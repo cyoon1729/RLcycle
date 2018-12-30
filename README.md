@@ -1,7 +1,7 @@
 # Reinforcement-Learning
 Modular implementations of reinforcement learning algorithms
 
-# Is Done:
+# Is done:
 - REINFORCE with normalized rewards
 
 # To come:
@@ -9,3 +9,7 @@ Modular implementations of reinforcement learning algorithms
 - DDPG
 - PPO
 - Soft Actor Critic
+
+# Requirements:
+- Python 3
+- PyTorch 0.4.1
