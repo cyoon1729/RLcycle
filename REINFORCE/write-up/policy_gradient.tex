@@ -8,29 +8,43 @@ Let us start with the defined objective function $J(\theta)$. We can expand the 
 
 $$
 \begin{aligned}
-J(\theta) &= \mathbb{E}[\sum\limits_{t=0}^{T-1} r_{t+1} | \pi_{\theta}] \\ &= \sum\limits_{t=0}^{T-1}P(s_{t}, a_{t} | \tau) R(s_{t}, a_{t}) 
+J(\theta) &= \mathbb{E}[\sum\limits_{t=i}^{T-1} \gamma^{t-i} r_{t+1} | \pi_{\theta}] \\ &= \sum\limits_{t=i}^{T-1}P(s_{t}, a_{t} | \tau) r_{t+1}
 \end{aligned}
 $$
 
-Differentiate both sides with respect to policy parameter $\theta$:
+\noindent where $i$ is an arbitrary starting point in a trajectory, $P(s_{t}, a_{t} | \tau)$ is the probability of the occurrence of $s_{t}, a_{t}$ given the
+trajectory $\tau$.
+\vspace{0.5cm}
+
+\noindent Differentiate both sides with respect to policy parameter $\theta$:
+
+$$
+\text{Using  \hspace{0.3cm}}
+\begin{aligned}
+    \frac{d}{dx} log f(x) = \frac{f'(x)}{f(x)},
+\end{aligned}
+$$
 
 $$
 \begin{aligned}
-    \nabla_{\theta} J(\theta) & = \sum\limits_{t=0}^{T-1} \nabla_{\theta} P(s_{t}, a_{t} | \tau) r_{t+1} \\ & = \sum\limits_{t=0}^{T-1} P(s_{t}, a_{t} | \tau) \nabla_{\theta} log P(s_{t}, a_{t} | \tau) r_{t+1} \\ & = \mathbb{E} [\sum\limits_{t=0}^{T-1} \nabla_{\theta} log P(s_{t}, a_{t} | \tau) r_{t+1}]
+    \nabla_{\theta} J(\theta) & = \sum\limits_{t=i}^{T-1} \nabla_{\theta} P(s_{t}, a_{t} | \tau) r_{t+1} \\ 
+    & = \sum\limits_{t=i}^{T-1} P(s_{t}, a_{t} | \tau) \frac{\nabla_{\theta} P(s_{t}, a_{t} | \tau)}{P(s_{t}, a_{t} | \tau)} r_{t+1} \\ 
+    & = \sum\limits_{t=i}^{T-1} P(s_{t}, a_{t} | \tau) \nabla_{\theta} log P(s_{t}, a_{t} | \tau) r_{t+1} \\ 
+    & = \mathbb{E} [\sum\limits_{t=i}^{T-1} \nabla_{\theta} log P(s_{t}, a_{t} | \tau) r_{t+1}]
 \end{aligned}
 $$
 
-However, during, learning, we take random samples of episodes instead of computing the expectation, so
+\noindent However, during, learning, we take random samples of episodes instead of computing the expectation, so we can replace the expectation with 
 
 $$
 \begin{aligned}
-    \nabla_{\theta} J(\theta) \sim \sum\limits_{t=0}^{T-1} \nabla_{\theta} log P(s_{t}, a_{t} | \tau) r_{t+1}
+    \nabla_{\theta} J(\theta) \sim \sum\limits_{t=i}^{T-1} \nabla_{\theta} log P(s_{t}, a_{t} | \tau) r_{t+1}
 \end{aligned}
 $$
 
-From here, let us take a more careful look into $\nabla_{\theta} log P(s_{t}, a_{t} | \tau) $.
+\noindent From here, let us take a more careful look into $\nabla_{\theta} log P(s_{t}, a_{t} | \tau) $.
 
-First, by definition,
+First, by definition, representing the starting point of the sequence in a trajectory as $s_{0}$,
 
 $$
 \begin{aligned}
@@ -39,9 +53,9 @@ $$
 & P(s_{2} | s_{1}, a_{1}) \pi_{\theta}(a_{3} | s_{2}) ... P(s_{t-1} | s_{t-2}, a_{t-2}) \pi_{\theta}(a_{t-1} | s_{t-2}) P(s_{t}) 
 \end{aligned}
 $$
-
-If we $log$ both sides,
-
+\vspace{0.2cm}
+\noindent If we $log$ both sides, \\
+\vspace{-0.2cm}
 $$
 \begin{aligned}
     log P(s_{t}, a_{t} | \tau)  ={}& log (P(s_{0}) \pi_{\theta}(a_{1} | s_{0}) P(s_{1} | s_{0}, a_{0}) \pi_{\theta}(a_{2} | s_{1}) P(s_{2} | s_{1}, a_{1}) \pi_{\theta}(a_{3} | s_{2}) ... \\
@@ -50,9 +64,9 @@ $$
 & + log P(s_{t-1} | s_{t-2}, a_{t-2}) + log \pi_{\theta}(a_{t-1} | s_{t-2}) + log P(s_{t})
 \end{aligned}
 $$
-
-Then,  differentiating $log P(s_{t}, a_{t} | \tau)$ with respect to $\theta$ yields: 
-
+\vspace{0.2cm}
+\noindent Then,  differentiating $log P(s_{t}, a_{t} | \tau)$ with respect to $\theta$ yields: \\
+\vspace{-0.15cm}
 $$
 \begin{aligned}
     \nabla_{\theta} log P(s_{t}, a_{t} | \tau)  ={}& \nabla_{\theta} log P(s_{0}) + \nabla_{\theta} log \pi_{\theta}(a_{1} | s_{0}) + \nabla_{\theta} log P(s_{1} | s_{0}, a_{0}) \\
@@ -67,7 +81,7 @@ So,
 $$
 \begin{aligned}
     \nabla_{\theta} log P(s_{t}, a_{t} | \tau) ={}& 0 + \nabla_{\theta} log \pi_{\theta}(a_{1} | s_{0}) + 0 + \nabla_{\theta} log \pi_{\theta}(a_{2} | s_{1}) + 0 + \nabla_{\theta} log \pi_{\theta}(a_{3} | s_{2}) + \\ & {} ... {} + {} 0 + \nabla_{\theta} log \pi_{\theta}(a_{t-1} | s_{t-2}) + 0 \\ ={}& \nabla_{\theta} log \pi_{\theta}(a_{1} | s_{0}) + \nabla_{\theta} log \pi_{\theta}(a_{2} | s_{1}) + \nabla_{\theta} log \pi_{\theta}(a_{3} | s_{2}) + \\
-& ... + \nabla_{\theta} log \pi_{\theta}(a_{t-1} | s_{t-2}) \\ ={}& \sum\limits_{t'=0}^{t} \nabla_{\theta} log \pi_{\theta}(a_{t'} | s_{t'})                                                
+& ... + \nabla_{\theta} log \pi_{\theta}(a_{t-1} | s_{t-2}) \\ ={}& \sum\limits_{t'=0}^{t} \nabla_{\theta} log \pi_{\theta}(a_{i} | s_{i})                                                
 \end{aligned}
 $$
 
@@ -75,55 +89,17 @@ Plugging this into our $\nabla_{\theta} J(\theta)$ yields:
 
 $$
 \begin{aligned}
-    \nabla_{\theta} J(\theta) ={}& \sum\limits_{t=0}^{T-1} r_{t+1} \nabla_{\theta} P(s_{t}, a_{t} | \tau) \\ ={}& \sum\limits_{t=0}^{T-1} r_{t+1} (\sum_{t'=0}^{t} \nabla_{\theta} log \pi_{\theta}(a_{t'} | s_{t'}))
+    \nabla_{\theta} J(\theta) ={}& \sum\limits_{t=0}^{T-1} r_{t+1} \nabla_{\theta} P(s_{t}, a_{t} | \tau) \\ ={}& \sum\limits_{t=0}^{T-1} r_{t+1} (\sum_{i=0}^{t} \nabla_{\theta} log \pi_{\theta}(a_{i} | s_{i}))
 \end{aligned}
 $$
-
-Lets play around that with a bit. 
-Say, $T = 4$. Then,
 
 $$
 \begin{aligned}
-    \nabla_{\theta} J(\theta) ={}& \sum\limits_{t=0}^{3} r_{t+1} (\sum\limits_{t'=0}^{t} \nabla_{\theta} log \pi_{\theta}(a_{t'} | s_{t'})) \\ ={}& r_{1} (\sum\limits_{t'=0}^{0} \nabla_{\theta} log \pi_{\theta}(a_{t'} | s_{t'})) + r_{2} (\sum\limits_{t'=0}^{1} \nabla_{\theta} log \pi_{\theta}(a_{t'} | s_{t'})) \\
-& + r_{3} (\sum\limits_{t'=0}^{2} \nabla_{\theta} log \pi_{\theta}(a_{t'} | s_{t'})) + r_{4} (\sum\limits_{t'=0}^{3} \nabla_{\theta} log \pi_{\theta}(a_{t'} | s_{t'})) \\ ={}& r_{1} \nabla_{\theta} log \pi_{\theta} (a_{0} | s_{0}) + r_{2} (\nabla_{\theta} log \pi_{\theta} (a_{0} | s_{0}) + \nabla_{\theta} log \pi_{\theta} (a_{1} | s_{1})) \\
-& + r_{3}  (\nabla_{\theta} log \pi_{\theta} (a_{0} | s_{0}) + \nabla_{\theta} log \pi_{\theta} (a_{1} | s_{1}) + \nabla_{\theta} log \pi_{\theta} (a_{2} | s_{2})) \\ & + r_{4} (\nabla_{\theta} log \pi_{\theta} (a_{0} | s_{0}) + \nabla_{\theta} log \pi_{\theta} (a_{1} | s_{1}) + \nabla_{\theta} log \pi_{\theta} (a_{2} | s_{2}) \\
-& + \nabla_{\theta} log \pi_{\theta} (a_{3} | s_{3})) \\ ={}&  \nabla_{\theta} log \pi_{\theta} (a_{0} | s_{0}) (r_{1} + r_{2} + r_{3} + r_{4}) \\
- & + \nabla_{\theta} log \pi_{\theta} (a_{1} | s_{1}) (r_{2} + r_{3} + r_{4}) \\ & + \nabla_{\theta} log \pi_{\theta} (a_{2} | s_{2}) (r_{3} + r_{4}) + \nabla_{\theta} log \pi_{\theta} (a_{3} | s_{3}) r_{4} \\ ={}& \sum\limits_{t=0}^{3} \nabla_{\theta} log \pi_{\theta} (a_{t} | s_{t}) (\sum\limits_{t'=t}^{3} r_{t'+1}) 
+    \nabla_{\theta} J(\theta) ={}& \sum\limits_{t = i}^{T - 1} \gamma^{t - i} r_{t+1} [\sum\limits_{t' = t}^{t} \nabla_{\theta} log \pi_{\theta}(a_{t'} | s_{t'})] \\
+    ={}& \sum\limits_{t = i}^{T - 1} \gamma^{t - i} r_{t+1}  \nabla_{\theta} log \pi_{\theta}(a_{t'} | s_{t'}) \\
+    ={}& \nabla_{\theta} log \pi_{\theta}(a_{t'} | s_{t'}) \sum\limits_{t = i}^{T - 1} \gamma^{t - i} r_{t+1} \\
+    ={}& \nabla_{\theta} log \pi_{\theta}(a_{t'} | s_{t'}) G_{t} 
 \end{aligned}
 $$
-
-So, in general, 
-
-$$
-\begin{aligned}
-\nabla_{\theta}J(\theta) = \sum\limits_{t=0}^{T-1} \nabla_{\theta} log \pi_{\theta} (a_{t} | s_{t}) (\sum\limits_{t'=t}^{T-1} r_{t'+1}) 
-\end{aligned}
-$$
-
-Incorporating the discount factor $\gamma \in [0,1]$ for future rewards,
-
-$$
-\begin{aligned}
-    \nabla_{\theta}J(\theta) = \sum\limits_{t=0}^{T-1} \nabla_{\theta} log \pi_{\theta} (a_{t} | s_{t}) (\sum\limits_{t'=t}^{T-1} \gamma^{t'-t} r_{t'+1}) 
-\end{aligned}
-$$
-
-For simplicity, we will denote ${\sum\limits_{t'=t}^{T-1} \gamma^{t'} r_{t'-1}}$ as $G_{t}$, the discounted cumulative future reward. Replacing ${\sum\limits_{t'=t}^{T-1} \gamma^{t'-t} r_{t+1}}$ with ${G_{t}}$, we derive the policy gradient,
-
-$$
-\begin{aligned}
-    \nabla_{\theta} J(\theta) = \sum_{t = 0}^{T-1} \nabla_{\theta} log \pi_{\theta} (a_{t} | s_{t}) G_{t}    
-\end{aligned}
-$$
-
-Then, we update the policy paramter $\theta$ as:
-
-$$
-\begin{aligned}
-    \theta \gets \theta + \alpha \nabla_{\theta} J(\theta)
-\end{aligned}
-$$
-
-where $\alpha$ is the learning rate in $[0, 1]$
 
 \end{document}
