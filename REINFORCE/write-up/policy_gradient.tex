@@ -89,12 +89,6 @@ Plugging this into our $\nabla_{\theta} J(\theta)$ yields:
 
 $$
 \begin{aligned}
-    \nabla_{\theta} J(\theta) ={}& \sum\limits_{t=0}^{T-1} r_{t+1} \nabla_{\theta} P(s_{t}, a_{t} | \tau) \\ ={}& \sum\limits_{t=0}^{T-1} r_{t+1} (\sum_{i=0}^{t} \nabla_{\theta} log \pi_{\theta}(a_{i} | s_{i}))
-\end{aligned}
-$$
-
-$$
-\begin{aligned}
     \nabla_{\theta} J(\theta) ={}& \sum\limits_{t = i}^{T - 1} \gamma^{t - i} r_{t+1} [\sum\limits_{t' = t}^{t} \nabla_{\theta} log \pi_{\theta}(a_{t'} | s_{t'})] \\
     ={}& \sum\limits_{t = i}^{T - 1} \gamma^{t - i} r_{t+1}  \nabla_{\theta} log \pi_{\theta}(a_{t'} | s_{t'}) \\
     ={}& \nabla_{\theta} log \pi_{\theta}(a_{t'} | s_{t'}) \sum\limits_{t = i}^{T - 1} \gamma^{t - i} r_{t+1} \\
