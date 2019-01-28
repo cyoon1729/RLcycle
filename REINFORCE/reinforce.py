@@ -70,6 +70,7 @@ def main():
         rewards = []
 
         for steps in range(max_steps):
+            # env.render()
             action, log_prob = policy_net.get_action(state)
             new_state, reward, done, _ = env.step(action)
             log_probs.append(log_prob)
