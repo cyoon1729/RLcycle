@@ -47,8 +47,8 @@ From here, let us take a more careful look into $\nabla_{\theta} log P(s_{t}, a_
 $$
 \begin{aligned}
     P(s_{t}, a_{t} | \tau) ={}& P(s_{0}, a_{0}, s_{1}, a_{2}, ..., s_{t-1}, a_{t-1}, s_{t}, a_{t} | \pi_{\theta}) \\
-                           ={}& P(s_{0}) \pi_{\theta}(a_{1} | s_{0}) P(s_{1} | s_{0}, a_{0}) \pi_{\theta}(a_{2} | s_{1}) \\
-& \ P(s_{2} | s_{1}, a_{1}) \pi_{\theta}(a_{3} | s_{2}) ... P(s_{t-1} | s_{t-2}, a_{t-2}) \pi_{\theta}(a_{t-1} | s_{t-2}) P(s_{t}) \pi_{\theta}(a_{t} | s_{t-1})
+                           ={}& P(s_{0}) \pi_{\theta}(a_{1} | s_{0}) P(s_{1} | s_{0}, a_{0}) \pi_{\theta}(a_{2} | s_{1})
+ P(s_{2} | s_{1}, a_{1}) \pi_{\theta}(a_{3} | s_{2}) \\ & \ ... P(s_{t-1} | s_{t-2}, a_{t-2}) \pi_{\theta}(a_{t-1} | s_{t-2}) P(s_{t} | s_{t-1}, a_{t-1}) \pi_{\theta}(a_{t} | s_{t-1})
 \end{aligned}
 $$
 
@@ -59,9 +59,9 @@ $$
 $$
 \begin{aligned}
     log P(s_{t}, a_{t} | \tau)  ={}& log (P(s_{0}) \pi_{\theta}(a_{1} | s_{0}) P(s_{1} | s_{0}, a_{0}) \pi_{\theta}(a_{2} | s_{1}) P(s_{2} | s_{1}, a_{1}) \pi_{\theta}(a_{3} | s_{2}) ... \\
-& P(s_{t-1} | s_{t-2}, a_{t-2}) \pi_{\theta}(a_{t-1} | s_{t-2}) P(s_{t})) \\ ={}& log P(s_{0}) + log \pi_{\theta}(a_{1} | s_{0}) + log P(s_{1} | s_{0}, a_{0}) + log \pi_{\theta}(a_{2} | s_{1})\\
-& + log P(s_{2} | s_{1}, a_{1}) + log \pi_{\theta}(a_{3} | s_{2}) + ... \\
-& + log P(s_{t-1} | s_{t-2}, a_{t-2}) + log \pi_{\theta}(a_{t-1} | s_{t-2}) + log P(s_{t}) + log \pi_{\theta}(a_{t} | s_{t-1})
+& P(s_{t-1} | s_{t-2}, a_{t-2}) \pi_{\theta}(a_{t-1} | s_{t-2}) P(s_{t})log \pi_{\theta}(a_{t} | s_{t-1}) \\ ={}& log P(s_{0}) + log \pi_{\theta}(a_{1} | s_{0}) + log P(s_{1} | s_{0}, a_{0}) + log \pi_{\theta}(a_{2} | s_{1})\\
+& + log P(s_{2} | s_{1}, a_{1}) + log \pi_{\theta}(a_{3} | s_{2}) + ... + log P(s_{t-1} | s_{t-2}, a_{t-2}) \\ 
+ & + log \pi_{\theta}(a_{t-1} | s_{t-2}) + log P(s_{t} | s_{t-1}, a_{t-1}) + log \pi_{\theta}(a_{t} | s_{t-1})
 \end{aligned}
 $$
 
@@ -73,7 +73,7 @@ $$
 \begin{aligned}
     \nabla_{\theta} log P(s_{t}, a_{t} | \tau)  ={}& \nabla_{\theta} log P(s_{0}) + \nabla_{\theta} log \pi_{\theta}(a_{1} | s_{0}) + \nabla_{\theta} log P(s_{1} | s_{0}, a_{0}) \\
 & + \nabla_{\theta} log \pi_{\theta}(a_{2} | s_{1}) + \nabla_{\theta} log P(s_{2} | s_{1}, a_{1}) + \nabla_{\theta} log \pi_{\theta}(a_{3} | s_{2}) + \\
-& ... + \nabla_{\theta} log P(s_{t-1} | s_{t-2}, a_{t-2}) + \nabla_{\theta} log \pi_{\theta}(a_{t-1} | s_{t-2}) + \nabla_{\theta} log P(s_{t})) \\
+& ... + \nabla_{\theta} log P(s_{t-1} | s_{t-2}, a_{t-2}) + \nabla_{\theta} log \pi_{\theta}(a_{t-1} | s_{t-2}) + \\ & \nabla_{\theta} log P(s_{t} | s_{t-1}, a_{t-1}) + \nabla_{\theta} log \pi_{\theta}(a_{t} | s_{t-1})  \\
 \end{aligned}
 $$
 
@@ -83,7 +83,7 @@ However, note that the $P(s_{t} | s_{t-1}, a_{t-1})$ is not dependent on the pol
 $$
 \begin{aligned}
     \nabla_{\theta} log P(s_{t}, a_{t} | \tau) ={}& 0 + \nabla_{\theta} log \pi_{\theta}(a_{1} | s_{0}) + 0 + \nabla_{\theta} log \pi_{\theta}(a_{2} | s_{1}) + 0 + \nabla_{\theta} log \pi_{\theta}(a_{3} | s_{2}) + \\ & {} ... {} + {} 0 + \nabla_{\theta} log \pi_{\theta}(a_{t-1} | s_{t-2}) + 0 \\ ={}& \nabla_{\theta} log \pi_{\theta}(a_{1} | s_{0}) + \nabla_{\theta} log \pi_{\theta}(a_{2} | s_{1}) + \nabla_{\theta} log \pi_{\theta}(a_{3} | s_{2}) + \\
-& ... + \nabla_{\theta} log \pi_{\theta}(a_{t-1} | s_{t-2}) \\ ={}& \sum\limits_{t'=0}^{t} \nabla_{\theta} log \pi_{\theta}(a_{t'} | s_{t'})                                                
+& ... + \nabla_{\theta} log \pi_{\theta}(a_{t-1} | s_{t-2}) + log \pi_{\theta}(a_{t} | s_{t-1})  \\ ={}& \sum\limits_{t'=0}^{t} \nabla_{\theta} log \pi_{\theta}(a_{t'} | s_{t'})                                                
 \end{aligned}
 $$
 
@@ -103,7 +103,7 @@ $\begin{aligned}
                                  & + r_{3} (\sum_{t'=0}^{2} \nabla_{\theta} log \pi_{\theta}(a_{t'} | s_{t'})) + ... + r_{T-1} (\sum_{t'=0}^{T-1} \nabla_{\theta} log \pi_{\theta}(a_{t'} | s_{t'})) \\
                               ={}& r_{1} \nabla_{\theta} log \pi_{\theta} (a_{0} | s_{0}) + r_{2} (\nabla_{\theta} log \pi_{\theta} (a_{0} | s_{0}) + \nabla_{\theta} log \pi_{\theta} (a_{1} | s_{1})) \\
                                  & + r_{3} (\nabla_{\theta} log \pi_{\theta} (a_{0} | s_{0}) + \nabla_{\theta} log \pi_{\theta} (a_{1} | s_{1}) + \nabla_{\theta} log \pi_{\theta} (a_{2} | s_{2})) \\
-                                 & + ... + r_{T} (\nabla_{\theta} log \pi_{\theta} (a_{0} | s_{0}) + \nabla_{\theta} log \pi_{\theta} (a_{1} | s_{1}) + \nabla_{\theta} log \pi_{\theta} (a_{2} | s_{2}) + ... + \nabla_{\theta} log \pi_{\theta} (a_{T-1} | s_{T-1})) \\
+                                 & + ... + r_{T} (\nabla_{\theta} log \pi_{\theta} (a_{0} | s_{0}) + \nabla_{\theta} log \pi_{\theta} (a_{1} | s_{1}) + ... + \nabla_{\theta} log \pi_{\theta} (a_{T-1} | s_{T-1})) \\
                               ={}&  \nabla_{\theta} log \pi_{\theta} (a_{0} | s_{0}) (r_{1} + r_{2} + ... + r_{T}) + \nabla_{\theta} log \pi_{\theta} (a_{1} | s_{1}) (r_{2} + r_{3} + ... +  r_{T}) \\
                                  & + \nabla_{\theta} log \pi_{\theta} (a_{2} | s_{2}) (r_{3} + r_{4} + ... + r_{T}) + ... + \nabla_{\theta} log \pi_{\theta} (a_{T-1} | s_{T-1}) r_{T} \\
                               ={}& \sum_{t=0}^{T-1} \nabla_{\theta} log \pi_{\theta} (a_{t} | s_{t}) (\sum_{t'=t+1}^{T} r_{t'}) 
@@ -116,9 +116,9 @@ $\begin{aligned}
     \sum_{t=0}^{T-1} \nabla_{\theta} log \pi_{\theta} (a_{t} | s_{t}) G_{t}
 \end{aligned}$
 \end{center}
-\vspace{1.0cm}
+\vspace{0.3cm}
 
-In corporating the discount factor $\gamma \in [0,1]$ into our objective (in order to weight immediate rewards more than future rewards):
+Incorporating the discount factor $\gamma \in [0,1]$ into our objective (in order to weight immediate rewards more than future rewards):
 
 \begin{center}
 $\begin{aligned}
