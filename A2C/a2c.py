@@ -10,7 +10,7 @@ from torch.autograd import Variable
 # neural network parameters
 hidden_size = 256
 lr = 3e-4
-num_steps = 5
+num_steps = 100
 
 # Constants
 GAMMA = 0.9
@@ -45,16 +45,17 @@ class ValueNetwork(nn.Module):
         self.optimizer = optim.Adam(self.parameters(), lr=learning_rate)
 
     def forward(self, state):
+        state = torch.from_numpy(state).float().unsqueeze(0)
         x = F.relu(self.linear1(state))
         x = F.softmax(self.linear2(x), dim=1)
         return x 
     
 def a2c(env):
-    num_inputs = envs.observation_space.shape[0]
-    num_outputs = envs.action_space.n
+    num_inputs = env.observation_space.shape[0]
+    num_outputs = env.action_space.n
     
-    policy_network = PolicyNetwork(num_inputss, num_outputs, hidden_size)
-    value_network = ValueNetwork(num_inputs, hidden)
+    policy_network = PolicyNetwork(num_inputs, num_outputs, hidden_size)
+    value_network = ValueNetwork(num_inputs, hidden_size)
 
     state = env.reset()
     for episode in range(20000):
@@ -72,38 +73,43 @@ def a2c(env):
             values.append(value)
 
             state = new_state
-        
-    
-    discounted_rewards = []
-    for t in range(len(rewards)):
-        Gt = 0 
-        pw = 0
-        for r in rewards[t:]:
-            Gt = Gt + GAMMA**pw * r
-            pw = pw + 1
-        discounted_rewards.append(Gt)
-    
-    policy_gradient = []
-    value_loss = []
-    for log_prob, returns, value in zip(log_probs, discounted_rewards, values):
-        advantage = returns - value
-        policy_gradient.append(-log_prob * advantage)
-        critic_loss.append(advantage.pow(2))
-    
-    # Actor update
-    policy_network.optimizer.zero_grad()
-    policy_gradient = torch.stack(policy_gradient).sum().mean()
-    policy_gradient.backward()
-    policy_network.optimizer.step()
 
-    # Critic update
-    value_network.optimizer.zero_grad()
-    value_loss = torch.stack(value_loss).sum().mean()
-    value_network.backward()
-    value_network.optimizer.step()
+            if done:
+                if episode % 10 == 0:
+                    sys.stdout.write("episode: {}, total length: {} \n".format(episode, steps))
+
+    
+        discounted_rewards = []
+        for t in range(len(rewards)):
+            Gt = 0 
+            pw = 0
+            for r in rewards[t:]:
+                Gt = Gt + GAMMA**pw * r
+                pw = pw + 1
+            discounted_rewards.append(Gt)
+        
+        policy_gradient = []
+        value_loss = []
+        
+        for log_prob, returns, value in zip(log_probs, discounted_rewards, values):
+            advantage = returns - value
+            policy_gradient.append(-log_prob * advantage)
+            value_loss.append(advantage.pow(2))
+        
+        # Actor update
+        policy_network.optimizer.zero_grad()
+        policy_gradient = torch.stack(policy_gradient).sum().mean()
+        policy_gradient.backward()
+        policy_network.optimizer.step()
+
+        # Critic update
+        value_network.optimizer.zero_grad()
+        value_loss = torch.stack(value_loss).sum().mean()
+        value_loss.backward()
+        value_network.optimizer.step()
 
 if __name__ == "__main__":
-    env = gym.make("Cartpole-v0")
+    env = gym.make("CartPole-v0")
     a2c(env)
 
 
