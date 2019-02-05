@@ -45,7 +45,6 @@ def a2c(env):
     num_outputs = env.action_space.n
     
     actor_critic = ActorCritic(num_inputs, num_outputs, hidden_size)
-    value_criterion = nn.MSELoss()
     ac_optimizer = optim.Adam(actor_critic.parameters(), lr=learning_rate)
 
     all_lengths = []
@@ -105,13 +104,5 @@ def a2c(env):
     
 if __name__ == "__main__":
     env = gym.make("CartPole-v0")
-    a2c(env)
-
-
-    
-
-
-
-
-    
+    a2c(env)    
     
