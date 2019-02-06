@@ -3,9 +3,9 @@ Modular implementations of reinforcement learning algorithms
 
 # Is done:
 - REINFORCE with normalized rewards
+- A2C
 
 # To come:
-- A2C
 - DDPG
 - PPO
 - Soft Actor Critic
