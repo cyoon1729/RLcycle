@@ -7,6 +7,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torch.autograd import Variable
 import matplotlib.pyplot as plt
+import obstacle_env
 
 # Constants
 GAMMA = 0.9
@@ -56,21 +57,22 @@ def update_policy(policy_network, rewards, log_probs):
     policy_network.optimizer.step()
 
 def main():
-    env = gym.make('CartPole-v0')
+    env = gym.make('obstacle-v0')
     policy_net = PolicyNetwork(env.observation_space.shape[0], env.action_space.n, 128)
     
     max_episode_num = 5000
     max_steps = 10000
     numsteps = []
     avg_numsteps = []
-    
+    all_rewards = []
+
     for episode in range(max_episode_num):
         state = env.reset()
         log_probs = []
         rewards = []
 
         for steps in range(max_steps):
-            # env.render()
+            env.render()
             action, log_prob = policy_net.get_action(state)
             new_state, reward, done, _ = env.step(action)
             log_probs.append(log_prob)
@@ -80,8 +82,9 @@ def main():
                 update_policy(policy_net, rewards, log_probs)
                 numsteps.append(steps)
                 avg_numsteps.append(np.mean(numsteps[-10:]))
-                if episode % 10 == 0:
-                    sys.stdout.write("episode: {}, total length: {}, average length: {}\n".format(episode, steps, np.mean(numsteps[-10:])))
+                all_rewards.append(np.sum(rewards))
+                if episode % 1 == 0:
+                    sys.stdout.write("episode: {}, total reward: {}, average_reward: {}, length: {}\n".format(episode, np.round(np.sum(rewards), decimals = 3),  np.round(np.mean(all_rewards[-10:]), decimals = 3), steps))
 
                 break
             
