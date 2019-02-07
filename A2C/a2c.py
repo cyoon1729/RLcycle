@@ -36,10 +36,8 @@ class ActorCritic(nn.Module):
         
         policy_dist = F.relu(self.actor_linear1(state))
         policy_dist = F.softmax(self.actor_linear2(policy_dist), dim=1)
-        highest_prob_action = np.random.choice(self.num_actions, p=np.squeeze(policy_dist.detach().numpy()))
-        log_prob = torch.log(policy_dist.squeeze(0)[highest_prob_action])
 
-        return value, highest_prob_action, log_prob
+        return value, policy_dist
 
 def a2c(env):
     num_inputs = env.observation_space.shape[0]
@@ -51,7 +49,8 @@ def a2c(env):
     all_lengths = []
     average_lengths = []
     all_rewards = []
-    
+    entropy_term = 0
+
     for episode in range(max_episodes):
         log_probs = []
         values = []
@@ -59,16 +58,21 @@ def a2c(env):
 
         state = env.reset()
         for steps in range(num_steps):
-            value, action, log_prob = actor_critic.forward(state)
+            value, policy_dist = actor_critic.forward(state)
+            dist = policy_dist.detach().numpy() # numpy version of policy distribution
+            action = np.random.choice(num_outputs, p=np.squeeze(dist))
+            log_prob = torch.log(policy_dist.squeeze(0)[action])
+            entropy = -np.sum(np.mean(dist) * np.log(dist))
             new_state, reward, done, _ = env.step(action)
-    
-            log_probs.append(log_prob)
+
             rewards.append(reward)
             values.append(value)
+            log_probs.append(log_prob)
+            entropy_term += entropy
             state = new_state
             
             if done:
-                Qval, _, _ = actor_critic.forward(new_state)
+                Qval, _ = actor_critic.forward(new_state)
                 all_rewards.append(np.sum(rewards))
                 all_lengths.append(steps)
                 average_lengths.append(np.mean(all_lengths[-10:]))
@@ -90,11 +94,13 @@ def a2c(env):
         advantage = Qvals - value
         actor_loss = (-log_probs * advantage).mean()
         critic_loss = 0.5 * advantage.pow(2).mean()
-        ac_loss = actor_loss + critic_loss
+        ac_loss = actor_loss + critic_loss + 0.001 * entropy_term
 
         ac_optimizer.zero_grad()
         ac_loss.backward()
         ac_optimizer.step()
+
+        
     
     # Plot results
     smoothing_rewards = pd.Series(all_rewards)
