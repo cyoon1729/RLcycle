@@ -1,0 +1,92 @@
+\documentclass[letterpaper,11pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{algorithm, algorithmic}
+\begin{document}
+
+Introducing a baseline $b(s)$
+$$
+\begin{aligned}
+    \nabla_{\theta} J(\theta) = \mathcal{E} [\sum\limits_{t=0}^{T-1} \log \pi_{\theta}(a_{t} | s_{t})(G_{t} - b(s_{t}))]
+\end{aligned}
+$$
+
+[Taken from Jerry Liu's post on "Why does the policy gradient method have a high variance"].
+
+For the sake of hypothetical example, let’s say that $\nabla_{\theta} \log \pi_{\theta}(\tau)$ is $[0.5, 0.2, 0.3]$ respectively for three trajectories, 
+and $r(\tau)$ is $[1000, 1001, 1002]$. Then the variance of the product of the two terms for these three samples is $\mathcal{Var}(0.5∗1000,0.2∗1001,0.3∗1002)$
+which according to WolframAlpha is around 23286.8. Now what if we reduce all values of $r(\tau)$ by a constant, say, 1001? Then the variance of the 
+product becomes $\mathcal{Var}(0.5∗1,0.2∗0,0.3∗−1)$, which is 0.1633, a much smaller value.
+
+\begin{algorithm}[H]
+	\caption{Q Actor Critic}
+	\begin{algorithmic}
+        \STATE Initialize parameters $s, \theta, w$ and learning rates $\alpha_{\theta}, \alpha_{w}$; sample $a \sim \pi_\theta(a \vert s)$.
+        \FOR{$t = 1 \dots T$:}
+            \STATE{Sample reward $r_{t} \sim R(s, a)$ and next state $s^{\prime} \sim P(s^{\prime} \vert s, a)$}
+            \STATE{Then sample the next action $a^{\prime} \sim \pi_\theta(a^{\prime} \vert s^{\prime})$}
+            \STATE{Update the policy parameters: $\theta \leftarrow \theta + \alpha_\theta Q_w(s, a) \nabla_\theta \log \pi_\theta(a \vert s);$
+            Compute the correction (TD error) for action-value at time t:}
+                \STATE{\hspace{0.5cm}$\delta_t = r_t + \gamma Q_w(s^{\prime}, a^{\prime}) - Q_w(s, a)$}
+            \STATE{and use it to update the parameters of Q function:}
+                \STATE{\hspace{0.5cm}$w \leftarrow w + \alpha_w \delta_t \nabla_w Q_w(s, a)$}
+            \STATE{Move to a $\leftarrow$ $a^{\prime}$ and s $\leftarrow$ $s^{\prime}$}
+        \ENDFOR
+	\end{algorithmic}
+\end{algorithm}
+
+
+% Vanilla Policy Gradient
+
+$$
+\begin{aligned}
+    \nabla_{\theta} J(\theta) = \mathcal{E} [\sum\limits_{t=0}^{T-1} \log \pi_{\theta}(a_{t} | s_{t})G_{t}]
+\end{aligned}
+$$
+
+We can decompose the Expectation to obtain:
+
+$$
+\begin{aligned}
+    \nabla_{\theta} J(\theta) = \mathcal{E}_{s_{0}, a_{0},\dots, s{t}, a_{t}} [\sum\limits_{t=0}^{T-1} \log \pi_{\theta}(a_{t} | s_{t})] \mathcal{E}_{r_{t+1}, s_{t+1},\dots, r_{T}, s_{T}} [G_{t}]
+\end{aligned}
+$$
+
+But we already know that (if you are unfamiliar with the Q value, please read about value interation & and Q learning first)
+
+$$
+\begin{aligned}
+\mathcal{E}_{r_{t+1}, s_{t+1},\dots, r_{T}, s_{T}} [G_{t}] = Q(s_{t},a_{t})
+\end{aligned}
+$$
+
+So we can replace the update term as such:
+
+$$
+\begin{aligned}
+    \nabla_{\theta} J(\theta) = \mathcal{E}_{s_{0}, a_{0},\dots, s{t}, a_{t}} [\sum\limits_{t=0}^{T-1} \log \pi_{\theta}(a_{t} | s_{t})] Q_{s_{t}, a_{t}}
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+    A(s_{t}, a_{t}) = Q_{w} (s_{t}, a_{t}) - V_{v} (s_{t}, a_{t})
+\end{aligned}
+$$
+
+
+$$
+\begin{aligned}
+    Q_{s_{t}, a_{t}} = \mathbb[r_{t+1} + \gamma V(s_{t+1})]
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+\nabla_{\theta} J(\theta) &\sim \sum\limits_{t=0}^{T-1} \log \pi_{\theta} (a_{t} | s_{t})(
+r_{t+1} + \gamma V_{v}(s_{t+1}) - V_{v}(s_{t})) \\
+&= \sum\limits_{t=0}^{T-1} \log \pi_{\theta} (a_{t} | s_{t})A(s_{t}, a_{t})
+\end{aligned}
+
+\end{document}
