@@ -17,11 +17,8 @@ class Critic(nn.Module):
     
     def forward(self, state, action):
         """
-        state and actions are torch tensors
+        Params state and actions are torch tensors
         """
-        #state = Variable(torch.from_numpy(state).float().unsqueeze(0))
-        #action = Variable(torch.from_numpy(action).float().unsqueeze(0))
-        
         x = torch.cat([state, action], 1)
         x = F.relu(self.linear1(x))
         x = F.relu(self.linear2(x))
@@ -42,9 +39,8 @@ class Actor(nn.Module):
         
     def forward(self, state):
         """
-        state is a torch tensor
+        Param state is a torch tensor
         """
-        #x = Variable(torch.from_numpy(state).float().unsqueeze(0))
         x = F.relu(self.linear1(state))
         x = F.relu(self.linear2(x))
         x = torch.tanh(self.linear3(x))

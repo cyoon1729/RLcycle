@@ -1,9 +1,10 @@
 import numpy as np
+import gym
 from collections import deque
 import random
+
 # Ornstein-Ulhenbeck Process
 # Taken from #https://github.com/vitchyr/rlkit/blob/master/rlkit/exploration_strategies/ou_strategy.py
-
 class OUNoise(object):
     def __init__(self, action_space, mu=0.0, theta=0.15, max_sigma=0.3, min_sigma=0.3, decay_period=100000):
         self.mu           = mu
@@ -32,15 +33,33 @@ class OUNoise(object):
         return np.clip(action + ou_state, self.low, self.high)
 
 
+class NormalizedActions(gym.ActionWrapper):
+
+    def _action(self, action):
+        low_bound   = self.action_space.low
+        upper_bound = self.action_space.high
+        
+        action = low_bound + (action + 1.0) * 0.5 * (upper_bound - low_bound)
+        action = np.clip(action, low_bound, upper_bound)
+        
+        return action
+
+    def _reverse_action(self, action):
+        low_bound   = self.action_space.low
+        upper_bound = self.action_space.high
+        
+        action = 2 * (action - low_bound) / (upper_bound - low_bound) - 1
+        action = np.clip(action, low_bound, upper_bound)
+        
+        return actions
+
 class Memory:
     def __init__(self, max_size):
         self.max_size = max_size
         self.buffer = deque(maxlen=max_size)
     
-    def push(self, experience):
-        """
-        experience must be in s,a,r,s,done format
-        """
+    def push(self, state, action, reward, next_state, done):
+        experience = (state, action, np.array([reward]), next_state, done)
         self.buffer.append(experience)
 
     def sample(self, batch_size):
@@ -61,3 +80,6 @@ class Memory:
             done_batch.append(done)
         
         return state_batch, action_batch, reward_batch, next_state_batch, done_batch
+
+    def __len__(self):
+        return len(self.buffer)
