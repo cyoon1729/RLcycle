@@ -1,5 +1,6 @@
 import numpy as np
-
+from collections import deque
+import random
 # Ornstein-Ulhenbeck Process
 # Taken from #https://github.com/vitchyr/rlkit/blob/master/rlkit/exploration_strategies/ou_strategy.py
 
@@ -31,8 +32,32 @@ class OUNoise(object):
         return np.clip(action + ou_state, self.low, self.high)
 
 
-class ReplayBuffer:
-    
+class Memory:
     def __init__(self, max_size):
         self.max_size = max_size
- 
+        self.buffer = deque(maxlen=max_size)
+    
+    def push(self, experience):
+        """
+        experience must be in s,a,r,s,done format
+        """
+        self.buffer.append(experience)
+
+    def sample(self, batch_size):
+        state_batch = []
+        action_batch = []
+        reward_batch = []
+        next_state_batch = []
+        done_batch = []
+
+        batch = random.sample(self.buffer, batch_size)
+
+        for experience in batch:
+            state, action, reward, next_state, done = experience
+            state_batch.append(state)
+            action_batch.append(action)
+            reward_batch.append(reward)
+            next_state_batch.append(next_state)
+            done_batch.append(done)
+        
+        return state_batch, action_batch, reward_batch, next_state_batch, done_batch
