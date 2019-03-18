@@ -52,8 +52,7 @@ class DDPGagent:
         critic_loss = self.critic_criterion(Qvals, Qprime)
 
         # Actor loss
-        policy_loss = self.critic.forward(states, self.actor.forward(states))
-        policy_loss = -policy_loss.mean()
+        policy_loss = -self.critic.forward(states, self.actor.forward(states)).mean()
         
         # update networks
         self.actor_optimizer.zero_grad()
