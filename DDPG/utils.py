@@ -33,25 +33,20 @@ class OUNoise(object):
         return np.clip(action + ou_state, self.low, self.high)
 
 
-class NormalizedActions(gym.ActionWrapper):
+# https://github.com/openai/gym/blob/master/gym/core.py
+class NormalizedEnv(gym.ActionWrapper):
+    """ Wrap action """
 
     def _action(self, action):
-        low_bound   = self.action_space.low
-        upper_bound = self.action_space.high
-        
-        action = low_bound + (action + 1.0) * 0.5 * (upper_bound - low_bound)
-        action = np.clip(action, low_bound, upper_bound)
-        
-        return action
+        act_k = (self.action_space.high - self.action_space.low)/ 2.
+        act_b = (self.action_space.high + self.action_space.low)/ 2.
+        return act_k * action + act_b
 
     def _reverse_action(self, action):
-        low_bound   = self.action_space.low
-        upper_bound = self.action_space.high
+        act_k_inv = 2./(self.action_space.high - self.action_space.low)
+        act_b = (self.action_space.high + self.action_space.low)/ 2.
+        return act_k_inv * (action - act_b)
         
-        action = 2 * (action - low_bound) / (upper_bound - low_bound) - 1
-        action = np.clip(action, low_bound, upper_bound)
-        
-        return actions
 
 class Memory:
     def __init__(self, max_size):
