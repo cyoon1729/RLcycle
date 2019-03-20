@@ -5,16 +5,12 @@ import torch.autograd
 from torch.autograd import Variable
 
 class Critic(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, init_w=3e-3):
+    def __init__(self, input_size, hidden_size, output_size):
         super(Critic, self).__init__()
-
         self.linear1 = nn.Linear(input_size, hidden_size)
         self.linear2 = nn.Linear(hidden_size, hidden_size)
         self.linear3 = nn.Linear(hidden_size, output_size)
 
-        self.linear3.weight.data.uniform_(-init_w, init_w)
-        self.linear3.bias.data.uniform_(-init_w, init_w)
-    
     def forward(self, state, action):
         """
         Params state and actions are torch tensors
@@ -27,15 +23,11 @@ class Critic(nn.Module):
         return x
 
 class Actor(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, learning_rate = 3e-4, init_w=3e-3):
+    def __init__(self, input_size, hidden_size, output_size, learning_rate = 3e-4):
         super(Actor, self).__init__()
-
         self.linear1 = nn.Linear(input_size, hidden_size)
         self.linear2 = nn.Linear(hidden_size, hidden_size)
         self.linear3 = nn.Linear(hidden_size, output_size)
-        
-        self.linear3.weight.data.uniform_(-init_w, init_w)
-        self.linear3.bias.data.uniform_(-init_w, init_w)
         
     def forward(self, state):
         """
