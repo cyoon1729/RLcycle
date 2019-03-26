@@ -2,7 +2,7 @@
 Modular implementations of reinforcement learning algorithms
 
 # Is done:
-- REINFORCE with normalized rewards
+- REINFORCE
 - A2C
 - DDPG
 
