@@ -1,3 +1,5 @@
+# This is a draft for my blog post, which is now published here:
+https://towardsdatascience.com/deep-deterministic-policy-gradients-explained-2d94655a9b7b
 # Deep Deterministic Policy Gradients explained 
 
 **Reinforcement Learning in Continuous Action Spaces**
