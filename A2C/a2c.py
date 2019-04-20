@@ -59,7 +59,9 @@ def a2c(env):
         state = env.reset()
         for steps in range(num_steps):
             value, policy_dist = actor_critic.forward(state)
-            dist = policy_dist.detach().numpy() # numpy version of policy distribution
+            value = value.detach().numpy()[0,0]
+            dist = policy_dist.detach().numpy() 
+
             action = np.random.choice(num_outputs, p=np.squeeze(dist))
             log_prob = torch.log(policy_dist.squeeze(0)[action])
             entropy = -np.sum(np.mean(dist) * np.log(dist))
@@ -71,8 +73,9 @@ def a2c(env):
             entropy_term += entropy
             state = new_state
             
-            if done:
+            if done or steps == num_steps-1:
                 Qval, _ = actor_critic.forward(new_state)
+                Qval = Qval.detach().numpy()[0,0]
                 all_rewards.append(np.sum(rewards))
                 all_lengths.append(steps)
                 average_lengths.append(np.mean(all_lengths[-10:]))
@@ -81,17 +84,17 @@ def a2c(env):
                 break
         
         # compute Q values
-        Qvals = []
+        Qvals = np.zeros_like(values)
         for t in reversed(range(len(rewards))):
             Qval = rewards[t] + GAMMA * Qval
-            Qvals.insert(0, Qval) 
+            Qvals[t] = Qval
   
         #update actor critic
-        values = torch.stack(values)
-        Qvals = torch.Tensor(Qvals)
+        values = torch.FloatTensor(values)
+        Qvals = torch.FloatTensor(Qvals)
         log_probs = torch.stack(log_probs)
         
-        advantage = Qvals - value
+        advantage = Qvals - values
         actor_loss = (-log_probs * advantage).mean()
         critic_loss = 0.5 * advantage.pow(2).mean()
         ac_loss = actor_loss + critic_loss + 0.001 * entropy_term
@@ -103,9 +106,8 @@ def a2c(env):
         
     
     # Plot results
-    smoothing_rewards = pd.Series(all_rewards)
-    smoothing_rewards = pd.Series.rolling(smoothing_rewards, 10).mean()
-    smoothend_rewards = [elem for elem in smoothing_rewards]
+    smoothed_rewards = pd.Series.rolling(pd.Series(all_rewards), 10).mean()
+    smoothed_rewards = [elem for elem in smoothed_rewards]
     plt.plot(all_rewards)
     plt.plot(smoothend_rewards)
     plt.plot()
