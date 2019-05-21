@@ -3,24 +3,30 @@ import torch.nn as nn
 import torch.nn.functional as F 
 import torch.autograd 
 
-class DQN(nn.module):
-    def __init__(self):
-        pass
-    
-    def forward(self, state):
-        pass
+class DQN(nn.Module):
+    def __init__(self, num_in, num_out):
+        super(DQN, self).__init__()
+        self.num_in = num_in
+        self.num_out = num_out
 
-    def boltzmann_action(self, state):
-        pass
+        self.linear1 = nn.Linear(self.num_in, 128)
+        self.linear2 = nn.Linear(128, 128)
+        self.linear3 = nn.Linear(128, self.num_out)
+
+    def forward(self, state_tensor):
+        qvals = F.relu(self.linear1(state_tensor))
+        qvals = F.relu(self.linear2(qvals))
+        qvals = self.linear3(qvals)
+        
+        return qvals
 
 class CnnDQN(nn.Module):
   
-    def __init__(self, input_dim, action_space_dim, num_actions=1):  
+    def __init__(self, input_dim, output_dim):  
         super(CnnDQN2, self).__init__()
         
         self.input_dim = input_dim
-        self.action_space_dim = action_space_dim
-        self.num_actions = num_actions
+        self.action_space_dim = output_dim
         
         self.features = nn.Sequential(
             nn.Conv2d(input_dim[0], 32, kernel_size=8, stride=4),
@@ -38,11 +44,7 @@ class CnnDQN(nn.Module):
         )
         
     def forward(self, state):
-        x = self.features(state)
-        x = x.view(x.size(0), -1)
-        x = self.fc(x)
+        qvals = self.features(state)
+        qvals = x.view(qvals.size(0), -1)
+        qvals = self.fc(qvals)
         return x
-    
-    def boltzmann_action(self, state):
-        state = autograd.Variable(torch.from_numpy(state).float().unsqueeze(0))
-        Qvals = self.forward(state)
