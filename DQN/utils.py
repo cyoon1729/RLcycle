@@ -3,7 +3,9 @@ from collections import deque
 import gym
 from gym import spaces
 import cv2
+import random
 cv2.ocl.setUseOpenCL(False)
+
 
 class ReplayBuffer:
     def __init__(self, max_size):

@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F 
 import torch.autograd 
 
+
 class DQN(nn.Module):
     def __init__(self, num_in, num_out):
         super(DQN, self).__init__()
@@ -23,7 +24,7 @@ class DQN(nn.Module):
 class CnnDQN(nn.Module):
   
     def __init__(self, input_dim, output_dim):  
-        super(CnnDQN2, self).__init__()
+        super(CnnDQN, self).__init__()
         
         self.input_dim = input_dim
         self.action_space_dim = output_dim
@@ -42,9 +43,12 @@ class CnnDQN(nn.Module):
             nn.ReLU(),
             nn.Linear(512, self.action_space_dim)
         )
+    
+    def feature_size(self):
+        return self.features(autograd.Variable(torch.zeros(1, *self.input_dim))).view(1, -1).size(1)
         
     def forward(self, state):
         qvals = self.features(state)
-        qvals = x.view(qvals.size(0), -1)
+        qvals = qvals.view(qvals.size(0), -1)
         qvals = self.fc(qvals)
-        return x
+        return qvals
