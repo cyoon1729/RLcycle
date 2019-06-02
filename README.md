@@ -4,6 +4,7 @@ Modular implementations of reinforcement learning algorithms
 # Is done:
 - REINFORCE
 - DQN
+- Dueling DQN
 - A2C
 - DDPG
 
@@ -11,3 +12,4 @@ Modular implementations of reinforcement learning algorithms
 - Python 3
 - PyTorch 0.4.1
 - OpenAI Gym
+
