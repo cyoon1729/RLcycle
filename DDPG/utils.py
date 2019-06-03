@@ -48,7 +48,7 @@ class NormalizedEnv(gym.ActionWrapper):
         return act_k_inv * (action - act_b)
         
 
-class Memory:
+class ReplayBuffer:
     def __init__(self, max_size):
         self.max_size = max_size
         self.buffer = deque(maxlen=max_size)
