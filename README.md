@@ -4,6 +4,7 @@ Modular implementations of reinforcement learning algorithms
 # Is done:
 - REINFORCE
 - DQN
+- Double DQN
 - Dueling DQN
 - A2C
 - DDPG
