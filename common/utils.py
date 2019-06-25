@@ -2,8 +2,13 @@ import torch
 import numpy as np
 
 # KL divergence of two univariate Gaussian distributions
-def KL_divergence(p_mean, p_std, q_mean, q_std):
+def KL_divergence_mean_std(p_mean, p_std, q_mean, q_std):
     kld = torch.log(q_std/p_std) + (torch.pow(p_std) + torch.pow(p_mean - q_mean, 2))/(2 * torch.pow(q_std)) - 0.5
+    return kld
+
+# compute KL divergence of two distributions
+def KL_divergence_two_dist(dist_p, dist_q):
+    kld = torch.sum(dist_p * (torch.log(dist_p) - torch.log(dist_q)))
     return kld
 
 # project value distribution onto atoms as in Categorical Algorithm
