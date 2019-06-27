@@ -12,14 +12,14 @@ class DQNAgent:
         self.env = env
         self.learning_rate = learning_rate
         self.gamma = gamma
-        self.replay_buffer =  BasicBuffer
+        self.replay_buffer = BasicBuffer(max_size=buffer_size)
         self.model = VanillaDQN(env.observation_space.shape, env.action_space.n, use_conv)
-        self.optimizer = torch.optim.Adam(self.model.optimizer)
+        self.optimizer = torch.optim.Adam(self.model.parameters())
         self.MSE_loss = nn.MSELoss()
 
     def get_action(self, state):
         state = autograd.Variable(torch.from_numpy(state).float().unsqueeze(0))
-        qvals = self.dqn.forward(state)
+        qvals = self.model.forward(state)
         action = np.argmax(qvals.detach().numpy())
 
         return action
@@ -41,7 +41,7 @@ class DQNAgent:
         loss = self.MSE_loss(curr_Q, expected_Q)
         return loss
 
-    def update_model(self, batch_size)
+    def update_model(self, batch_size):
         batch = self.replay_buffer.sample(batch_size)
         loss = self.compute_loss(batch)
 

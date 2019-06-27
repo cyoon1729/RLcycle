@@ -2,91 +2,57 @@ import random
 import numpy as np
 from collections import deque
 #from data_structures import SumTree
+  
+  
+class SumTree:
+    write = 0
 
-class BasicBuffer:
-    def __init__(self, max_size):
-        self.max_size = max_size
-        self.buffer = deque(maxlen=max_size)
+    def __init__(self, capacity):
+        self.capacity = capacity
+        self.tree = numpy.zeros( 2*capacity - 1 )
+        self.data = numpy.zeros( capacity, dtype=object )
 
-    def push(self, state, action, reward, next_state, done):
-        experience = (state, action, np.array([reward]), next_state, done)
-        self.buffer.append(experience)
+    def _propagate(self, idx, change):
+        parent = (idx - 1) // 2
 
-    def sample(self, batch_size):
-        state_batch = []
-        action_batch = []
-        reward_batch = []
-        next_state_batch = []
-        done_batch = []
+        self.tree[parent] += change
 
-        batch = random.sample(self.buffer, batch_size)
+        if parent != 0:
+            self._propagate(parent, change)
 
-        for experience in batch:
-            state, action, reward, next_state, done = experience
-            state_batch.append(state)
-            action_batch.append(action)
-            reward_batch.append(reward)
-            next_state_batch.append(next_state)
-            done_batch.append(done)
+    def _retrieve(self, idx, s):
+        left = 2 * idx + 1
+        right = left + 1
 
-        return (state_batch, action_batch, reward_batch, next_state_batch, done_batch)
+        if left >= len(self.tree):
+            return idx
 
-    def __len__(self):
-        return len(self.buffer)
+        if s <= self.tree[left]:
+            return self._retrieve(left, s)
+        else:
+            return self._retrieve(right, s-self.tree[left])
 
+    def total(self):
+        return self.tree[0]
 
-class PrioritizedBuffer:
+    def add(self, p, data):
+        idx = self.write + self.capacity - 1
 
-    def __init__(self, maxlen, alpha=0.6, beta=0.4):
-        self.sum_tree = SumTree(maxlen)
-        self.alpha = alpha
-        self.beta = beta
+        self.data[self.write] = data
+        self.update(idx, p)
 
-    def push(self, state, action, reward, next_state, done):
-        priority = np.max(self.sum_tree.tree) if self.sum_tree.write == 0 else 1.0
-        priority = priority ** self.alpha
-        experience = (state, action, np.array([reward]), next_state, done)
-        self.sum_tree.add(priority, experience)
+        self.write += 1
+        if self.write >= self.capacity:
+            self.write = 0
 
-    def sample(self, batch_size):
-        batch_idx, batch, IS_weights = [], [], []
-        segment = self.sum_tree.total() / batch_size
-        p_sum = self.sum_tree.tree[0]
+    def update(self, idx, p):
+        change = p - self.tree[idx]
 
-        for i in range(batch_size):
-            a = segment * i
-            b = segment * (i + 1)
+        self.tree[idx] = p
+        self._propagate(idx, change)
 
-            s = random.uniform(a, b)
-            idx, p, data = self.sum_tree.get(s)
+    def get(self, s):
+        idx = self._retrieve(0, s)
+        dataIdx = idx - self.capacity + 1
 
-            batch_idx.append(idx)
-            batch.append(data)
-
-            # Get Is weight
-            prob = p / p_sum
-            IS_weight = (self.sum_tree.total() * prob) ** (-self.beta)
-            IS_weights.append(IS_weight)
-        
-        state_batch = []
-        action_batch = []
-        reward_batch = []
-        next_state_batch = []
-        done_batch = []
-
-        for transition in batch:
-            state, action, reward, next_state, done = transition
-            state_batch.append(state)
-            action_batch.append(action)
-            reward_batch.append(reward)
-            next_state_batch.append(next_state)
-            done_batch.append(done)
-        
-        return (state_batch, action_batch, reward_batch, next_state_batch, done_batch), batch_idx, IS_weights
-            
-
-        return batch, batch_idx, IS_weights
-
-    def update_priority(self, idx, td_error):
-        priority = td_error ** self.alpha
-        self.sum_tree.update(idx, priority)
+        return (idx, self.tree[idx], self.data[dataIdx])

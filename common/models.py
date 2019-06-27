@@ -4,16 +4,16 @@ import torch.nn.functional as F
 
 class VanillaDQN(nn.Module):
 
-    def __init__(self, input_dim, output_dim, use_cnn=True):
+    def __init__(self, input_dim, output_dim, use_conv=True):
         super(VanillaDQN, self).__init__()
         self.input_dim = input_dim
         self.output_dim = output_dim
-        self.use_cnn = use_cnn
+        self.use_conv = use_conv
 
-        self.features = self.conv_layer(self.input_dim) if self.use_cnn else None
+        self.features = self.conv_layer(self.input_dim) if self.use_conv else None
 
         self.fc = nn.Sequential(
-            nn.Linear(self.feature_size() if use_conv else self.input_dim[0], 128),
+            nn.Linear(self.feature_size() if self.use_conv else self.input_dim[0], 128),
             nn.ReLU(),
             nn.Linear(128, 256),
             nn.ReLU(),
@@ -21,7 +21,7 @@ class VanillaDQN(nn.Module):
         )
 
     def forward(self, state):
-        feats = self.conv_features(state) if self.use_cnn else state
+        feats = self.conv_features(state) if self.use_conv else state
         qvals = self.fc(state)
         return qvals
 
@@ -47,12 +47,12 @@ class VanillaDQN(nn.Module):
 class DuelingDQN(nn.Module):
 
     def __init__(self, input_dim, output_dim, use_conv=True):
-        super(DuelingDQN, self).__init__:
+        super(DuelingDQN, self).__init__()
         self.input_dim = input_dim
         self.output_dim = output_dim
+        self.use_conv = use_conv
 
-        self.features = self.conv_layer(self.input_dim) if use_conv else
-            nn.Sequential(
+        self.features = self.conv_layer(self.input_dim) if self.use_conv else nn.Sequential(
                 nn.Linear(self.input_dim[0], 128),
                 nn.ReLU()
             )
@@ -66,11 +66,11 @@ class DuelingDQN(nn.Module):
         self.advantage_stream = nn.Sequential(
             nn.Linear(128, 128),
             nn.ReLU(),
-            nn.Linear(128, self.num_out)
+            nn.Linear(128, self.output_dim)
         )
 
     def forward(self, state):
-        feats = self.conv_features(state) if use_conv else self.features(state)
+        feats = self.conv_features(state) if self.use_conv else self.features(state)
         values = self.value_stream(feats)
         advantages = self.advantage_stream(feats)
         qvals = values + (advantages - advantages.mean())
@@ -98,6 +98,7 @@ class DuelingDQN(nn.Module):
 class DistributionalDQN(nn.Module):
 
     def __init__(self, input_dim, output_dim, use_conv=True, n_atoms=51):
+        super(DistributionalDQN, self).__init__()
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.n_atoms = n_atoms
@@ -139,6 +140,7 @@ class DistributionalDQN(nn.Module):
 class RecurrentDQN(nn.Module):
 
     def __init__(self, input_dim, gru_size, output_dim, use_conv=True):
+        super(RecurrentDQN, self).__init__()
         self.input_dim = input_dim
         self.gru_size = gru_size
         self.output_dim = output_dim
@@ -171,11 +173,11 @@ class RecurrentDQN(nn.Module):
             nn.Conv2d(32, 64, kernel_size=4, stride=2),
             nn.ReLU(),
             nn.Conv2d(64, 64, kernel_size=3, stride=1),
-            nn.ReLU(),
+            nn.ReLU()
          )
         return conv
 
-     def feature_size(self, input_dim):
+    def feature_size(self, input_dim):
         return self.features(autograd.Variable(torch.zeros(1, *input_dim))).view(1, -1).size(1)
 
 

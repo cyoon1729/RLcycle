@@ -1,9 +1,10 @@
 import random
 import numpy as np
 from collections import deque
-from data_structures import SumTree
+from common.data_structures import SumTree
 
 class BasicBuffer:
+
     def __init__(self, max_size):
         self.max_size = max_size
         self.buffer = deque(maxlen=max_size)
@@ -65,7 +66,7 @@ class PrioritizedBuffer:
             prob = p / p_sum
             IS_weight = (self.sum_tree.total() * prob) ** (-self.beta)
             IS_weights.append(IS_weight)
-        
+
         state_batch = []
         action_batch = []
         reward_batch = []
@@ -79,7 +80,7 @@ class PrioritizedBuffer:
             reward_batch.append(reward)
             next_state_batch.append(next_state)
             done_batch.append(done)
-        
+
         return (state_batch, action_batch, reward_batch, next_state_batch, done_batch), batch_idx, IS_weights
 
     def update_priority(self, idx, td_error):
