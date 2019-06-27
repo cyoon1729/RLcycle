@@ -1,9 +1,7 @@
 import random
-import numpy as np
+import numpy
 from collections import deque
-#from data_structures import SumTree
-  
-  
+
 class SumTree:
     write = 0
 

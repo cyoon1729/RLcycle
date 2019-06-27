@@ -26,38 +26,37 @@ class PERAgent:
 
     def _sample(self, batch_size):
         return self.replay_buffer.sample(batch_size)
-      
+
     def _compute_TDerror(self, batch_size):
         transitions, idxs, IS_weights = self._sample(batch_size)
         states, actions, rewards, next_states, dones = transitions
-        
+
         states = torch.FloatTensor(states)
         actions = torch.LongTensor(actions)
         rewards = torch.FloatTensor(rewards)
         next_states = torch.FloatTensor(next_states)
         dones = torch.FloatTensor(dones)
         IS_weights = torch.FloatTensor(IS_weights)
-      
+
         curr_Q = self.model.forward(states).gather(1, actions.unsqueeze(1))
         curr_Q = curr_Q.squeeze(1)
         next_Q = self.model.forward(next_states)
         max_next_Q = torch.max(next_Q, 1)[0]
         expected_Q = rewards.squeeze(1) + self.gamma * max_next_Q
-        
+
         td_errors = torch.pow(expected_Q - curr_Q, 2) * IS_weights
-  
-        return td_errors, idxs 
-      
+
+        return td_errors, idxs
+
     def update(self, batch_size):
         td_errors, idxs = self._compute_TDerror(batch_size)
-        
-        # update priority
-        for idx, td_error in zip(idxs, td_errors):
-            self.replay_buffer.update_priority(idx, td_error)
-        
+
         # update model
-        td_errors = td_errors.mean()
+        td_errors_mean = td_errors.mean()
         self.optimizer.zero_grad()
-        td_errors.backward()
+        td_errors_mean.backward()
         self.optimizer.step()
-        
+
+        # update priorities
+        for idx, td_error in zip(idxs, td_errors.detach().numpy()):
+            self.replay_buffer.update_priority(idx, td_error)

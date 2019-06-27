@@ -38,13 +38,16 @@ class BasicBuffer:
 
 class PrioritizedBuffer:
 
-    def __init__(self, maxlen, alpha=0.6, beta=0.4):
-        self.sum_tree = SumTree(maxlen)
+    def __init__(self, max_size, alpha=0.6, beta=0.4):
+        self.sum_tree = SumTree(max_size)
         self.alpha = alpha
         self.beta = beta
+        self.current_length = 0
 
-    def push(self, td_error, state, action, reward, next_state, done):
-        priority = td_error ** self.alpha
+    def push(self, state, action, reward, next_state, done):
+        priority = 1.0 if self.current_length is 0 else self.sum_tree.tree.max()
+        self.current_length = self.current_length + 1
+        #priority = td_error ** self.alpha
         experience = (state, action, np.array([reward]), next_state, done)
         self.sum_tree.add(priority, experience)
 
@@ -62,7 +65,6 @@ class PrioritizedBuffer:
 
             batch_idx.append(idx)
             batch.append(data)
-
             prob = p / p_sum
             IS_weight = (self.sum_tree.total() * prob) ** (-self.beta)
             IS_weights.append(IS_weight)
