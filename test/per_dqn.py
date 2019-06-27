@@ -27,7 +27,7 @@ if __name__ == "__main__":
                 print("Episode " + str(episode) + ": " + str(episode_reward))
                 break
             else:
-                if((episode + 1 ) * step > BATCH_SIZE):
+                if(agent.replay_buffer.current_length > BATCH_SIZE):
                     agent.update(BATCH_SIZE)
                 state = next_state
                 episode_reward += reward
