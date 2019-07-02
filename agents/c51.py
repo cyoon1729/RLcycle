@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.autograd as autograd
 import torch.optim as optim
 import numpy as np
@@ -42,10 +43,16 @@ class C51Agent:
 
         projection = dist_projection(optimal_dist, rewards, dones, self.gamma, self.model.n_atoms, self.model.Vmin, self.model.Vmax, self.model.support)
 
-        loss = -KL_divergence_two_dist(curr_action_dist, projection)
+        loss = -KL_divergence_two_dist(optimal_dist, projection)
 
         return loss
 
     def update(self, batch_size):
-        pass
+
+        loss = self.compute_error(batch_size)
+        loss = loss.mean()
+
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
 
