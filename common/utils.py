@@ -1,5 +1,8 @@
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
 import numpy as np
+import math
 
 # KL divergence of two univariate Gaussian distributions
 def KL_divergence_mean_std(p_mean, p_std, q_mean, q_std):
@@ -33,4 +36,68 @@ def dist_projection(optimal_dist, rewards, dones, gamma, n_atoms, Vmin, Vmax, su
             m[sample_idx][l] = m[sample_idx][l] + optimal_dist[sample_idx][atom] * (u - b_j)
             m[sample_idx][u] = m[sample_idx][u] + optimal_dist[sample_idx][atom] * (b_j - l)
 
+    #print(m)
     return m
+
+
+# noisy layer with independent Gaussian noise
+class NoisyLinear(nn.Linear):
+
+    def __init__(self, num_in, num_out, sigma_init=0.017):
+        super(NoisyLinear, self).__init__(num_in, num_out, bias=True)
+        self.sigma_weight = nn.Parameter(torch.full((num_in, num_out), sigma_init))
+        self.sigma_bias = nn.Parameter(torch.full((num_out,), sigma_init))
+
+        self.register_buffer("epsilon_weight", torch.zeros(num_out, num_in))
+        self.register_buffer("epsilon_bias", torch.zeros(num_out))
+
+        self.reset_parameters(num_in)
+
+    def forward(self, x):
+        # generate gaussian noise
+        self.epsilon_weight.normal_()
+        self.epsilon_bias.normal_()
+
+        y = F.linear(x, self.weight + self.sigma_weight * self.epsilon_weight, self.sigma_bias * self.epsilon_bias)
+
+        return y
+
+    def reset_parameters(self, num_in):
+        std = math.sqrt(3 / num_in)
+        self.weight.data.uniform_(-std, std)
+        self.bias.data.uniform_(-std, std)
+
+
+# noisy layer for factorized Gaussion noise
+class NoisyFactorizedLinear(nn.Linear):
+
+    def __init__(self, num_in, num_out, sigma_init=0.017):
+        super(NoisyFactorizedLinear, self).__init__(num_in, num_out, bias=True)
+        self.sigma_weight = nn.Parameter(torch.full((num_in, num_out), sigma_init))
+        self.sigma_bias = nn.Paramter(torch.full(num_out,), sigma_init)
+        self.register_buffer("epsilon_i", torch.zeros(1, num_in))
+        self.register_buffer("epsilon_j", torch.zeros(num_out, 1))
+
+        self.reset_parameters(num_in)
+
+    def forward(self, x):
+        # generate guassian noise
+        self.epsilon_i.normal_()
+        self.epsilon_j.normal_()
+
+        # factorize gaussian noise
+        self.epsilon_i = torch.sign(self.epsilon_i) * torch.sqrt(torch.abs(self.epsilon_i))
+        self.epsilon_j = torch.sign(self.epsilon_j) * torch.sqrt(torch.abs(self.epsilon_j))
+
+        epsilon_weight = self.epsilon_i @ self.epsilon_j
+        epsilon_bias = self.epsilon_j
+
+
+        y = F.linear(x, self.weight + self.sigma_weight * self.epsilon_weight, self.sigma_bias * self.epsilon_bias)
+        return y
+
+    def reset_parameters(self, num_in):
+        std = math.sqrt(1 / num_in)
+        self.weight.data.uniform_(-std, std)
+        self.weight.data.uniform_(-std, std)
+
