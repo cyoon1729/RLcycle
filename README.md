@@ -2,11 +2,14 @@
 
 Implementation of algorithms from the Q-learning family
 
-## Implemented (and will be implemented):
-- Vanilla DQN + Nstep + Double
+## Implemented:
+- Vanilla DQN
+- Double DQN
 - Dueling DQN
 - Prioritized experience replay + DDQN
-- C51 (Categorical DQN)
+- Noisy DQN (in progress)
+- C51 Categorical DQN (in progress)
+- DRQN with Gated Recurrent Units (in progress)
 
 ## Dependencies:
 - PyTorch = 0.4.1
