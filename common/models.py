@@ -97,26 +97,43 @@ class DuelingDQN(nn.Module):
 
 class DistributionalDQN(nn.Module):
 
-    def __init__(self, input_dim, output_dim, use_conv=True, n_atoms=51):
+    def __init__(self, input_dim, output_dim, use_conv=True, n_atoms=51, Vmin=-10., Vmax=10.):
         super(DistributionalDQN, self).__init__()
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.n_atoms = n_atoms
         self.use_conv = use_conv
 
-        self.features = self.conv_layer(self.input_dim) if use_conv else None
+        self.Vmin = Vmin
+        self.Vmax = Vmax
+        self.delta_z = (Vmax - Vmin) / (self.n_atoms - 1)
+        self.support = torch.arange(self.Vmin, self.Vmax + self.delta_z, self.delta_z)
+
+        self.features = self.conv_layer(self.input_dim) if self.use_conv else None
         self.fc = nn.Sequential(
-            nn.Linear(self.feature_size() if use_conv else self.input_dim[0], 128),
+            nn.Linear(self.feature_size() if self.use_conv else self.input_dim[0], 128),
             nn.ReLU(),
             nn.Linear(128, 256),
             nn.ReLU(),
             nn.Linear(256, self.output_dim * self.n_atoms)
         )
+        self.softmax = nn.Softmax(dim=1)
 
     def forward(self, state):
-        feats = self.conv_features(state) if self.use_conv else state
-        q_dist = self.fc(state)
-        return q_dist
+        batch_size = state.size()[0]
+        feats = conv_features(state) if self.use_conv else state
+        dist = self.fc(state).view(batch_size, -1, self.n_atoms)
+        probs = self.softmax(dist)
+        Qvals = torch.sum(probs * self.support, dim=2)
+
+        return dist, Qvals
+
+    def get_q_vals(self, state):
+        dist = self.forward(state)
+        probs = self.softmax(dist)
+        weights = probs * self.support
+        qvals = weights.sum(dim=2)
+        return dist, qvals
 
     def conv_features(self, state):
         feats = self.features(state)
@@ -131,10 +148,6 @@ class DistributionalDQN(nn.Module):
             nn.Conv2d(64, 64, kernel_size=3, stride=1),
             nn.ReLU()
          )
-        return conv
-
-    def feature_size(self, input_dim):
-        return self.features(autograd.Variable(torch.zeros(1, *input_dim))).view(1, -1).size(1)
 
 
 class RecurrentDQN(nn.Module):
