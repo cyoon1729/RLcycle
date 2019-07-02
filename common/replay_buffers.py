@@ -32,6 +32,27 @@ class BasicBuffer:
 
         return (state_batch, action_batch, reward_batch, next_state_batch, done_batch)
 
+    def sample_sequence(self, batch_size):
+        state_batch = []
+        action_batch = []
+        reward_batch = []
+        next_state_batch = []
+        done_batch = []
+
+        min_start = len(self.buffer) - batch_size
+        start = np.random.randint(0, min_start)
+
+        for sample in range(start, start + batch_size):
+            state, action, reward, next_state, done = self.buffer[start]
+            state, action, reward, next_state, done = experience
+            state_batch.append(state)
+            action_batch.append(action)
+            reward_batch.append(reward)
+            next_state_batch.append(next_state)
+            done_batch.append(done)
+
+        return (state_batch, action_batch, reward_batch, next_state_batch, done_batch)
+
     def __len__(self):
         return len(self.buffer)
 
