@@ -76,7 +76,6 @@ class Agent:
 
     def train(self, max_episode, max_step, batch_size):
         rewards = []
-        #avg_rewards = []
 
         for episode in range(max_episode):
             state = self.env.reset()
@@ -96,12 +95,10 @@ class Agent:
                 episode_reward += reward
 
                 if done:
-                    #sys.stdout.write("episode: {}, reward: {}, average _reward: {} \n".format(episode, np.round(episode_reward, decimals=2), np.mean(rewards[-10:])))
                     print("episode " + str(episode) + ": " + str(episode_reward))
                     break
 
             rewards.append(episode_reward)
-            #avg_rewards.append(np.mean(rewards[-10:]))
         
         return rewards
 
