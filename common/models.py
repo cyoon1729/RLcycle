@@ -1,19 +1,49 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.autograd as autograd
+from common.utils import NoisyLinear
+
+
+def noisy_network(input_dim, output_dim):
+    noisy_net = nn.Sequential(
+        NoisyLinear(input_dim, 512),
+        nn.ReLU(),
+        NoisyLinear(512, output_dim)
+    )
+
+    return noisy_net
+
+def conv_net(self, input_dim):
+    conv = nn.Sequential(
+        nn.Conv2d(input_dim[0], 32, kernel_size=8, stride=4),
+        nn.ReLU(),
+        nn.Conv2d(32, 64, kernel_size=4, stride=2),
+        nn.ReLU(),
+        nn.Conv2d(64, 64, kernel_size=3, stride=1),
+        nn.ReLU()
+    )
+    return conv
+
+def feature_size(self, conv_net, input_dim):
+    return conv_net(autograd.Variable(torch.zeros(1, *input_dim))).view(1, -1).size(1)
+
 
 class VanillaDQN(nn.Module):
-
+    
     def __init__(self, input_dim, output_dim, use_conv=True):
-        super(VanillaDQN, self).__init__()
+        super(NoisyDQN, self).__init__()
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.use_conv = use_conv
-
-        self.features = self.conv_layer(self.input_dim) if self.use_conv else None
+        self.fc_input_dim = self.input_dim[0]
+        
+        if self.use_conv:
+            self.conv_net = self.get_conv_net(self.input_dim)
+            self.fc_input_dim = self.feature_size()
 
         self.fc = nn.Sequential(
-            nn.Linear(self.feature_size() if self.use_conv else self.input_dim[0], 128),
+            nn.Linear(self.fc_input_dim, 128),
             nn.ReLU(),
             nn.Linear(128, 256),
             nn.ReLU(),
@@ -21,15 +51,15 @@ class VanillaDQN(nn.Module):
         )
 
     def forward(self, state):
-        feats = self.conv_features(state) if self.use_conv else state
-        qvals = self.fc(state)
+        if self.use_conv:
+            feats = self.conv_net(state)
+            feats = feats.view(feats.size(0), -1)
+        else:
+            feats = state
+        qvals = self.noisy_fc(feats)
         return qvals
 
-    def conv_features(self, state):
-        feats = self.features(state)
-        return feats.view(feats.size(0), -1)
-
-    def conv_layer(self, input_dim):
+    def get_conv_net(self, input_dim):
         conv = nn.Sequential(
             nn.Conv2d(input_dim[0], 32, kernel_size=8, stride=4),
             nn.ReLU(),
@@ -39,14 +69,14 @@ class VanillaDQN(nn.Module):
             nn.ReLU()
         )
         return conv
-
-    def feature_size(self, input_dim):
-        return self.features(autograd.Variable(torch.zeros(1, *input_dim))).view(1, -1).size(1)
+    
+    def feature_size(self):
+        return self.conv_net(autograd.Variable(torch.zeros(1, *self.input_dim))).view(1, -1).size(1)
 
 
 class DuelingDQN(nn.Module):
 
-    def __init__(self, input_dim, output_dim, use_conv=True):
+    def __init__(self, input_dim, output_dim, use_conv=True, noisy=True):
         super(DuelingDQN, self).__init__()
         self.input_dim = input_dim
         self.output_dim = output_dim
@@ -194,4 +224,53 @@ class RecurrentDQN(nn.Module):
         return self.features(autograd.Variable(torch.zeros(1, *input_dim))).view(1, -1).size(1)
 
 
+class NoisyDQN(nn.Module):
+    
+    def __init__(self, input_dim, output_dim, use_conv=True, noisy=True):
+        super(NoisyDQN, self).__init__()
+        self.input_dim = input_dim
+        self.output_dim = output_dim
+        self.use_conv = use_conv
+        self.noisy = noisy
+        self.fc_input_dim = self.input_dim[0]
+        
+        if self.use_conv:
+            self.conv_net = self.get_conv_net(self.input_dim)
+            self.fc_input_dim = self.feature_size()
 
+        if self.noisy:
+            self.noisy_fc = nn.Sequential(
+                NoisyLinear(self.fc_input_dim, 512),
+                nn.ReLU(),
+                NoisyLinear(512, self.output_dim)
+            )
+
+        if not self.noisy:
+            self.fc = nn.Sequential(
+                nn.Linear(self.fc_input_dim, 128),
+                nn.ReLU(),
+                nn.Linear(128, 256),
+                nn.ReLU(),
+                nn.Linear(256, self.output_dim)
+            )
+
+    def forward(self, state):
+        feats = self.conv_net(state)
+        feats = feats.view(feats.size(0), -1)
+        qvals = self.noisy_fc(feats)
+        # print(qvals)
+        return qvals
+
+    def get_conv_net(self, input_dim):
+        conv = nn.Sequential(
+            nn.Conv2d(input_dim[0], 32, kernel_size=8, stride=4),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=4, stride=2),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1),
+            nn.ReLU()
+        )
+        return conv
+    
+    def feature_size(self):
+        return self.conv_net(autograd.Variable(torch.zeros(1, *self.input_dim))).view(1, -1).size(1)
