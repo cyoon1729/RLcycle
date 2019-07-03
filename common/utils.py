@@ -1,8 +1,10 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.autograd as autograd
 import numpy as np
 import math
+import gym
 
 # KL divergence of two univariate Gaussian distributions
 def KL_divergence_mean_std(p_mean, p_std, q_mean, q_std):
@@ -39,65 +41,174 @@ def dist_projection(optimal_dist, rewards, dones, gamma, n_atoms, Vmin, Vmax, su
     #print(m)
     return m
 
+# run environment
+def run_environment(env, agent, max_episodes, max_steps, batch_size):
+    episode_rewards = []
 
-# noisy layer with independent Gaussian noise
-class NoisyLinear(nn.Linear):
+    for episode in range(max_episodes):
+        state = env.reset()
+        episode_reward = 0
 
-    def __init__(self, num_in, num_out, sigma_init=0.017):
-        super(NoisyLinear, self).__init__(num_in, num_out, bias=True)
-        self.sigma_weight = nn.Parameter(torch.full((num_in, num_out), sigma_init))
-        self.sigma_bias = nn.Parameter(torch.full((num_out,), sigma_init))
+        for step in range(max_steps):
+            action = agent.get_action(state)
+            next_state, reward, done, _ = env.step(action)
+            agent.replay_buffer.push(state, action, reward, next_state, done)
 
-        self.register_buffer("epsilon_weight", torch.zeros(num_out, num_in))
-        self.register_buffer("epsilon_bias", torch.zeros(num_out))
+            if done or step == max_steps-1:
+                episode_rewards.append(episode_reward)
+                print("Episode " + str(episode) + ": " + str(episode_reward))
 
-        self.reset_parameters(num_in)
+    return episode_rewards
+
+# process episode rewards for multiple trials
+def process_episode_rewards(many_episode_rewards):
+    minimum = [np.min(episode_reward) for episode_reward in episode_rewards]
+    maximum = [np.max(episode_reward) for episode_reward in episode_rewards]
+    mean = [np.mean(episode_reward) for episode_reward in episode_rewards]
+
+    return minimum, maximum, mean
+
+
+class NoisyLinear2(nn.Module):
+    def __init__(self, in_features, out_features, std_init=0.40):
+        super(NoisyLinear2, self).__init__()
+        
+        self.in_features  = in_features
+        self.out_features = out_features
+        self.std_init     = std_init
+        
+        self.weight_mu    = nn.Parameter(torch.FloatTensor(out_features, in_features))
+        self.weight_sigma = nn.Parameter(torch.FloatTensor(out_features, in_features))
+        self.register_buffer('weight_epsilon', torch.FloatTensor(out_features, in_features))
+        
+        self.bias_mu    = nn.Parameter(torch.FloatTensor(out_features))
+        self.bias_sigma = nn.Parameter(torch.FloatTensor(out_features))
+        self.register_buffer('bias_epsilon', torch.FloatTensor(out_features))
+        
+        self.reset_parameters()
+        self.reset_noise()
+    
+    def forward(self, x):
+        if self.training: 
+            weight = self.weight_mu + self.weight_sigma.mul(autograd.Variable(self.weight_epsilon))
+            bias   = self.bias_mu   + self.bias_sigma.mul(autograd.Variable(self.bias_epsilon))
+        else:
+            weight = self.weight_mu
+            bias   = self.bias_mu
+        
+        return F.linear(x, weight, bias)
+    
+    def reset_parameters(self):
+        mu_range = 1 / math.sqrt(self.weight_mu.size(1))
+        
+        self.weight_mu.data.uniform_(-mu_range, mu_range)
+        self.weight_sigma.data.fill_(self.std_init / math.sqrt(self.weight_sigma.size(1)))
+        
+        self.bias_mu.data.uniform_(-mu_range, mu_range)
+        self.bias_sigma.data.fill_(self.std_init / math.sqrt(self.bias_sigma.size(0)))
+    
+    def reset_noise(self):
+        epsilon_in  = self._scale_noise(self.in_features)
+        epsilon_out = self._scale_noise(self.out_features)
+        
+        self.weight_epsilon.copy_(epsilon_out.ger(epsilon_in))
+        self.bias_epsilon.copy_(self._scale_noise(self.out_features))
+    
+    def _scale_noise(self, size):
+        x = torch.randn(size)
+        x = x.sign().mul(x.abs().sqrt())
+        return x
+
+
+class NoisyLinear(nn.Module):
+
+    def __init__(self, num_in, num_out, is_training=True):
+        super(NoisyLinear, self).__init__()
+        self.num_in = num_in
+        self.num_out = num_out
+        self.is_training = is_training
+
+        self.mu_weight = nn.Parameter(torch.FloatTensor(num_out, num_in))
+        self.mu_bias = nn.Parameter(torch.FloatTensor(num_out))
+        self.sigma_weight = nn.Parameter(torch.FloatTensor(num_out, num_in))
+        self.sigma_bias = nn.Parameter(torch.FloatTensor(num_out))
+        self.register_buffer("epsilon_weight", torch.FloatTensor(num_out, num_in)) 
+        self.register_buffer("epsilon_bias", torch.FloatTensor(num_out))
+
+        self.reset_parameters()
+        self.reset_noise()
 
     def forward(self, x):
-        # generate gaussian noise
-        self.epsilon_weight.normal_()
-        self.epsilon_bias.normal_()
+        self.reset_noise()
 
-        y = F.linear(x, self.weight + self.sigma_weight * self.epsilon_weight, self.sigma_bias * self.epsilon_bias)
+        if self.is_training:
+            weight = self.mu_weight + self.sigma_weight.mul(autograd.Variable(self.epsilon_weight)) 
+            bias = self.mu_bias + self.sigma_bias.mul(autograd.Variable(self.epsilon_bias))
+        else:
+            weight = self.mu_weight
+            buas = self.mu_bias
 
+        y = F.linear(x, weight, bias)
+        
         return y
 
-    def reset_parameters(self, num_in):
-        std = math.sqrt(3 / num_in)
-        self.weight.data.uniform_(-std, std)
-        self.bias.data.uniform_(-std, std)
+    def reset_parameters(self):
+        std = math.sqrt(3 / self.num_in)
+        self.mu_weight.data.uniform_(-std, std)
+        self.mu_bias.data.uniform_(-std,std)
 
+        self.sigma_weight.data.fill_(0.017)
+        self.sigma_bias.data.fill_(0.017)
 
-# noisy layer for factorized Gaussion noise
-class NoisyFactorizedLinear(nn.Linear):
+    def reset_noise(self):
+        self.epsilon_weight.data.normal_()
+        self.epsilon_bias.data.normal_()
 
-    def __init__(self, num_in, num_out, sigma_init=0.017):
-        super(NoisyFactorizedLinear, self).__init__(num_in, num_out, bias=True)
-        self.sigma_weight = nn.Parameter(torch.full((num_in, num_out), sigma_init))
-        self.sigma_bias = nn.Paramter(torch.full(num_out,), sigma_init)
-        self.register_buffer("epsilon_i", torch.zeros(1, num_in))
-        self.register_buffer("epsilon_j", torch.zeros(num_out, 1))
+    
+class FactorizedNoisyLinear(nn.Module):
 
-        self.reset_parameters(num_in)
+    def __init__(self, num_in, num_out, is_training=True):
+        super(FactorizedNoisyLinear, self).__init__()
+        self.num_in = num_in
+        self.num_out = num_out 
+        self.is_training = is_training
+
+        self.mu_weight = nn.Parameter(torch.FloatTensor(num_out, num_in))
+        self.mu_bias = nn.Parameter(torch.FloatTensor(num_out)) 
+        self.sigma_weight = nn.Parameter(torch.FloatTensor(num_out, num_in))
+        self.sigma_bias = nn.Parameter(torch.FloatTensor(num_out))
+        self.register_buffer("epsilon_i", torch.FloatTensor(num_in))
+        self.register_buffer("epsilon_j", torch.FloatTensor(num_out))
+
+        self.reset_parameters()
+        self.reset_noise()
 
     def forward(self, x):
-        # generate guassian noise
-        self.epsilon_i.normal_()
-        self.epsilon_j.normal_()
+        self.reset_noise()
+        
+        if self.is_training:
+            epsilon_weight = self.epsilon_j.ger(self.epsilon_i)
+            epsilon_bias = self.epsilon_j
+            weight = self.mu_weight + self.sigma_weight.mul(autograd.Variable(epsilon_weight))
+            bias = self.mu_bias + self.sigma_bias.mul(autograd.Variable(epsilon_bias))
+        else:
+            weight = self.mu_weight
+            bias = self.mu_bias
 
-        # factorize gaussian noise
-        self.epsilon_i = torch.sign(self.epsilon_i) * torch.sqrt(torch.abs(self.epsilon_i))
-        self.epsilon_j = torch.sign(self.epsilon_j) * torch.sqrt(torch.abs(self.epsilon_j))
-
-        epsilon_weight = self.epsilon_i @ self.epsilon_j
-        epsilon_bias = self.epsilon_j
-
-
-        y = F.linear(x, self.weight + self.sigma_weight * self.epsilon_weight, self.sigma_bias * self.epsilon_bias)
+        y = F.linear(x, weight, bias)
+        
         return y
 
-    def reset_parameters(self, num_in):
-        std = math.sqrt(1 / num_in)
-        self.weight.data.uniform_(-std, std)
-        self.weight.data.uniform_(-std, std)
+    def reset_parameters(self):
+        std = 1 / math.sqrt(self.num_in)
+        self.mu_weight.data.uniform_(-std, std)
+        self.mu_bias.data.uniform_(-std, std)
 
+        self.sigma_weight.data.fill_(0.5 / math.sqrt(self.num_in))
+        self.sigma_bias.data.fill_(0.5 / math.sqrt(self.num_in))
+
+    def reset_noise(self):
+        eps_i = torch.randn(self.num_in)
+        eps_j = torch.randn(self.num_out)
+        self.epsilon_i = eps_i.sign() * (eps_i.abs()).sqrt()
+        self.epsilon_j = eps_j.sign() * (eps_j.abs()).sqrt()
