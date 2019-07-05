@@ -41,6 +41,88 @@ def dist_projection(optimal_dist, rewards, dones, gamma, n_atoms, Vmin, Vmax, su
     #print(m)
     return m
 
+def projection_distribution(next_state, rewards, dones):
+    batch_size  = next_state.size(0)
+    
+    delta_z = float(Vmax - Vmin) / (num_atoms - 1)
+    support = torch.linspace(Vmin, Vmax, num_atoms)
+    print(support)
+    next_dist   = model(next_state)[0].data.cpu() * support
+    next_action = next_dist.sum(2).max(1)[1]
+    next_action = next_action.unsqueeze(1).unsqueeze(1).expand(next_dist.size(0), 1, next_dist.size(2))
+    next_dist   = next_dist.gather(1, next_action).squeeze(1)
+        
+    rewards = rewards.unsqueeze(1).expand_as(next_dist)
+    dones   = dones.unsqueeze(1).expand_as(next_dist)
+    support = support.unsqueeze(0).expand_as(next_dist)
+    print(support)
+    
+    Tz = rewards + (1 - dones) * 0.99 * support
+    Tz = Tz.clamp(min=Vmin, max=Vmax)
+    b  = (Tz - Vmin) / delta_z
+    l  = b.floor().long()
+    u  = b.ceil().long()
+        
+    offset = torch.linspace(0, (batch_size - 1) * num_atoms, batch_size).long()\
+                    .unsqueeze(1).expand(batch_size, num_atoms)
+    
+    print(offset)
+
+    proj_dist = torch.zeros(next_dist.size())
+    print((l + offset).view(-1))
+    proj_dist.view(-1).index_add_(0, (l + offset).view(-1), (next_dist * (u.float() - b)).view(-1))
+    proj_dist.view(-1).index_add_(0, (u + offset).view(-1), (next_dist * (b - l.float())).view(-1))
+        
+    return next_dist, proj_dist
+
+def mini_batch_train(env, agent, max_episodes, max_steps, batch_size):
+    episode_rewards = []
+
+    for episode in range(max_episodes):
+        state = env.reset()
+        episode_reward = 0
+
+        for step in range(max_steps):
+            action = agent.get_action(state)
+            next_state, reward, done, _ = env.step(action)
+            agent.replay_buffer.push(state, action, reward, next_state, done)
+            episode_reward += reward
+
+            if len(agent.replay_buffer) > batch_size:
+                agent.update(batch_size)   
+
+            if done or step == max_steps-1:
+                episode_rewards.append(episode_reward)
+                print("Episode " + str(episode) + ": " + str(episode_reward))
+
+            state = next_state
+
+    return episode_rewards
+
+def mini_batch_train_frames(env, agent, max_frames, batch_size):
+    episode_rewards = []
+    state = env.reset()
+    episode_reward = 0
+
+    for frame in range(max_frames):
+        action = agent.get_action(state)
+        next_state, reward, done, _ = env.step(action)
+        agent.replay_buffer.push(state, action, reward, next_state, done)
+        episode_reward += reward
+
+        if len(agent.replay_buffer) > batch_size:
+            agent.update(batch_size)   
+
+        if done:
+            episode_rewards.append(episode_reward)
+            print("Frame " + str(frame) + ": " + str(episode_reward))
+            state = env.reset()
+            episode_reward = 0
+        
+        state = next_state
+            
+    return episode_rewards
+
 # run environment
 def run_environment(env, agent, max_episodes, max_steps, batch_size):
     episode_rewards = []
