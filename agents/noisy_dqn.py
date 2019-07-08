@@ -73,7 +73,7 @@ class NoisyDQNAgent:
         self.gamma = gamma
         self.replay_buffer = BasicBuffer(buffer_maxlen)
 
-        if self.use_conv
+        if self.use_conv:
             self.model = ConvNoisyDQN(env.observation_space.shape, env.action_space.n)
         else:
             self.model = NoisyDQN(self.env.observation_space.shape, self.env.action_space.n) 
@@ -105,7 +105,7 @@ class NoisyDQNAgent:
 
         return loss
 
-    def update_model(self, batch_size):
+    def update(self, batch_size):
         batch = self.replay_buffer.sample(batch_size)
         loss = self.compute_loss(batch)
 

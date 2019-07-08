@@ -93,9 +93,11 @@ def mini_batch_train(env, agent, max_episodes, max_steps, batch_size):
 
             if done or step == max_steps-1:
                 episode_rewards.append(episode_reward)
-                print("Episode " + str(episode) + ": " + str(episode_reward))
+                break
 
             state = next_state
+        
+        print("Episode " + str(episode) + ": " + str(episode_reward))
 
     return episode_rewards
 
@@ -120,7 +122,7 @@ def mini_batch_train_frames(env, agent, max_frames, batch_size):
             episode_reward = 0
         
         state = next_state
-            
+                
     return episode_rewards
 
 # run environment
