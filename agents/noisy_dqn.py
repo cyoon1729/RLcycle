@@ -12,10 +12,9 @@ from common.replay_buffers import BasicBuffer
 class ConvNoisyDQN(nn.Module):
 
     def __init__(self, input_dim, output_dim):
-        super(ConvNoisyNet, self).__init__()
+        super(ConvNoisyDQN, self).__init__()
         self.input_dim = input_dim
         self.output_dim = output_dim
-        self.fc_input_dim = self.feature_size()
 
         self.conv = nn.Sequential(
             nn.Conv2d(self.input_dim[0], 32, kernel_size=8, stride=4),
@@ -27,9 +26,9 @@ class ConvNoisyDQN(nn.Module):
         )
 
         self.noisy_fc = nn.Sequential(
-            FactorizedNoisyLinear(self.fc_input_dim, 512),
+            FactorizedNoisyLinear(self.feature_size(), 512),
             nn.ReLU(),
-            FactorizedNoisyLinear(512, self,output_dim)
+            FactorizedNoisyLinear(512, self.output_dim)
         )
 
     def forward(self, state):
