@@ -9,7 +9,6 @@ class Critic(nn.Module):
     def __init__(self, obs_dim, action_dim):
         super(Critic, self).__init__()
 
-        # obs_dim = n_agents * local_obs_dim
         self.obs_dim = obs_dim
         self.action_dim = action_dim
 
