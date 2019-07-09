@@ -1,7 +1,6 @@
 import random
 import numpy as np
 from collections import deque
-from common.data_structures import SumTree
 
 class BasicBuffer:
 
