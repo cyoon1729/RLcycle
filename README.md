@@ -28,6 +28,12 @@ More implementations will be added soon.
 
 Install package
 
+```bash
+git clone git@github.com:cyoon1729/Policy-Gradient-Methods.git
+cd Policy-Gradient-Methods
+pip install .
+```
+
 Example:
 
 ```python
