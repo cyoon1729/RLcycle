@@ -1,6 +1,12 @@
 import numpy as np
 import math
 import gym
+import torch
+
+def Variable(tensor, USE_CUDA):
+    if USE_CUDA:
+        return torch.autograd.Variable(tensor).cuda()  
+    return torch.autograd.Variable(tensor) 
 
 def mini_batch_train(env, agent, max_episodes, max_steps, batch_size):
     episode_rewards = []
