@@ -2,6 +2,10 @@ import torch
 import torch.optim as optim
 import torch.autograd as autograd
 
+from ddpg.models import Critic, Actor
+from common.replay_buffers import BasicBuffer
+from common.noise import OUNoise
+
 
 class DDPGAgent:
     

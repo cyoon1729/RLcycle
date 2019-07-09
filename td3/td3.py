@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn 
 import torch.optim as optim
-from .model import Critic, Actor
+
+from td3.models import Critic, Actor
 from common.replay_buffers import BasicBuffer
 
 
