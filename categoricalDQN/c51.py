@@ -6,8 +6,8 @@ import torch.optim as optim
 import numpy as np
 
 from common.replay_buffers import BasicBuffer
-from common.models import DistributionalDQN
 from common.utils import KL_divergence_two_dist, dist_projection
+from categoricalDQN.models import DistributionalDQN
 
 class C51Agent:
 
