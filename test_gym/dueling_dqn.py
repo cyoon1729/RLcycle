@@ -1,6 +1,6 @@
 import gym
 
-from agents.dueling_ddqn import DuelingAgent
+from duelingDQN.dueling_ddqn import DuelingAgent
 from common.utils import mini_batch_train
 
 env_id = "CartPole-v0"

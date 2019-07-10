@@ -1,6 +1,6 @@
 import gym
 
-from agents.per_dqn import PERAgent
+from perDQN.per_dqn import PERAgent
 from common.utils import mini_batch_train
 
 env_id = "CartPole-v0"

@@ -1,6 +1,6 @@
 import gym
 
-from agents.dqn import DQNAgent
+from vanillaDQN.dqn import DQNAgent
 from common.utils import mini_batch_train
 
 env_id = "CartPole-v0"
