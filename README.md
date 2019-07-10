@@ -2,6 +2,8 @@
 
 Implementation of algorithms from the Q-learning family
 
+Check `/ipynb` for jupiter notebooks of implementations
+
 ## Implemented:
 - Vanilla DQN
 - Double DQN
