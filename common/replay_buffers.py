@@ -109,3 +109,7 @@ class PrioritizedBuffer:
     def update_priority(self, idx, td_error):
         priority = td_error ** self.alpha
         self.sum_tree.update(idx, priority)
+
+    def __len__(self):
+        return self.current_length
+
