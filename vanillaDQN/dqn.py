@@ -14,9 +14,8 @@ class DQNAgent:
         self.learning_rate = learning_rate
         self.gamma = gamma
         self.replay_buffer = BasicBuffer(max_size=buffer_size)
-        self.device = "cpu"
-        if torch.cuda.is_available():
-            self.device = "cuda"
+	
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         self.use_conv = use_conv
         if self.use_conv:

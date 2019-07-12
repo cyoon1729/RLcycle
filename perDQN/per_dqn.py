@@ -13,10 +13,8 @@ class PERAgent:
         self.env = env
         self.gamma = gamma
         self.replay_buffer = PrioritizedBuffer(buffer_size)
-        self.device = "cpu"
-        if torch.cuda.is_available():
-            self.device = "cuda"
-        
+	self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")        
+	
         if use_conv:
             self.model = ConvDQN(self.env.observation_space.shape, env.action_space.n).to(self.device)
         else:
