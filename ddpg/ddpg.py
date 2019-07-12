@@ -20,10 +20,7 @@ class DDPGAgent:
         self.obs_dim = env.observation_space.shape[0]
         self.action_dim = env.action_space.shape[0]
         
-        self.device = "cpu"
-        self.use_cuda = torch.cuda.is_available()
-        if self.use_cuda:
-            self.device = "cuda"
+	self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             
         self.critic = Critic(self.obs_dim, self.action_dim).to(self.device)
         self.critic_target = Critic(self.obs_dim, self.action_dim).to(self.device)
