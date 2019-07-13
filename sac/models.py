@@ -24,6 +24,7 @@ class ValueNetwork(nn.Module):
 
 
 class SoftQNetwork(nn.Module):
+    
     def __init__(self, num_inputs, num_actions, hidden_size=256, init_w=3e-3):
         super(SoftQNetwork, self).__init__()
         self.linear1 = nn.Linear(num_inputs + num_actions, hidden_size)
@@ -42,6 +43,7 @@ class SoftQNetwork(nn.Module):
 
 
 class PolicyNetwork(nn.Module):
+    
     def __init__(self, num_inputs, num_actions, hidden_size=256, init_w=3e-3, log_std_min=-20, log_std_max=2):
         super(PolicyNetwork, self).__init__()
         self.log_std_min = log_std_min
