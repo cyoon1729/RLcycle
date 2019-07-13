@@ -2,7 +2,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.autograd as autograd
+
 import math
+import numpy as np
+
 
 class NoisyLinear(nn.Module):
 
