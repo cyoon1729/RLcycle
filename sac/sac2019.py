@@ -1,7 +1,9 @@
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
+from torch.distributions import Normal
 
+from models import SoftQNetwork, PolicyNetwork
 from common.replay_buffers import BasicBuffer
 
 
@@ -9,20 +11,24 @@ class SACAgent:
   
     def __init__(self, env, gamma, tau, alpha, q_lr, policy_lr, a_lr, buffer_maxlen):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
         self.env = env
+        self.action_range = [env.action_space.low, env.action_space.high]
+        self.obs_dim = env.observation_space.shape[0]
+        self.action_dim = env.action_space.shape[0]
+
+        # hyperparameters
         self.gamma = gamma
         self.tau = tau
-        self.q_lr = q_lr
-        self.policy_lr = policy_lr
+        self.update_step = 0
+        self.delay_step = 2
         
-        self.action_range = [env.action_space.low, env.action_space.high]
-
         # initialize networks 
-        self.q_net1 = SoftQNetwork(env.observation_space.shape[0], env.action_space.shape[0]).to(self.device)
-        self.q_net2 = SoftQNetwork(env.observation_space.shape[0], env.action_space.shape[0]).to(self.device)
-        self.target_q_net1 = SoftQNetwork(env.observation_space.shape[0], env.action_space.shape[0]).to(self.device)
-        self.target_q_net2 = SoftQNetwork(env.observation_space.shape[0], env.action_space.shape[0]).to(self.device)
-        self.policy_net = PolicyNetwork(env.observation_space.shape[0], env.action_space.shape[0]).to(self.device)
+        self.q_net1 = SoftQNetwork(self.obs_dim, self.action_dim).to(self.device)
+        self.q_net2 = SoftQNetwork(self.obs_dim, self.action_dim).to(self.device)
+        self.target_q_net1 = SoftQNetwork(self.obs_dim, self.action_dim).to(self.device)
+        self.target_q_net2 = SoftQNetwork(self.obs_dim, self.action_dim).to(self.device)
+        self.policy_net = PolicyNetwork(self.obs_dim, self.action_dim).to(self.device)
 
         # copy params to target param
         for target_param, param in zip(self.target_q_net1.parameters(), self.q_net1.parameters()):
@@ -32,9 +38,9 @@ class SACAgent:
             target_param.data.copy_(param)
 
         # initialize optimizers 
-        self.q1_optimizer = optim.Adam(self.q_net1.parameters(), lr=self.q_lr)
-        self.q2_optimizer = optim.Adam(self.q_net2.parameters(), lr=self.q_lr)
-        self.policy_optimizer = optim.Adam(self.policy_net.parameters(), lr=self.policy_lr)
+        self.q1_optimizer = optim.Adam(self.q_net1.parameters(), lr=q_lr)
+        self.q2_optimizer = optim.Adam(self.q_net2.parameters(), lr=q_lr)
+        self.policy_optimizer = optim.Adam(self.policy_net.parameters(), lr=policy_lr)
 
         # entropy temperature
         self.alpha = alpha
@@ -42,10 +48,7 @@ class SACAgent:
         self.log_alpha = torch.zeros(1, requires_grad=True, device=self.device)
         self.alpha_optim = optim.Adam([self.log_alpha], lr=a_lr)
 
-
         self.replay_buffer = BasicBuffer(buffer_maxlen)
-        self.update_step = 0
-        self.delay_step = 2
 
     def get_action(self, state):
         state = torch.FloatTensor(state).unsqueeze(0).to(self.device)
@@ -64,8 +67,6 @@ class SACAgent:
             (self.action_range[1] + self.action_range[0]) / 2.0
    
     def update(self, batch_size):
-        self.update_step += 1
-
         states, actions, rewards, next_states, dones = self.replay_buffer.sample(batch_size)
         states = torch.FloatTensor(states).to(self.device)
         actions = torch.FloatTensor(actions).to(self.device)
@@ -80,13 +81,13 @@ class SACAgent:
         next_q_target = torch.min(next_q1, next_q2) - self.alpha * next_log_pi
         expected_q = rewards + (1 - dones) * self.gamma * next_q_target
 
+        # q loss
         curr_q1 = self.q_net1.forward(states, actions)
-        curr_q2 = self.q_net2.forward(states, actions)
-        
+        curr_q2 = self.q_net2.forward(states, actions)        
         q1_loss = F.mse_loss(curr_q1, expected_q.detach())
         q2_loss = F.mse_loss(curr_q2, expected_q.detach())
-        
-        
+
+        # update q networks        
         self.q1_optimizer.zero_grad()
         q1_loss.backward()
         self.q1_optimizer.step()
@@ -95,6 +96,7 @@ class SACAgent:
         q2_loss.backward()
         self.q2_optimizer.step()
         
+        # delayed update for policy network and target q networks
         new_actions, log_pi = self.policy_net.sample(states)
         if self.update_step % self.delay_step == 0:
             min_q = torch.min(
@@ -114,11 +116,12 @@ class SACAgent:
             for target_param, param in zip(self.target_q_net2.parameters(), self.q_net2.parameters()):
                 target_param.data.copy_(self.tau * param + (1 - self.tau) * target_param)
 
-        # temperature
+        # update temperature
         alpha_loss = (self.log_alpha * (-log_pi - self.target_entropy).detach()).mean()
 
         self.alpha_optim.zero_grad()
         alpha_loss.backward()
         self.alpha_optim.step()
-
         self.alpha = self.log_alpha.exp()
+
+        self.update_step += 1
