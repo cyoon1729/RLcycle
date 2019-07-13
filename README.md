@@ -10,18 +10,25 @@ Implementations of important policy gradient algorithms in deep reinforcement le
 
 - Deep Deterministic Policy Gradients 
 
-  Paper: ["Continuous control with deep reinforcement learning" (Lillicrap et al. 2015)](https://arxiv.org/abs/1509.02971)
+  Paper: ["Continuous control with deep reinforcement learning" (Lillicrap et al., 2015)](https://arxiv.org/abs/1509.02971)
 
 - Twin Dueling Deep Deterministic Policy Gradients
 
-  Paper: ["Addressing Function Approximation Error in Actor-Critic Methods" (Fujimoto et al. 2018)](https://arxiv.org/abs/1802.09477)
+  Paper: ["Addressing Function Approximation Error in Actor-Critic Methods" (Fujimoto et al., 2018)](https://arxiv.org/abs/1802.09477)
+  
+- Soft Actor Critic
+
+  - `(sac2018.py`) ["Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor" (Haarnoja et al., 2018)](https://arxiv.org/abs/1801.01290)
+  - (`sac2019.py`) ["Soft Actor-Critic Algorithms and Applications" (Haarnoja et al., 2019)](https://arxiv.org/abs/1812.05905)
+  - Algorithm in 2018 paper uses value network, double Q networks, and Gaussian policy. Algorithm in 2019 paper uses double Q networks and Gaussian policy, and adds automatic entropy tuning.
+  - TODO: SAC for discrete action space 
 
 More implementations will be added soon.
 
 ## Known Dependencies
 
 - Python 3.6
-- PyTorch 0.4.2
+- PyTorch 1.0.2
 - gym 0.12.5
 
 ## How to run:
