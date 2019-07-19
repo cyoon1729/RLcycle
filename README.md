@@ -8,15 +8,19 @@ Implementations of important policy gradient algorithms in deep reinforcement le
 
 ## Implementations
 
-- Deep Deterministic Policy Gradients 
+- Advantage Actor-Critic (A2C)
+  
+  Paper: ["Asynchronous Methods for Deep Reinforcement Learning" (Mnih et al., 2016)](https://arxiv.org/pdf/1602.01783.pdf)
+ 
+- Deep Deterministic Policy Gradients (DDPG)
 
   Paper: ["Continuous control with deep reinforcement learning" (Lillicrap et al., 2015)](https://arxiv.org/abs/1509.02971)
 
-- Twin Dueling Deep Deterministic Policy Gradients
+- Twin Dueling Deep Deterministic Policy Gradients (TD3)
 
   Paper: ["Addressing Function Approximation Error in Actor-Critic Methods" (Fujimoto et al., 2018)](https://arxiv.org/abs/1802.09477)
   
-- Soft Actor Critic
+- Soft Actor Critic (SAC)
 
   - `(sac2018.py`) ["Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor" (Haarnoja et al., 2018)](https://arxiv.org/abs/1801.01290)
   - (`sac2019.py`) ["Soft Actor-Critic Algorithms and Applications" (Haarnoja et al., 2019)](https://arxiv.org/abs/1812.05905)
