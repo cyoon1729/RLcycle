@@ -22,8 +22,8 @@ Implementations of important policy gradient algorithms in deep reinforcement le
   
 - Soft Actor Critic (SAC)
 
-  - `(sac2018.py`) ["Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor" (Haarnoja et al., 2018)](https://arxiv.org/abs/1801.01290)
-  - (`sac2019.py`) ["Soft Actor-Critic Algorithms and Applications" (Haarnoja et al., 2019)](https://arxiv.org/abs/1812.05905)
+  - Papaer (`sac2018.py`): ["Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor" (Haarnoja et al., 2018)](https://arxiv.org/abs/1801.01290)
+  - Paper (`sac2019.py`): ["Soft Actor-Critic Algorithms and Applications" (Haarnoja et al., 2019)](https://arxiv.org/abs/1812.05905)
   - Algorithm in 2018 paper uses value network, double Q networks, and Gaussian policy. Algorithm in 2019 paper uses double Q networks and Gaussian policy, and adds automatic entropy tuning.
   - TODO: SAC for discrete action space 
 
