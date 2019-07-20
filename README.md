@@ -12,6 +12,10 @@ Implementations of important policy gradient algorithms in deep reinforcement le
   
   Paper: ["Asynchronous Methods for Deep Reinforcement Learning" (Mnih et al., 2016)](https://arxiv.org/pdf/1602.01783.pdf)
  
+- Asynchronous Advantage Actor-Critic (A3C)
+  
+  Paper: ["Asynchronous Methods for Deep Reinforcement Learning" (Mnih et al., 2016)](https://arxiv.org/pdf/1602.01783.pdf)
+
 - Deep Deterministic Policy Gradients (DDPG)
 
   Paper: ["Continuous control with deep reinforcement learning" (Lillicrap et al., 2015)](https://arxiv.org/abs/1509.02971)
