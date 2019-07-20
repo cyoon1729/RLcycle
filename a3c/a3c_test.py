@@ -1,5 +1,15 @@
 import gym
-from a3c import A3CAgent
+from a3c import A3CAgent, DecoupledA3CAgent
+
+def train_twoHeaded():
+    agent = A3CAgent(env, gamma, lr, GLOBAL_MAX_EPISODE)
+    agent.train()
+    agent.save_model()
+
+def train_decoupled():
+    agent = DecoupledA3CAgent(env, gamma, lr, GLOBAL_MAX_EPISODE)
+    agent.train()
+    agent.save_model()
 
 
 if __name__ == "__main__":
@@ -8,6 +18,5 @@ if __name__ == "__main__":
     lr = 1e-3
     GLOBAL_MAX_EPISODE = 1000
 
-    agent = A3CAgent(env, gamma, lr, GLOBAL_MAX_EPISODE)
-    agent.train()
-    agent.save_model()
+    train_twoHeaded()
+    # train_decoupled()
