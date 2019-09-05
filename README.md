@@ -7,17 +7,3 @@ Modular implementations of reinforcement learning algorithms
 - Implementations in the two repositories above are of better quality. Please go to those instead.
 
 
-# Is done:
-- REINFORCE
-- DQN
-- Double DQN
-- Dueling DQN
-- A2C
-- DDPG
-check the two new repositories for more implementations
-
-# Requirements:
-- Python 3
-- PyTorch 0.4.1
-- OpenAI Gym
-
