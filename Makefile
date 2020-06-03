@@ -1,0 +1,3 @@
+format:
+	black .
+	isort -rc .
