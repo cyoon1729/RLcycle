@@ -8,11 +8,15 @@ from rlcycle.common.utils.logger import Logger
 class Agent(ABC):
     """Abstract base class for RL agents"""
 
-    def __init__(self, hyper_params: dict, model_cfg: dict, log_cfg: dict):
-        pass
+    def __init__(self, args: dict, hyper_params: dict, model_cfg: dict, log_cfg: dict):
+        self.args = args
+        self.hyper_params = hyper_params
+        self.model_cfg = model_cfg
+        self.log_cfg = log_cfg
+        self.device = self.args["device"]
 
     @abstractmethod
-    def _init_learner(self, learner_cls: Type[Learner]):
+    def _initialize(self):
         pass
 
     @abstractmethod
@@ -21,7 +25,7 @@ class Agent(ABC):
 
     @abstractmethod
     def step(
-        self, action: np.ndarray
+        self, state: np.ndarray, action: np.ndarray
     ) -> Tuple[np.ndarray, np.ndarray, np.float64, bool]:
         pass
 
