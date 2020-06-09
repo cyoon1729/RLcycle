@@ -47,7 +47,7 @@ class DQNLearner(Learner):
         return loss
 
 
-class PERLearner(DQNLearner):
+class PrioritizedUpdates(DQNLearner):
     def __init__(self, dqn_learner: DQNLearner):
         self.learner = dqn_learner
 
