@@ -43,4 +43,4 @@ class LearnerWrapper(LearnerBase):
     def update_model(
         self, experience: Tuple[torch.Tensor, ...]
     ) -> Tuple[torch.Tensor, ...]:
-        pass    
+        pass

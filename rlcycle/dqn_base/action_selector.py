@@ -39,10 +39,11 @@ class EpsGreedy(ActionSelector):
         self.action_space = action_space
         self.eps = self.hyper_params["eps"]
         self.eps_decay = self.hyper_params["eps_decay"]
-        self.exploration = True
 
-    def __call__(self, policy: nn.Module, state: np.ndarray) -> Tuple[np.ndarray, ...]:
-        if np.random.randn(0, 1) < self.eps and self.exploration:
+    def __call__(
+        self, policy: nn.Module, state: np.ndarray, explore: bool = True
+    ) -> np.ndarray:
+        if np.random.randn(0, 1) < self.eps and explore:
             return self.action_space.sample()
         return self.action_selector(policy, state, device)
 

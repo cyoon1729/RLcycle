@@ -1,15 +1,33 @@
 from abc import ABC, abstractmethod
-from typing import Type
+from typing import Tuple, Type
 
+import numpy as np
 from rlcycle.common.abstract.learner import Learner
-from rlcycle.common.utils.logger import Logger
+from omegaconf import DictConfig
+# from rlcycle.common.utils.logger import Logger
 
 
 class Agent(ABC):
-    """Abstract base class for RL agents"""
+    """Abstract base class for RL agents
+    
+    Attributes:
+        experiment_info (DictConfig): configurations for running main loop (like args) 
+        env_info (DictConfig): env info for initialization gym environment
+        hyper_params (DictConfig): algorithm hyperparameters
+        model_cfg (DictConfig): configurations for building neural networks
+        log_cfg (DictConfig): configurations for logging algorithm run
 
-    def __init__(self, args: dict, hyper_params: dict, model_cfg: dict, log_cfg: dict):
-        self.args = args
+    """
+
+    def __init__(
+        self,
+        experiment_info: DictConfig,
+        env_info: DictConfig,
+        hyper_params: DictConfig,
+        model_cfg: DictConfig,
+        log_cfg: DictConfig
+    ):
+        self.experiment_info = experiment_info
         self.hyper_params = hyper_params
         self.model_cfg = model_cfg
         self.log_cfg = log_cfg
@@ -17,10 +35,6 @@ class Agent(ABC):
 
     @abstractmethod
     def _initialize(self):
-        pass
-
-    @abstractmethod
-    def _init_logger(self, logger: Logger):
         pass
 
     @abstractmethod
