@@ -13,7 +13,7 @@ class Loss(ABC):
     def __call__(
         self,
         networks: Tuple[nn.Module, ...],
-        optimizers: Tuple[optim.Optim, ...],
+        optimizers: Tuple[optim.Optimizer, ...],
         data: Tuple[np.ndarray, ...],
     ) -> Tuple[Any, ...]:
         pass

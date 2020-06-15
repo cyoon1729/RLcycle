@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Tuple
 
 import torch
+from omegaconf import DictConfig
 
 
 class LearnerBase(ABC):
@@ -17,8 +18,13 @@ class LearnerBase(ABC):
 class Learner(LearnerBase):
     """Abstract class for all """
 
-    def __init__(self, args: dict, hyper_params: dict, model_cfg: dict):
-        self.args = args
+    def __init__(
+        self,
+        experiment_info: DictConfig,
+        hyper_params: DictConfig,
+        model_cfg: DictConfig,
+    ):
+        self.experiment_info = experiment_info
         self.hyper_params = hyper_params
         self.model_cfg = model_cfg
 

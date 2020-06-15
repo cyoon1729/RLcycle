@@ -2,8 +2,10 @@ from abc import ABC, abstractmethod
 from typing import Tuple, Type
 
 import numpy as np
-from rlcycle.common.abstract.learner import Learner
 from omegaconf import DictConfig
+
+from rlcycle.common.abstract.learner import Learner
+
 # from rlcycle.common.utils.logger import Logger
 
 
@@ -22,16 +24,14 @@ class Agent(ABC):
     def __init__(
         self,
         experiment_info: DictConfig,
-        env_info: DictConfig,
         hyper_params: DictConfig,
         model_cfg: DictConfig,
-        log_cfg: DictConfig
     ):
         self.experiment_info = experiment_info
         self.hyper_params = hyper_params
         self.model_cfg = model_cfg
         self.log_cfg = log_cfg
-        self.device = self.args["device"]
+        self.device = self.experiment_info["device"]
 
     @abstractmethod
     def _initialize(self):
