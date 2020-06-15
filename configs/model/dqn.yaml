@@ -1,14 +1,14 @@
 model:
-  class: common.modules.value.DQNModel
+  class: rlcycle.common.models.value.DQNModel
   params:
     model_cfg:
       state_dim: undefined
       action_dim: undefined
 
       use_conv: True
-      features:
+      conv_features:
         feature1:
-          class: common.modules.layers.Conv2DLayer
+          class: rlcycle.common.models.layers.Conv2DLayer
           params:
              input_size: 4
              output_size: 32
@@ -16,7 +16,7 @@ model:
              stride: 4
              activation_fn: relu
         feature2:
-          class: common.modules.layers.Conv2DLayer
+          class: rlcycle.common.models.layers.Conv2DLayer
           params:
              input_size: 32
              output_size: 64
@@ -24,7 +24,7 @@ model:
              stride: 2
              activation_fn: relu
         feature3:
-          class: common.modules.layers.Conv2DLayer
+          class: rlcycle.common.models.layers.Conv2DLayer
           params:
              input_size: 64
              output_size: 64
@@ -34,20 +34,20 @@ model:
              
       fc:
         input:
-          class: common.modules.layers.LinearLayer
+          class: rlcycle.common.models.layers.LinearLayer
           params: 
             input_size: undefined
             output_size: 512
             post_activation_fn: relu           
         hidden:
           hidden1:
-            class: common.modules.layers.LinearLayer
+            class: rlcycle.common.models.layers.LinearLayer
             params: 
               input_size: 512
               output_size: 512
               post_activation_fn: relu
         output:
-          class: common.modules.layers.LinearLayer
+          class: rlcycle.common.models.layers.LinearLayer
           params:
             input_size: 512
             output_size: undefined
