@@ -4,13 +4,15 @@ https://github.com/openai/baselines/blob/master/baselines/deepq/replay_buffer.py
 """
 
 import numpy as np
+
+from rlcycle.common.abstract.buffer import ReplayBufferWrapper
 from rlcycle.common.buffer.replay_buffer import ReplayBuffer
 from rlcycle.common.buffer.segment_tree import MinSegmentTree, SumSegmentTree
 
 
-class PrioritizedReplayBuffer(ReplayBuffer):
+class PrioritizedReplayBuffer(ReplayBufferWrapper):
     def __init__(self, replay_buffer: ReplayBuffer, args: dict, hyper_params: dict):
-        self.replay_buffer = replay_buffer
+        ReplayBufferWrapper.__init__(self, replay_buffer)
 
         self._alpha = hyper_params["per_alpha"]
         assert self._alpha >= 0

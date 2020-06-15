@@ -3,28 +3,7 @@ import torch
 import torch.nn as nn
 from omegaconf import DictConfig
 
-
-class BaseModel(nn.Module):
-    def __init__(self, model_cfg: DictConfig):
-        nn.Module.__init__(self)
-        self.model_cfg = model_cfg
-
-        if self.model_cfg.use_conv:
-            feature_modules = []
-            for layer in self.model_cfg.conv_features:
-                layer_info = self.model_cfg.conv_features[layer]
-                feature_modules.append(hydra.utils.instantiate(layer_info))
-            self.features = nn.Sequential(*feature_modules)
-
-        else:
-            print("Not using CNN backbone; Using identity layer.")
-            self.features = nn.Identity(0)  # args aren't used in nn.Identity
-
-    def get_feature_size(self):
-        feature_size = (
-            self.conv(torch.zeros(1, *self.model_cfg.state_dim)).view(-1).size(0)
-        )
-        return feature_size
+from rlcycle.common.models.base import BaseModel
 
 
 class DQNModel(BaseModel):
@@ -54,6 +33,7 @@ class DQNModel(BaseModel):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.features.forward(x)
+        x = x.view(x.size(0), -1)
         x = self.fc_input.forward(x)
         x = self.fc_hidden.forward(x)
         x = self.fc_output.forward(x)
@@ -102,6 +82,7 @@ class DuelingDQNModel(BaseModel):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.features.forward(x)
+        x = x.view(x.size(0), -1)
         advantage = self.advantage_stream.forward(x)
         value = self.value_stream.forward(x)
         return value + advantage - advantage.mean()
