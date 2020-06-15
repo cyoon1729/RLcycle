@@ -1,4 +1,10 @@
+from typing import Any, Tuple
+
+import numpy as np
+import torch.nn as nn
 import torch.nn.functional as F
+import torch.optim as optim
+
 from rlcycle.common.abstract.loss import Loss
 from rlcycle.common.utils.common_utils import soft_update
 
@@ -7,7 +13,7 @@ class DQNLoss(Loss):
     def __call__(
         self,
         networks: Tuple[nn.Module, ...],
-        optimizers: Tuple[optim.Optim, ...],
+        optimizers: Tuple[optim.Optimizer, ...],
         data: Tuple[np.ndarray, ...],
         hyper_params: dict,
     ) -> Tuple[Any, ...]:
@@ -29,7 +35,7 @@ class QRLoss(Loss):
     def __call__(
         self,
         networks: Tuple[nn.Module, ...],
-        optimizers: Tuple[optim.Optim, ...],
+        optimizers: Tuple[optim.Optimizer, ...],
         data: Tuple[np.ndarray, ...],
         hyper_params: dict,
     ) -> Tuple[Any, ...]:
@@ -40,7 +46,7 @@ class C51Loss(Loss):
     def __call__(
         self,
         networks: Tuple[nn.Module, ...],
-        optimizers: Tuple[optim.Optim, ...],
+        optimizers: Tuple[optim.Optimizer, ...],
         data: Tuple[np.ndarray, ...],
         hyper_params: dict,
     ) -> Tuple[Any, ...]:

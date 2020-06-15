@@ -2,15 +2,22 @@ from typing import Tuple
 
 import torch
 import torch.optim as optim
+from omegaconf import DictConfig
+from torch.nn.utils import clip_grad_norm_
+
 from rlcycle.build import build_loss, build_model
 from rlcycle.common.abstract.learner import Learner
 from rlcycle.common.utils.common_utils import hard_update, soft_update
-from torch.nn.utils import clip_grad_norm_
 
 
 class DQNLearner(Learner):
-    def __init__(self, args: dict, hyper_params: dict, model_cfg: dict):
-        Learner.__init__(args, hyper_params, model_cfg)
+    def __init__(
+        self,
+        experiment_info: DictConfig,
+        hyper_params: DictConfig,
+        model_cfg: DictConfig,
+    ):
+        Learner.__init__(experiment_info, hyper_params, model_cfg)
         self.use_per = self.hyper_params.use_per
         self.update_step = 0
 

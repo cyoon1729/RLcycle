@@ -1,28 +1,35 @@
+from typing import Tuple
+
 import numpy as np
 import torch
 import torch.nn as nn
 from gym import spaces
+
 from rlcycle.common.abstract.action_selector import ActionSelector
 from rlcycle.common.utils.common_utils import np2tensor
 
 
 class DQNActionSelector(ActionSelector):
-    def __init__(self, device: torch.device):
+    def __init__(self, device: str):
+        device = torch.device(device)
         ActionSelector.__init__(self, device)
 
     def __call__(self, policy: nn.Module, state: np.ndarray) -> Tuple[np.ndarray, ...]:
-        qvals = policy.forward(np2tensor(state, device))
+        state = np2tensor(state, self.device).unsqueeze(0)
+        qvals = policy.forward(np2tensor(state))
         qvals = qvals.cpu().detach().numpy()
         action = np.argmax(qvals)
         return action
 
 
 class QRActionSelector(ActionSelector):
-    def __init__(self, device: torch.device):
+    def __init__(self, device: str):
+        device = torch.device(device)
         ActionSelector.__init__(self, device)
 
     def __call__(self, policy: nn.Module, state: np.ndarray) -> Tuple[np.ndarray, ...]:
-        qvals = policy.forward(np2tensor(state, device)).mean(2)  # fix dim
+        state = np2tensor(state, self.device).unsqueeze(0)
+        qvals = policy.forward(state).mean(2)  # fix dim
         qvals = qvals.cpu().detach().numpy()
         action = np.argmax(qvals)
         return action
