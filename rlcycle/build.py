@@ -14,9 +14,7 @@ def build_agent(
     agent_cfg = DictConfig(dict())
     agent_cfg["class"] = experiment_info.agent
     agent_cfg["params"] = dict(
-        experiment_info=experiment_info,
-        hyper_params=hyper_params,
-        model_cfg=model
+        experiment_info=experiment_info, hyper_params=hyper_params, model_cfg=model
     )
     agent = hydra.utils.instantiate(agent_cfg)
     return agent
@@ -36,9 +34,7 @@ def build_learner(
     learner_cfg = DictConfig(dict())
     learner_cfg["class"] = experiment_info.learner
     learner_cfg["params"] = dict(
-        experiment_info=experiment_info,  
-        hyper_params=hyper_params,
-        model_cfg=model
+        experiment_info=experiment_info, hyper_params=hyper_params, model_cfg=model
     )
     learner = hydra.utils.instantiate(learner_cfg)
     return learner

@@ -3,7 +3,7 @@ import torch
 from omegaconf import DictConfig
 
 from rlcycle.build import (build_action_selector, build_agent, build_env,
-                           build_loss, build_model, build_learner)
+                           build_learner, build_loss, build_model)
 
 
 @hydra.main(config_path="../configs/meta_config.yaml", strict=False)
@@ -40,7 +40,7 @@ def main(cfg: DictConfig):
     print(loss)
     print("==================")
 
-    # build learner 
+    # build learner
     print("===INITIALIZING LEARNER===")
     learner = build_learner(**cfg)
     print("=====================")

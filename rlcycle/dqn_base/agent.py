@@ -5,12 +5,14 @@ import hydra
 import numpy as np
 from omegaconf import DictConfig
 
-from rlcycle.dqn_base.action_selector import EpsGreedy
+from rlcycle.build import (build_action_selector, build_env, build_learner,
+                           build_loss)
 from rlcycle.common.abstract.agent import Agent
+from rlcycle.common.buffer.prioritized_replay_buffer import \
+    PrioritizedReplayBuffer
 from rlcycle.common.buffer.replay_buffer import ReplayBuffer
-from rlcycle.common.buffer.prioritized_replay_buffer import PrioritizedReplayBuffer
+from rlcycle.dqn_base.action_selector import EpsGreedy
 from rlcycle.dqn_base.learner import DQNLearner
-from rlcycle.build import build_learner, build_env, build_action_selector, build_loss
 
 
 class DQNBaseAgent(Agent):
@@ -44,7 +46,7 @@ class DQNBaseAgent(Agent):
         self.env = build_env(self.experiment_info)
         self.model_cfg.params.model_cfg.state_dim = self.env.observation_space.shape
         self.model_cfg.params.model_cfg.action_dim = self.env.action_space.n
-        
+
         # Build learner
         self.learner = build_learner(
             self.experiment_info, self.hyper_params, self.model_cfg
@@ -56,7 +58,7 @@ class DQNBaseAgent(Agent):
             self.replay_buffer = PrioritizedReplayBuffer(
                 self.replay_buffer, self.experiment_info, self.hyper_params
             )
-        
+
         # Build action selector, wrap with e-greedy exploration
         self.action_selector = build_action_selector(self.experiment_info)
         self.action_selector = EpsGreedy(
