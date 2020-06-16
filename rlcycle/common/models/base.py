@@ -23,7 +23,6 @@ class BaseModel(nn.Module):
             self.features = nn.Identity(0)  # args aren't used in nn.Identity
 
     def get_feature_size(self):
-        print(self.model_cfg.state_dim)
         feature_size = (
             self.features(torch.zeros(1, *self.model_cfg.state_dim)).view(-1).size(0)
         )

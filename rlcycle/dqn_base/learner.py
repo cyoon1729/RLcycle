@@ -17,7 +17,7 @@ class DQNLearner(Learner):
         hyper_params: DictConfig,
         model_cfg: DictConfig,
     ):
-        Learner.__init__(experiment_info, hyper_params, model_cfg)
+        Learner.__init__(self, experiment_info, hyper_params, model_cfg)
         self.use_per = self.hyper_params.use_per
         self.update_step = 0
 
@@ -25,13 +25,13 @@ class DQNLearner(Learner):
 
     def _initialize(self):
         """initialize networks, optimizer, loss function"""
-        self.network = build_model(self.args, self.hyper_params, self.model_cfg)
-        self.target_network = build_model(self.args, self.hyper_params, self.model_cfg)
+        self.network = build_model(self.model_cfg)
+        self.target_network = build_model(self.model_cfg)
         hard_update(self.network, self.target_network)
         self.optimizer = optim.Adam(
             self.network.parameters(), lr=self.hyper_params.learning_rate
         )
-        self.loss_fn = build_loss(args, hyper_params)
+        self.loss_fn = build_loss(self.experiment_info)
 
     def update_model(
         self, experience: Tuple[torch.Tensor, ...]

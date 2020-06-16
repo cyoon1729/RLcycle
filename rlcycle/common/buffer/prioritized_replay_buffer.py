@@ -8,19 +8,19 @@ import numpy as np
 from rlcycle.common.abstract.buffer import ReplayBufferWrapper
 from rlcycle.common.buffer.replay_buffer import ReplayBuffer
 from rlcycle.common.buffer.segment_tree import MinSegmentTree, SumSegmentTree
-
+from omegaconf import DictConfig
 
 class PrioritizedReplayBuffer(ReplayBufferWrapper):
-    def __init__(self, replay_buffer: ReplayBuffer, args: dict, hyper_params: dict):
+    def __init__(self, replay_buffer: ReplayBuffer, experiment_info: DictConfig, hyper_params: DictConfig):
         ReplayBufferWrapper.__init__(self, replay_buffer)
+        
+        self.experiment_info = experiment_info
+        self.hyper_params = hyper_params
 
-        self._alpha = hyper_params["per_alpha"]
+        self._alpha = self.hyper_params.per_alpha
         assert self._alpha >= 0
-
-        self.beta = hyper_params["per_beta"]
-        self.beta_increment = (hyper_params["per_beta_max"] - self.beta) / args[
-            "max_update_steps"
-        ]
+        self.beta = self.hyper_params.per_beta
+        self.beta_increment = (self.hyper_params.per_beta_max - self.beta) / self.hyper_params.per_beta_total_steps
 
         it_capacity = 1
         while it_capacity < self.replay_buffer._maxsize:

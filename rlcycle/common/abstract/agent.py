@@ -5,7 +5,6 @@ import numpy as np
 from omegaconf import DictConfig
 
 from rlcycle.common.abstract.learner import Learner
-
 # from rlcycle.common.utils.logger import Logger
 
 
@@ -30,7 +29,6 @@ class Agent(ABC):
         self.experiment_info = experiment_info
         self.hyper_params = hyper_params
         self.model_cfg = model_cfg
-        self.log_cfg = log_cfg
         self.device = self.experiment_info["device"]
 
     @abstractmethod

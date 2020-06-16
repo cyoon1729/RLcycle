@@ -5,9 +5,12 @@ import hydra
 import numpy as np
 from omegaconf import DictConfig
 
-from rlcycle.common.abstract.action_selector import ActionSelector
+from rlcycle.dqn_base.action_selector import EpsGreedy
 from rlcycle.common.abstract.agent import Agent
+from rlcycle.common.buffer.replay_buffer import ReplayBuffer
+from rlcycle.common.buffer.prioritized_replay_buffer import PrioritizedReplayBuffer
 from rlcycle.dqn_base.learner import DQNLearner
+from rlcycle.build import build_learner, build_env, build_action_selector, build_loss
 
 
 class DQNBaseAgent(Agent):
@@ -33,18 +36,28 @@ class DQNBaseAgent(Agent):
         self.use_n_step = self.hyper_params.n_step > 1
         self.transition_queue = deque(maxlen=self.hyper_params.n_step)
 
+        self._initialize()
+
     def _initialize(self):
         """Initialize agent components"""
-        self.env = build_env(self.experiment_info.env)
+        # Build env and env specific model params
+        self.env = build_env(self.experiment_info)
+        self.model_cfg.params.model_cfg.state_dim = self.env.observation_space.shape
+        self.model_cfg.params.model_cfg.action_dim = self.env.action_space.n
+        
+        # Build learner
         self.learner = build_learner(
             self.experiment_info, self.hyper_params, self.model_cfg
         )
-        self.replay_buffer = ReplayBuffer(self.hyper_params)
+
+        # Build replay buffer, wrap with PER buffer if using it
+        self.replay_buffer = ReplayBuffer(self.hyper_params.replay_buffer_size)
         if self.hyper_params.use_per:
-            self.learner = PERLearner(self.learner)
             self.replay_buffer = PrioritizedReplayBuffer(
-                self.replay_buffer, self.hyper_params
+                self.replay_buffer, self.experiment_info, self.hyper_params
             )
+        
+        # Build action selector, wrap with e-greedy exploration
         self.action_selector = build_action_selector(self.experiment_info)
         self.action_selector = EpsGreedy(
             self.action_selector, self.env.action_space, self.hyper_params

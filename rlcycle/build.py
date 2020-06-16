@@ -8,34 +8,40 @@ from rlcycle.common.abstract.loss import Loss
 from rlcycle.common.utils.env_wrappers import generate_atari_env, generate_env
 
 
-def build_agent(cfgs: DictConfig):
-    agent_cfg = DictConfig()
-    agent_cfg.cls = cfgs.experiment_info.agent
-    agent_cfg.params.experiment_info = cfgs.experiment_info
-    agent_cfg.params.hyper_params = cfgs.hyper_params
-    agent_cfg.params.model_cfg = cfgs.model
+def build_agent(
+    experiment_info: DictConfig, hyper_params: DictConfig, model: DictConfig
+):
+    agent_cfg = DictConfig(dict())
+    agent_cfg["class"] = experiment_info.agent
+    agent_cfg["params"] = dict(
+        experiment_info=experiment_info,
+        hyper_params=hyper_params,
+        model_cfg=model
+    )
     agent = hydra.utils.instantiate(agent_cfg)
     return agent
 
 
-def build_env(env_info: DictConfig):
-    if env_info.is_atari:
-        env = generate_atari_env(env_info)
+def build_env(experiment_info: DictConfig):
+    if experiment_info.env.is_atari:
+        env = generate_atari_env(experiment_info.env)
     else:
-        env = generate_env(env_info)
-
+        env = generate_env(experiment_info.env)
     return env
 
 
 def build_learner(
-    experiment_info: DictConfig, hyper_params: DictConfig, model_cfg: DictConfig
+    experiment_info: DictConfig, hyper_params: DictConfig, model: DictConfig
 ):
-    learner_cfg = DictConfig()
-    learner_cfg.cls = experiment_info.learner
-    learner_cfg.params.hyper_params = hyper_params
-    learner_cfg.params.model_cfg = model_cfg
+    learner_cfg = DictConfig(dict())
+    learner_cfg["class"] = experiment_info.learner
+    learner_cfg["params"] = dict(
+        experiment_info=experiment_info,  
+        hyper_params=hyper_params,
+        model_cfg=model
+    )
     learner = hydra.utils.instantiate(learner_cfg)
-    return learner, learner_cfg
+    return learner
 
 
 def build_model(model_cfg: DictConfig):
@@ -44,10 +50,15 @@ def build_model(model_cfg: DictConfig):
 
 
 def build_action_selector(experiment_info: DictConfig):
-    action_selector = hydra.utils.instantiate(experiment_info.action_selector)
+    action_selector_cfg = DictConfig(dict())
+    action_selector_cfg["class"] = experiment_info.action_selector
+    action_selector_cfg["params"] = dict(device=experiment_info.device)
+    action_selector = hydra.utils.instantiate(action_selector_cfg)
     return action_selector
 
 
-def build_loss(loss: DictConfig) -> Loss:
-    loss_fn = hydra.utils.instantiate(loss)
+def build_loss(experiment_info: DictConfig) -> Loss:
+    loss_cfg = DictConfig(dict())
+    loss_cfg["class"] = experiment_info.loss
+    loss_fn = hydra.utils.instantiate(loss_cfg)
     return loss_fn
