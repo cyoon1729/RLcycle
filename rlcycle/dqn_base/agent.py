@@ -13,7 +13,7 @@ from rlcycle.common.buffer.prioritized_replay_buffer import \
 from rlcycle.common.buffer.replay_buffer import ReplayBuffer
 from rlcycle.dqn_base.action_selector import EpsGreedy
 from rlcycle.dqn_base.learner import DQNLearner
-
+from rlcycle.common.utils.common_utils import np2tensor
 
 class DQNBaseAgent(Agent):
     """Configurable DQN base agent; works with Dueling DQN, C51, QR-DQN, etc
@@ -37,6 +37,7 @@ class DQNBaseAgent(Agent):
         Agent.__init__(self, experiment_info, hyper_params, model_cfg)
         self.use_n_step = self.hyper_params.n_step > 1
         self.transition_queue = deque(maxlen=self.hyper_params.n_step)
+        self.update_step = 0
 
         self._initialize()
 
@@ -83,12 +84,13 @@ class DQNBaseAgent(Agent):
         for episode_i in range(self.experiment_info.total_num_episodes):
             state = self.env.reset()
             episode_reward = 0
+            done = False
 
             while not done:
-                if self.args.render:
+                if self.experiment_info.render:
                     self.env.render()
 
-                action = self.action_selector(state)
+                action = self.action_selector(self.learner.network, state)
                 state, action, reward, next_state, done = self.step(state, action)
                 episode_reward = episode_reward + reward
 
@@ -96,26 +98,34 @@ class DQNBaseAgent(Agent):
                     transition = [state, action, reward, next_state, done]
                     self.transition_queue.append(transition)
                     if len(self.transition_queue) > self.hyper_params.n_step:
+                        #TODO: Implement preprocess_n_step
                         n_step_transition = preprocess_n_step(self.transition_queue)
                         self.replay_buffer.add(*n_step_transition)
                 else:
                     self.replay_buffer.add(state, action, reward, next_state, done)
 
-                if len(self.replay_buffer) > self.hyper_params.update_starting_point:
+                if len(self.replay_buffer) >= self.hyper_params.update_starting_point:
                     experience = self.replay_buffer.sample()
-                    info = self.learner.update_model(experience)
+                    info = self.learner.update_model(
+                        self._preprocess_experience(experience)
+                    )
+                    self.update_step = self.update_step + 1
 
                     if self.hyper_params.use_per:
                         q_loss, indices, new_priorities = info
                         self.replay_buffer.update_priorities(indices, new_priorities)
                     else:
                         q_loss = info
+                    
+                    self.action_selector.decay_epsilon()
 
-            if episode_i % self.experiment_info.test_interval:
-                self.test(episode_i)
-                self.learner.save_params()
+            print(f"[TRAIN] episode num: {episode_i} \tepisode reward: {episode_reward}")
+            
+            if episode_i % self.experiment_info.test_interval == 0:
+                self.test(episode_i, self.update_step)
+                # self.learner.save_params()
 
-    def test(self, step: int):
+    def test(self, episode_i: int, update_step: int):
         """Test policy without random exploration a number of times
         
         Params:
@@ -126,15 +136,27 @@ class DQNBaseAgent(Agent):
         self.action_selector.exploration = False
         episode_rewards = []
         for test_i in range(self.experiment_info.test_num):
+            state = self.env.reset()
             episode_reward = 0
+            done = False
             while not done:
                 self.env.render()
-                action = self.action_selector(state)
+                action = self.action_selector(self.learner.network, state)
                 state, action, reward, next_state, done = self.step(state, action)
                 episode_reward = episode_reward + reward
 
-            print(f"step: {step} \ttest: {test_i} \tepisode reward: {episode_reward}")
+            print(f"episode num: {episode_i} \tupdate step: {update_step} \ttest: {test_i} \tepisode reward: {episode_reward}")
             episode_rewards.append(episode_reward)
 
-        print(f"STEP: {step} \tMEAN REWARD: {np.mean(episode_rewards)}")
+        print(f"EPISODE NUM: {episode_i} \tUPDATE STEP: {update_step} \tMEAN REWARD: {np.mean(episode_rewards)}")
         print("====TEST END====")
+        self.action_selector.exploration = True
+
+    def _preprocess_experience(self, experience: Tuple[np.ndarray]):
+        states, actions, rewards, next_states, dones, indices, weights = tuple([np2tensor(np_arr, self.device) for np_arr in experience])
+        actions = actions.long().view(-1, 1)
+        rewards = rewards.view(-1, 1)
+        dones = dones.view(-1, 1)
+        indices = indices.long().detach().cpu().numpy() # indices need not be tensor
+        weights = weights.view(-1, 1)
+        return states, actions, rewards, next_states, dones, indices, weights

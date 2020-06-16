@@ -9,8 +9,8 @@ import torch.nn as nn
 class ActionSelector(ABC):
     """Abstract base class for callable action selection methods"""
 
-    def __init__(self, device: torch.device):
-        self.deice = device
+    def __init__(self, device: str):
+        self.device = torch.device(device)
 
     @abstractmethod
     def __call__(self, policy: nn.Module, state: np.ndarray) -> Tuple[np.ndarray, ...]:

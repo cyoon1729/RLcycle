@@ -1,16 +1,19 @@
-# Main algorithm choices
-agent: rlcycle.dqn_base.learner.DQNBaseAgent
-learner: rlcycle.dqn_base.learner.DQNLearner
-action_selector: rlcycle.dqn_base.action_selector.DQNActionSelector
+experiment_info:
+  # Main algorithm choices
+  agent: rlcycle.dqn_base.agent.DQNBaseAgent
+  learner: rlcycle.dqn_base.learner.DQNLearner
+  loss: rlcycle.dqn_base.loss.DQNLoss
+  action_selector: rlcycle.dqn_base.action_selector.DQNActionSelector
+  device: cpu
 
-# Environment info
-env:
-  name: "LunarLander-v2"
-  is_atari: False
-  max_episode_steps: 300
+  # Environment info
+  env:
+    name: "LunarLander-v2"
+    is_atari: False
+    max_episode_steps: 300
 
-# Experiment default arguments:
-total_num_episodes: 3000
-experiment_info.test_interval: 50  # Test every 50 episodes
-test_num: 10  # Number of episodes to test during test phase
-render: True  # Render all episode steps
+  # Experiment default arguments:
+  total_num_episodes: 1500
+  test_interval: 50  # Test every 50 episodes
+  test_num: 10  # Number of episodes to test during test phase
+  render: True  # Render all episode steps

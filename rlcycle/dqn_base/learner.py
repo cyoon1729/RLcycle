@@ -39,33 +39,33 @@ class DQNLearner(Learner):
 
         # Separate indices and weights from experience if using PER
         if self.use_per:
-            indices, weights = experience[-3:-1]
-            experience = experience[0:5]
+            indices, weights = experience[-2:]
+            experience = experience[0:-2]
 
-        q_loss, q_vals = self.loss_fn(
+        q_loss_element_wise = self.loss_fn(
             (self.network, self.target_network),
-            self.optimizer,
             experience,
             self.hyper_params,
         )
 
         # Compute new priorities and correct importance sampling bias
         if self.use_per:
-            new_priorities = q_loss.detach().cpu().numpy()
-            q_loss = (q_loss * weights).mean()
+            q_loss = (q_loss_element_wise * weights).mean()
 
-        dqn_reg = torch.norm(q_loss, 2).mean() * self.hyper_params.q_regularization
+        dqn_reg = torch.norm(q_loss, 2).mean() * self.hyper_params.q_reg_coeff
         loss = q_loss + dqn_reg
 
         self.optimizer.zero_grad()
         loss.backward()
-        clip_grad_norm_(self.network.parameters, self.hyper_params.gradient_clip)
+        clip_grad_norm_(self.network.parameters(), self.hyper_params.gradient_clip)
         self.optimizer.step()
 
         soft_update(self.network, self.target_network, self.hyper_params.tau)
 
         info = (loss,)
         if self.use_per:
-            info = info + (indices.cpu().numpy(), new_priorities,)
+            new_priorities = q_loss_element_wise.detach().view(-1)
+            new_priorities = torch.clamp(new_priorities, min=1e-8)
+            info = info + (indices, new_priorities,)
 
         return info

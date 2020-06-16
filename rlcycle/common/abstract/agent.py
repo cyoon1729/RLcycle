@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Tuple, Type
 
+import torch
 import numpy as np
 from omegaconf import DictConfig
 
@@ -30,7 +31,7 @@ class Agent(ABC):
         self.experiment_info = experiment_info
         self.hyper_params = hyper_params
         self.model_cfg = model_cfg
-        self.device = self.experiment_info["device"]
+        self.device = torch.device(self.experiment_info.device)
 
     @abstractmethod
     def _initialize(self):

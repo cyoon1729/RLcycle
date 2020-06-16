@@ -12,12 +12,11 @@ from rlcycle.common.utils.common_utils import np2tensor
 
 class DQNActionSelector(ActionSelector):
     def __init__(self, device: str):
-        device = torch.device(device)
         ActionSelector.__init__(self, device)
 
     def __call__(self, policy: nn.Module, state: np.ndarray) -> Tuple[np.ndarray, ...]:
         state = np2tensor(state, self.device).unsqueeze(0)
-        qvals = policy.forward(np2tensor(state))
+        qvals = policy.forward(state)
         qvals = qvals.cpu().detach().numpy()
         action = np.argmax(qvals)
         return action
@@ -25,7 +24,6 @@ class DQNActionSelector(ActionSelector):
 
 class QRActionSelector(ActionSelector):
     def __init__(self, device: str):
-        device = torch.device(device)
         ActionSelector.__init__(self, device)
 
     def __call__(self, policy: nn.Module, state: np.ndarray) -> Tuple[np.ndarray, ...]:
@@ -46,15 +44,16 @@ class EpsGreedy(ActionSelector):
         self.action_selector = action_selector
         self.action_space = action_space
         self.eps = hyper_params.eps
-        self.eps_decay = hyper_params.eps_decay
         self.eps_final = hyper_params.eps_final
-
+        self.eps_decay = (self.eps - self.eps_final) / hyper_params.max_exploration_frame
+        
     def __call__(
         self, policy: nn.Module, state: np.ndarray, explore: bool = True
     ) -> np.ndarray:
-        if np.random.randn(0, 1) < self.eps and explore:
+        if self.eps > np.random.uniform(0, 1) and explore:
             return self.action_space.sample()
-        return self.action_selector(policy, state, device)
+        return self.action_selector(policy, state)
 
     def decay_epsilon(self):
-        pass
+        eps = self.eps * self.eps_decay
+        self.eps = min(eps, self.eps_final)

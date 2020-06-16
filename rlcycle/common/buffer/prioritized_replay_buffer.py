@@ -5,6 +5,7 @@ https://github.com/openai/baselines/blob/master/baselines/deepq/replay_buffer.py
 
 import numpy as np
 from omegaconf import DictConfig
+import random 
 
 from rlcycle.common.abstract.buffer import ReplayBufferWrapper
 from rlcycle.common.buffer.replay_buffer import ReplayBuffer
@@ -39,14 +40,14 @@ class PrioritizedReplayBuffer(ReplayBufferWrapper):
         self._max_priority = 1.0
 
     def add(self, *args, **kwargs):
-        idx = self._next_idx
+        idx = self.replay_buffer._next_idx
         self.replay_buffer.add(*args, **kwargs)
         self._it_sum[idx] = self._max_priority ** self._alpha
         self._it_min[idx] = self._max_priority ** self._alpha
 
     def _sample_proportional(self, batch_size):
         res = []
-        p_total = self._it_sum.sum(0, len(self._storage) - 1)
+        p_total = self._it_sum.sum(0, len(self.replay_buffer._storage) - 1)
         every_range_len = p_total / batch_size
         for i in range(batch_size):
             mass = random.random() * every_range_len + i * every_range_len
@@ -55,7 +56,7 @@ class PrioritizedReplayBuffer(ReplayBufferWrapper):
         return res
 
     def sample(self):
-        idxes = self._sample_proportional(batch_size)
+        idxes = self._sample_proportional(self.hyper_params.batch_size)
 
         weights = []
         p_min = self._it_min.min() / self._it_sum.sum()
@@ -70,7 +71,7 @@ class PrioritizedReplayBuffer(ReplayBufferWrapper):
 
         self._update_beta()
 
-        return tuple(list(encoded_sample) + [weights, idxes])
+        return tuple(list(encoded_sample) + [idxes, weights])
 
     def update_priorities(self, idxes, priorities):
         assert len(idxes) == len(priorities)
@@ -85,3 +86,6 @@ class PrioritizedReplayBuffer(ReplayBufferWrapper):
     def _update_beta(self):
         self.beta = self.beta + self.beta_increment
         assert self.beta > 0
+
+    def __len__(self):
+        return len(self.replay_buffer)

@@ -1,6 +1,7 @@
 from typing import Any, Tuple
 
 import numpy as np
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
@@ -13,21 +14,17 @@ class DQNLoss(Loss):
     def __call__(
         self,
         networks: Tuple[nn.Module, ...],
-        optimizers: Tuple[optim.Optimizer, ...],
-        data: Tuple[np.ndarray, ...],
+        data: Tuple[torch.Tensor, ...],
         hyper_params: dict,
     ) -> Tuple[Any, ...]:
         dqn, target_dqn = networks
-        dqn_optim = optimizers[0]
 
-        states, actions, rewards, next_states, mask = data
-
+        states, actions, rewards, next_states, dones = data
         q_value = dqn.forward(states).gather(1, actions)
-        next_q = torch.max(target_dqn.forward(next_states))[0]
-        target_q = rewards + masks * hyper_params.gamma * next_q
+        next_q = torch.max(target_dqn.forward(next_states), 1)[0].view(-1, 1)
+        target_q = rewards + (1 - dones) * hyper_params.gamma * next_q
 
-        loss = F.mse_loss(q_value, target_q.detach())
-
+        loss = F.smooth_l1_loss(q_value, target_q.detach(), reduction='none')
         return loss
 
 
@@ -35,7 +32,6 @@ class QRLoss(Loss):
     def __call__(
         self,
         networks: Tuple[nn.Module, ...],
-        optimizers: Tuple[optim.Optimizer, ...],
         data: Tuple[np.ndarray, ...],
         hyper_params: dict,
     ) -> Tuple[Any, ...]:
@@ -46,7 +42,6 @@ class C51Loss(Loss):
     def __call__(
         self,
         networks: Tuple[nn.Module, ...],
-        optimizers: Tuple[optim.Optimizer, ...],
         data: Tuple[np.ndarray, ...],
         hyper_params: dict,
     ) -> Tuple[Any, ...]:

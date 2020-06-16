@@ -397,6 +397,6 @@ def generate_env(env_info: DictConfig):
     env = gym.make(env_info.name)
     if env_info.max_episode_steps is not None:
         env = TimeLimit(env, env_info.max_episode_steps)
-    if clip_rewards is not None:
-        env = ClipRewardEnv(env)
+    # if env_info.clip_rewards is not 'None':
+    #     env = ClipRewardEnv(env)
     return env
