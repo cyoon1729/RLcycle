@@ -121,8 +121,8 @@ class DQNBaseAgent(Agent):
 
             print(f"[TRAIN] episode num: {episode_i} \tepisode reward: {episode_reward}")
             
-            if episode_i % self.experiment_info.test_interval == 0:
-                self.test(episode_i, self.update_step)
+            # if episode_i % self.experiment_info.test_interval == 0:
+            #     self.test(episode_i, self.update_step)
                 # self.learner.save_params()
 
     def test(self, episode_i: int, update_step: int):
@@ -153,10 +153,30 @@ class DQNBaseAgent(Agent):
         self.action_selector.exploration = True
 
     def _preprocess_experience(self, experience: Tuple[np.ndarray]):
-        states, actions, rewards, next_states, dones, indices, weights = tuple([np2tensor(np_arr, self.device) for np_arr in experience])
+        states, actions, rewards, next_states, dones, indices, weights = experience
+
+    
+        states = np2tensor(states, self.device)
+        x = input("states")
+        actions = np2tensor(actions, self.device)
+        x = input("actions")
+        rewards = np2tensor(rewards, self.device)
+        x = input("rewards")
+        next_states = np2tensor(next_states, self.device)
+        x = input("next_states")
+        dones = np2tensor(dones, self.device)
+        x = input("dones")
+        indices = np2tensor(indices, self.device)
+        x = input("indices")
+        print(weights)
+        weights = np2tensor(weights, self.device)
+        x = input("weights")
+
+
         actions = actions.long().view(-1, 1)
         rewards = rewards.view(-1, 1)
         dones = dones.view(-1, 1)
         indices = indices.long().detach().cpu().numpy() # indices need not be tensor
         weights = weights.view(-1, 1)
+
         return states, actions, rewards, next_states, dones, indices, weights
