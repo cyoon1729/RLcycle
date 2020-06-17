@@ -27,6 +27,7 @@ class Learner(LearnerBase):
         self.experiment_info = experiment_info
         self.hyper_params = hyper_params
         self.model_cfg = model_cfg
+        self.device = self.experiment_info.device
 
     @abstractmethod
     def _initialize(self):

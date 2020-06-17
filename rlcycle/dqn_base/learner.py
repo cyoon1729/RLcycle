@@ -27,10 +27,14 @@ class DQNLearner(Learner):
         """initialize networks, optimizer, loss function"""
         self.network = build_model(self.model_cfg)
         self.target_network = build_model(self.model_cfg)
+        self.network.to(self.device)
+        self.target_network.to(self.device)
         hard_update(self.network, self.target_network)
+
         self.optimizer = optim.Adam(
             self.network.parameters(), lr=self.hyper_params.learning_rate
         )
+        
         self.loss_fn = build_loss(self.experiment_info)
 
     def update_model(
