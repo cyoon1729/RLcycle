@@ -25,16 +25,14 @@ class DQNLearner(Learner):
 
     def _initialize(self):
         """initialize networks, optimizer, loss function"""
-        self.network = build_model(self.model_cfg)
-        self.target_network = build_model(self.model_cfg)
-        self.network.to(self.device)
-        self.target_network.to(self.device)
+        self.network = build_model(self.model_cfg, self.device)
+        self.target_network = build_model(self.model_cfg, self.device)
         hard_update(self.network, self.target_network)
 
         self.optimizer = optim.Adam(
             self.network.parameters(), lr=self.hyper_params.learning_rate
         )
-        
+
         self.loss_fn = build_loss(self.experiment_info)
 
     def update_model(
@@ -47,9 +45,7 @@ class DQNLearner(Learner):
             experience = experience[0:-2]
 
         q_loss_element_wise = self.loss_fn(
-            (self.network, self.target_network),
-            experience,
-            self.hyper_params,
+            (self.network, self.target_network), experience, self.hyper_params,
         )
 
         # Compute new priorities and correct importance sampling bias
@@ -68,8 +64,8 @@ class DQNLearner(Learner):
 
         info = (loss,)
         if self.use_per:
-            new_priorities = q_loss_element_wise.detach().view(-1)
-            new_priorities = torch.clamp(new_priorities, min=1e-8)
+            new_priorities = torch.clamp(q_loss_element_wise.view(-1), min=1e-6)
+            new_priorities = new_priorities.cpu().detach().numpy()
             info = info + (indices, new_priorities,)
 
         return info

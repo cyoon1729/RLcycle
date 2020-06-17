@@ -45,8 +45,10 @@ class EpsGreedy(ActionSelector):
         self.action_space = action_space
         self.eps = hyper_params.eps
         self.eps_final = hyper_params.eps_final
-        self.eps_decay = (self.eps - self.eps_final) / hyper_params.max_exploration_frame
-        
+        self.eps_decay = (
+            self.eps - self.eps_final
+        ) / hyper_params.max_exploration_frame
+
     def __call__(
         self, policy: nn.Module, state: np.ndarray, explore: bool = True
     ) -> np.ndarray:

@@ -2,6 +2,7 @@ from typing import Tuple
 
 import gym
 import hydra
+import torch
 from omegaconf import DictConfig
 
 from rlcycle.common.abstract.loss import Loss
@@ -40,9 +41,9 @@ def build_learner(
     return learner
 
 
-def build_model(model_cfg: DictConfig):
+def build_model(model_cfg: DictConfig, device: torch.device):
     model = hydra.utils.instantiate(model_cfg)
-    return model
+    return model.to(device)
 
 
 def build_action_selector(experiment_info: DictConfig):
