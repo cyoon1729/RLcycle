@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Tuple, Type
 
-import torch
 import numpy as np
+import torch
 from omegaconf import DictConfig
 
 from rlcycle.common.abstract.learner import Learner

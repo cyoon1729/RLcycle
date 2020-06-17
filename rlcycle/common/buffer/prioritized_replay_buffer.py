@@ -3,9 +3,10 @@ Adapted from OpenAI Baselines
 https://github.com/openai/baselines/blob/master/baselines/deepq/replay_buffer.py
 """
 
+import random
+
 import numpy as np
 from omegaconf import DictConfig
-import random 
 
 from rlcycle.common.abstract.buffer import ReplayBufferWrapper
 from rlcycle.common.buffer.replay_buffer import ReplayBuffer
