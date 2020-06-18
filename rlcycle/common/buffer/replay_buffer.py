@@ -12,7 +12,7 @@ from rlcycle.common.abstract.buffer import ReplayBufferBase
 
 class ReplayBuffer(ReplayBufferBase):
     def __init__(self, hyper_params: DictConfig):
-        self.hyper_params
+        self.hyper_params = hyper_params
         self._storage = []
         self._maxsize = self.hyper_params.replay_buffer_size
         self._next_idx = 0
