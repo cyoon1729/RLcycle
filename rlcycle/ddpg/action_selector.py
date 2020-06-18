@@ -7,10 +7,11 @@ from rlcycle.common.utils.common_utils import np2tensor
 
 
 class DDPGActionSelector(ActionSelector):
-    def __call__(
-        self, policy: nn.Module, state: np.ndarray, device: torch.device
-    ) -> Tuple[np.ndarray, ...]:
-        action = self.policy.forward(np2tensor(state, device))
+    def __init__(self, device):
+        self.device = device
+
+    def __call__(self, policy: nn.Module, state: np.ndarray) -> Tuple[np.ndarray, ...]:
+        action = policy.forward(np2tensor(state, device))
         action = action.cpu().detach().numpy()
         return action
 
@@ -38,6 +39,9 @@ class OUNoise(ActionSelector):
         self.action_dim = action_space.shape[0]
         self.low = action_space.low
         self.high = action_space.high
+
+        self.exploration = True
+
         self._reset()
 
     def _reset(self):
@@ -52,6 +56,9 @@ class OUNoise(ActionSelector):
         self, policy: nn.Module, state: np.ndarray, device: torch.device
     ) -> Tuple[np.ndarray, ...]:
         action = self.action_selector(policy, state, device)
+        if not self.exploration:
+            return action
+
         ou_state = self.evolve_state()
         self.sigma = self.max_sigma - (self.max_sigma - self.min_sigma) * min(
             1.0, t / self.decay_period

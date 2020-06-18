@@ -55,6 +55,8 @@ class DDPGLearner(Learner):
         # Compute new priorities and correct importance sampling bias
         if self.use_per:
             critic_loss = (critic_loss_element_wise * weights).mean()
+        else:
+            critic_loss = critic_loss_element_wise.mean()
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
