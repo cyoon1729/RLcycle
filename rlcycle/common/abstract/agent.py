@@ -6,6 +6,7 @@ import torch
 from omegaconf import DictConfig
 
 from rlcycle.common.abstract.learner import Learner
+from rlcycle.common.utils.common_utils import np2tensor
 
 # from rlcycle.common.utils.logger import Logger
 
@@ -52,12 +53,20 @@ class Agent(ABC):
         pass
 
     def _preprocess_experience(self, experience: Tuple[np.ndarray]):
-        states, actions, rewards, next_states, dones, indices, weights = experience
+        states, actions, rewards, next_states, dones = experience[:5]
+        if self.hyper_params.use_per:
+            indices, weights = experience[-2:]
 
         states = np2tensor(states, self.device)
         actions = np2tensor(actions.reshape(-1, 1), self.device)
         rewards = np2tensor(rewards.reshape(-1, 1), self.device)
         next_states = np2tensor(next_states, self.device)
         dones = np2tensor(dones.reshape(-1, 1), self.device)
-        weights = np2tensor(weights.reshape(-1, 1), self.device)
-        return states, actions.long(), rewards, next_states, dones, indices, weights
+
+        experience = (states, actions.long(), rewards, next_states, dones)
+
+        if self.hyper_params.use_per:
+            weights = np2tensor(weights.reshape(-1, 1), self.device)
+            experience = experience + (indices, weights,)
+
+        return experience

@@ -162,14 +162,3 @@ class DQNBaseAgent(Agent):
         )
         print("====TEST END====")
         self.action_selector.exploration = True
-
-    def _preprocess_experience(self, experience: Tuple[np.ndarray]):
-        states, actions, rewards, next_states, dones, indices, weights = experience
-
-        states = np2tensor(states, self.device)
-        actions = np2tensor(actions.reshape(-1, 1), self.device)
-        rewards = np2tensor(rewards.reshape(-1, 1), self.device)
-        next_states = np2tensor(next_states, self.device)
-        dones = np2tensor(dones.reshape(-1, 1), self.device)
-        weights = np2tensor(weights.reshape(-1, 1), self.device)
-        return states, actions.long(), rewards, next_states, dones, indices, weights
