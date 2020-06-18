@@ -5,14 +5,16 @@ https://github.com/openai/baselines/blob/master/baselines/deepq/replay_buffer.py
 import random
 
 import numpy as np
+from omegaconf import DictConfig
 
 from rlcycle.common.abstract.buffer import ReplayBufferBase
 
 
 class ReplayBuffer(ReplayBufferBase):
-    def __init__(self, size):
+    def __init__(self, hyper_params: DictConfig):
+        self.hyper_params
         self._storage = []
-        self._maxsize = size
+        self._maxsize = self.hyper_params.replay_buffer_size
         self._next_idx = 0
 
     def __len__(self):
@@ -45,6 +47,9 @@ class ReplayBuffer(ReplayBufferBase):
             np.array(dones),
         )
 
-    def sample(self, batch_size):
-        idxes = [random.randint(0, len(self._storage) - 1) for _ in range(batch_size)]
+    def sample(self):
+        idxes = [
+            random.randint(0, len(self._storage) - 1)
+            for _ in range(self.hyper_params.batch_size)
+        ]
         return self._encode_sample(idxes)
