@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Tuple
-
+from omegaconf import DictConfig
 import numpy as np
 
 
@@ -22,8 +22,9 @@ class ReplayBufferBase(ABC):
 
 
 class ReplayBufferWrapper(ReplayBufferBase):
-    def __init__(self, replay_buffer: ReplayBufferBase):
+    def __init__(self, replay_buffer: ReplayBufferBase, hyper_params: DictConfig):
         self.replay_buffer = replay_buffer
+        self.hyper_params = hyper_params
 
     def add(
         self,
