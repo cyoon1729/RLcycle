@@ -52,10 +52,10 @@ class EpsGreedy(ActionSelector):
     def __call__(
         self, policy: nn.Module, state: np.ndarray, explore: bool = True
     ) -> np.ndarray:
-        if self.eps > np.random.uniform(0, 1) and explore:
+        if self.eps > np.random.random() and explore:
             return self.action_space.sample()
         return self.action_selector(policy, state)
 
     def decay_epsilon(self):
-        eps = self.eps * self.eps_decay
-        self.eps = min(eps, self.eps_final)
+        eps = self.eps - self.eps_decay
+        self.eps = max(eps, self.eps_final)

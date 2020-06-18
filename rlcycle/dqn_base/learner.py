@@ -51,6 +51,8 @@ class DQNLearner(Learner):
         # Compute new priorities and correct importance sampling bias
         if self.use_per:
             q_loss = (q_loss_element_wise * weights).mean()
+        else:
+            q_loss = q_loss_element_wise.mean()
 
         dqn_reg = torch.norm(q_loss, 2).mean() * self.hyper_params.q_reg_coeff
         loss = q_loss + dqn_reg

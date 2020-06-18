@@ -55,10 +55,10 @@ class DQNBaseAgent(Agent):
         )
 
         # Build replay buffer, wrap with PER buffer if using it
-        self.replay_buffer = ReplayBuffer(self.hyper_params.replay_buffer_size)
+        self.replay_buffer = ReplayBuffer(self.hyper_params)
         if self.hyper_params.use_per:
             self.replay_buffer = PrioritizedReplayBuffer(
-                self.replay_buffer, self.experiment_info, self.hyper_params
+                self.replay_buffer, self.hyper_params
             )
 
         # Build action selector, wrap with e-greedy exploration
@@ -82,9 +82,9 @@ class DQNBaseAgent(Agent):
 
     def train(self):
         """Main training loop"""
+        step = 0
         for episode_i in range(self.experiment_info.total_num_episodes):
             state = self.env.reset()
-            episode_step = 0
             episode_reward = 0
             done = False
 
@@ -94,8 +94,8 @@ class DQNBaseAgent(Agent):
 
                 action = self.action_selector(self.learner.network, state)
                 state, action, reward, next_state, done = self.step(state, action)
-                episode_step = episode_step + 1
                 episode_reward = episode_reward + reward
+                step = step + 1
 
                 if self.use_n_step:
                     transition = [state, action, reward, next_state, done]
@@ -107,7 +107,7 @@ class DQNBaseAgent(Agent):
                     self.replay_buffer.add(state, action, reward, next_state, done)
 
                 if len(self.replay_buffer) >= self.hyper_params.update_starting_point:
-                    if episode_step % self.hyper_params.train_freq == 0:
+                    if step % self.hyper_params.train_freq == 0:
                         experience = self.replay_buffer.sample()
                         info = self.learner.update_model(
                             self._preprocess_experience(experience)
@@ -125,7 +125,7 @@ class DQNBaseAgent(Agent):
                         self.action_selector.decay_epsilon()
 
             print(
-                f"[TRAIN] episode num: {episode_i} | update step: {self.update_step} | episode reward: {episode_reward}"
+                f"[TRAIN] episode num: {episode_i} | update step: {self.update_step} | episode reward: {episode_reward} | epsilon: {self.action_selector.eps}"
             )
 
             if episode_i % self.experiment_info.test_interval == 0:
