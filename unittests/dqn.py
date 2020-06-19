@@ -197,7 +197,7 @@ def mini_batch_train(env, agent, max_episodes, max_steps, batch_size):
 
     return episode_rewards
 
-env_id = "CartPole-v0"
+env_id = "LunarLander-v2"
 MAX_EPISODES = 1000
 MAX_STEPS = 500
 BATCH_SIZE = 32
