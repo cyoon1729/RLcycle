@@ -42,17 +42,23 @@ class DQNLearner(Learner):
         # Separate indices and weights from experience if using PER
         if self.use_per:
             indices, weights = experience[-2:]
-            experience = experience[0:-2]
+            experience = experience[:-2]
 
-        q_loss_element_wise = self.loss_fn(
-            (self.network, self.target_network), experience, self.hyper_params,
-        )
+        # q_loss_element_wise = self.loss_fn(
+        #     (self.network, self.target_network), experience, self.hyper_params,
+        # )
+        states, actions, rewards, next_states, dones = experience
+        q_value = self.network.forward(states).gather(1, actions)
+        next_q = torch.max(self.target_network.forward(next_states), 1)[0].view(-1, 1)
+        target_q = rewards + self.hyper_params.gamma * next_q
+
+        q_loss_element_wise = torch.nn.functional.smooth_l1_loss(q_value, target_q.detach(), reduction="none")
 
         # Compute new priorities and correct importance sampling bias
         if self.use_per:
-            q_loss = (q_loss_element_wise * weights).mean()
+            q_loss = torch.mean((q_loss_element_wise * weights))
         else:
-            q_loss = q_loss_element_wise.mean()
+            q_loss = torch.mean(q_loss_element_wise)
 
         dqn_reg = torch.norm(q_loss, 2).mean() * self.hyper_params.q_reg_coeff
         loss = q_loss + dqn_reg
@@ -64,7 +70,7 @@ class DQNLearner(Learner):
 
         soft_update(self.network, self.target_network, self.hyper_params.tau)
 
-        info = (loss,)
+        info = (q_loss,)
         if self.use_per:
             new_priorities = torch.clamp(q_loss_element_wise.view(-1), min=1e-6)
             new_priorities = new_priorities.cpu().detach().numpy()

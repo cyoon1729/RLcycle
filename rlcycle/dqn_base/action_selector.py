@@ -52,7 +52,7 @@ class EpsGreedy(ActionSelector):
     def __call__(
         self, policy: nn.Module, state: np.ndarray, explore: bool = True
     ) -> np.ndarray:
-        if self.eps > np.random.random() and explore:
+        if self.eps > np.random.random():
             return self.action_space.sample()
         return self.action_selector(policy, state)
 

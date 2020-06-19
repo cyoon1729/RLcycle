@@ -1,5 +1,5 @@
 model:
-  class: common.modules.value.DuelingDQNModel
+  class: rlcycle.common.models.value.DuelingDQNModel
   params:
     model_cfg:
       state_dim: undefined
@@ -8,7 +8,7 @@ model:
       use_conv: True
       features:
         feature1:
-          class: common.modules.layers.Conv2DLayer
+          class: rlcycle.common.models.layers.Conv2DLayer
           params:
              input_size: 4
              output_size: 32
@@ -16,7 +16,7 @@ model:
              stride: 4
              activation_fn: relu
         feature2:
-          class: common.modules.layers.Conv2DLayer
+          class: rlcycle.common.models.layers.Conv2DLayer
           params:
              input_size: 32
              output_size: 64
@@ -24,7 +24,7 @@ model:
              stride: 2
              activation_fn: relu
         feature3:
-          class: common.modules.layers.Conv2DLayer
+          class: rlcycle.common.models.layers.Conv2DLayer
           params:
              input_size: 64
              output_size: 64
@@ -33,7 +33,7 @@ model:
              activation_fn: relu   
      
       linear_features:  # Using this only when not using cnn as backbone
-        class: common.modules.layers.LinearLayer
+        class: rlcycle.common.models.layers.LinearLayer
         params: 
           input_size: undefined
           output_size: 512
@@ -41,28 +41,28 @@ model:
 
       advantage:
         fc1:
-          class: common.modules.layers.LinearLayer
+          class: rlcycle.common.models.layers.LinearLayer
           params: 
             input_size: undefined
             output_size: 512
             post_activation_fn: relu
         fc2:
-          class: common.modules.layers.LinearLayer
+          class: rlcycle.common.models.layers.LinearLayer
           params: 
             input_size: 512
             output_size: undefined
-            post_activation_fn: relu
+            post_activation_fn: identity
 
       value:
         fc1:
-          class: common.modules.layers.LinearLayer
+          class: rlcycle.common.models.layers.LinearLayer
           params: 
             input_size: undefined
             output_size: 512
-            post_activation_fn: relu
+            post_activation_fn: identity
         fc2:
-          class: common.modules.layers.LinearLayer
+          class: rlcycle.common.models.layers.LinearLayer
           params: 
             input_size: 512
-            output_size: undefined
+            output_size: 1
             post_activation_fn: identity      
