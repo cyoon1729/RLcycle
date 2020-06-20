@@ -21,7 +21,7 @@ class DQNLoss(Loss):
 
         states, actions, rewards, next_states, dones = data
         q_value = dqn.forward(states).gather(1, actions)
-        next_q = torch.max(target_dqn.forward(next_states), 1)[0]
+        next_q = torch.max(target_dqn.forward(next_states), 1)[0].unsqueeze(1)
 
         n_step_gamma = hyper_params.gamma ** hyper_params.n_step
         target_q = rewards + (1 - dones) * n_step_gamma * next_q

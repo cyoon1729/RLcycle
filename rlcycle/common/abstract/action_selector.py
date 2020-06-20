@@ -11,6 +11,7 @@ class ActionSelector(ABC):
 
     def __init__(self, device: str):
         self.device = torch.device(device)
+        self.exploration = True
 
     @abstractmethod
     def __call__(self, policy: nn.Module, state: np.ndarray) -> Tuple[np.ndarray, ...]:

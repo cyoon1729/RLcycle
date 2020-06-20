@@ -6,7 +6,10 @@ import torch
 from omegaconf import DictConfig
 
 from rlcycle.common.abstract.learner import Learner
+from rlcycle.common.abstract.action_selector import ActionSelector
+from rlcycle.common.models.base import BaseModel
 from rlcycle.common.utils.common_utils import np2tensor
+from rlcycle.build import build_env
 
 # from rlcycle.common.utils.logger import Logger
 
@@ -34,6 +37,8 @@ class Agent(ABC):
         self.model_cfg = model_cfg
         self.device = torch.device(self.experiment_info.device)
 
+        self.env = build_env(self.experiment_info)
+
     @abstractmethod
     def _initialize(self):
         pass
@@ -52,6 +57,45 @@ class Agent(ABC):
     def test(self):
         pass
 
+    @abstractmethod
+    def get_policy(self) -> BaseModel:
+        pass
+
+    def test(self, action_selector: ActionSelector, episode_i: int, update_step: int):
+        """Test policy without random exploration a number of times
+        
+        Params:
+            step (int): step information, by episode number of model update step
+
+        """
+        print("====TEST START====")
+        policy = self.get_policy()
+        policy.eval()
+        action_selector.exploration = False
+        episode_rewards = []
+        for test_i in range(self.experiment_info.test_num):
+            state = self.env.reset()
+            episode_reward = 0
+            done = False
+            while not done:
+                self.env.render()
+                action = action_selector(policy, state)
+                state, action, reward, next_state, done = self.step(state, action)
+                episode_reward = episode_reward + reward
+                state = next_state
+
+            print(
+                f"episode num: {episode_i} | test: {test_i} episode reward: {episode_reward}"
+            )
+            episode_rewards.append(episode_reward)
+
+        action_selector.exploration = True
+        print(
+            f"EPISODE NUM: {episode_i} | UPDATE STEP: {update_step} |"
+            f"MEAN REWARD: {np.mean(episode_rewards)}"
+        )
+        print("====TEST END====")
+        
     def _preprocess_experience(self, experience: Tuple[np.ndarray]):
         states, actions, rewards, next_states, dones = experience[:5]
         if self.hyper_params.use_per:

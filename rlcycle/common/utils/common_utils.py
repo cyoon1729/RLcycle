@@ -13,13 +13,13 @@ def np2tensor(np_arr: np.ndarray, device: torch.device):
     return tensor_output
 
 
-def preprocess_nstep(self, nstepqueue: Deque) -> tuple:
+def preprocess_nstep(n_step_queue: Deque, gamma: float) -> tuple:
     """Return n-step transition data with discounted n-step rewards"""
     discounted_reward = 0
-    _, _, _, last_state, done = nstepqueue[-1]
-    for transition in list(reversed(nstepqueue)):
+    _, _, _, last_state, done = n_step_queue[-1]
+    for transition in list(reversed(n_step_queue)):
         state, action, reward, _, _ = transition
-        discounted_reward = reward + self.gamma * discounted_reward
+        discounted_reward = reward + gamma * discounted_reward
 
     return state, action, discounted_reward, last_state, done
 

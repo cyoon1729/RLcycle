@@ -5,11 +5,9 @@ import hydra
 import numpy as np
 from omegaconf import DictConfig
 
-from rlcycle.build import (build_action_selector, build_env, build_learner,
-                           build_loss)
+from rlcycle.build import build_action_selector, build_learner, build_loss
 from rlcycle.common.abstract.agent import Agent
-from rlcycle.common.buffer.prioritized_replay_buffer import \
-    PrioritizedReplayBuffer
+from rlcycle.common.buffer.prioritized_replay_buffer import PrioritizedReplayBuffer
 from rlcycle.common.buffer.replay_buffer import ReplayBuffer
 from rlcycle.common.utils.common_utils import np2tensor, preprocess_nstep
 from rlcycle.dqn_base.action_selector import EpsGreedy
@@ -44,8 +42,7 @@ class DQNBaseAgent(Agent):
 
     def _initialize(self):
         """Initialize agent components"""
-        # Build env and env specific model params
-        self.env = build_env(self.experiment_info)
+        # set env specific model params
         self.model_cfg.params.model_cfg.state_dim = self.env.observation_space.shape
         self.model_cfg.params.model_cfg.action_dim = self.env.action_space.n
 
@@ -100,8 +97,10 @@ class DQNBaseAgent(Agent):
                 if self.use_n_step:
                     transition = [state, action, reward, next_state, done]
                     self.transition_queue.append(transition)
-                    if len(self.transition_queue) > self.hyper_params.n_step:
-                        n_step_transition = preprocess_n_step(self.transition_queue)
+                    if len(self.transition_queue) == self.hyper_params.n_step:
+                        n_step_transition = preprocess_nstep(
+                            self.transition_queue, self.hyper_params.gamma
+                        )
                         self.replay_buffer.add(*n_step_transition)
                 else:
                     self.replay_buffer.add(state, action, reward, next_state, done)
@@ -123,6 +122,8 @@ class DQNBaseAgent(Agent):
                             q_loss = info
 
                         self.action_selector.decay_epsilon()
+                
+                state = next_state
 
             print(
                 f"[TRAIN] episode num: {episode_i} | update step: {self.update_step} |"
@@ -130,37 +131,8 @@ class DQNBaseAgent(Agent):
             )
 
             if episode_i % self.experiment_info.test_interval == 0:
-                self.test(episode_i)
+                self.test(self.action_selector, episode_i, self.update_step)
                 # self.learner.save_params()
 
-    def test(self, episode_i: int):
-        """Test policy without random exploration a number of times
-        
-        Params:
-            step (int): step information, by episode number of model update step
-
-        """
-        print("====TEST START====")
-        self.action_selector.exploration = False
-        episode_rewards = []
-        for test_i in range(self.experiment_info.test_num):
-            state = self.env.reset()
-            episode_reward = 0
-            done = False
-            while not done:
-                self.env.render()
-                action = self.action_selector(self.learner.network, state)
-                state, action, reward, next_state, done = self.step(state, action)
-                episode_reward = episode_reward + reward
-
-            print(
-                f"episode num: {episode_i} | test: {test_i} episode reward: {episode_reward}"
-            )
-            episode_rewards.append(episode_reward)
-
-        print(
-            f"EPISODE NUM: {episode_i} | UPDATE STEP: {self.update_step} |"
-            f"MEAN REWARD: {np.mean(episode_rewards)}"
-        )
-        print("====TEST END====")
-        self.action_selector.exploration = True
+    def get_policy(self):
+        return self.learner.network

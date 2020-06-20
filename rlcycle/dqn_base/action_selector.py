@@ -41,6 +41,7 @@ class EpsGreedy(ActionSelector):
         action_space: spaces.Discrete,
         hyper_params: DictConfig,
     ):
+        ActionSelector.__init__(self, action_selector.device)
         self.action_selector = action_selector
         self.action_space = action_space
         self.eps = hyper_params.eps
@@ -50,9 +51,8 @@ class EpsGreedy(ActionSelector):
         ) / hyper_params.max_exploration_frame
 
     def __call__(
-        self, policy: nn.Module, state: np.ndarray, explore: bool = True
-    ) -> np.ndarray:
-        if self.eps > np.random.random():
+        self, policy: nn.Module, state: np.ndarray) -> np.ndarray:
+        if self.eps > np.random.random() and self.exploration:
             return self.action_space.sample()
         return self.action_selector(policy, state)
 
