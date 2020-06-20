@@ -44,6 +44,7 @@ class DuelingDQNModel(BaseModel):
     """Dueling DQN model initializable with hydra configs"""
 
     def __init__(self, model_cfg: DictConfig):
+        print(model_cfg.pretty())
         BaseModel.__init__(self, model_cfg)
 
         # initialize feature layer and fc inputs if not using cnn
@@ -53,7 +54,6 @@ class DuelingDQNModel(BaseModel):
             self.model_cfg.advantage.fc1.params.input_size = (
                 self.model_cfg.value.fc1.params.input_size
             ) = self.model_cfg.linear_features.params.output_size
-
 
         # set input sizes of fc input layer if using cnn
         if self.model_cfg.use_conv:

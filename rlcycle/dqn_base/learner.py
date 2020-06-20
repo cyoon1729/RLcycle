@@ -44,15 +44,9 @@ class DQNLearner(Learner):
             indices, weights = experience[-2:]
             experience = experience[:-2]
 
-        # q_loss_element_wise = self.loss_fn(
-        #     (self.network, self.target_network), experience, self.hyper_params,
-        # )
-        states, actions, rewards, next_states, dones = experience
-        q_value = self.network.forward(states).gather(1, actions)
-        next_q = torch.max(self.target_network.forward(next_states), 1)[0].view(-1, 1)
-        target_q = rewards + self.hyper_params.gamma * next_q
-
-        q_loss_element_wise = torch.nn.functional.smooth_l1_loss(q_value, target_q.detach(), reduction="none")
+        q_loss_element_wise = self.loss_fn(
+            (self.network, self.target_network), experience, self.hyper_params,
+        )
 
         # Compute new priorities and correct importance sampling bias
         if self.use_per:

@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Tuple
-from omegaconf import DictConfig
+
 import numpy as np
+from omegaconf import DictConfig
 
 
 class ReplayBufferBase(ABC):
