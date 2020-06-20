@@ -1,6 +1,6 @@
-from rlcycle.common.utils.env_wrappers import *
 import gym
 from omegaconf import DictConfig
+from rlcycle.common.utils.env_wrappers import *
 
 
 def generate_atari_env(env_info: DictConfig):

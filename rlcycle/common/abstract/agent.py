@@ -4,12 +4,11 @@ from typing import Tuple, Type
 import numpy as np
 import torch
 from omegaconf import DictConfig
-
-from rlcycle.common.abstract.learner import Learner
+from rlcycle.build import build_env
 from rlcycle.common.abstract.action_selector import ActionSelector
+from rlcycle.common.abstract.learner import Learner
 from rlcycle.common.models.base import BaseModel
 from rlcycle.common.utils.common_utils import np2tensor
-from rlcycle.build import build_env
 
 # from rlcycle.common.utils.logger import Logger
 
@@ -95,7 +94,7 @@ class Agent(ABC):
             f"MEAN REWARD: {np.mean(episode_rewards)}"
         )
         print("====TEST END====")
-        
+
     def _preprocess_experience(self, experience: Tuple[np.ndarray]):
         states, actions, rewards, next_states, dones = experience[:5]
         if self.hyper_params.use_per:

@@ -5,7 +5,6 @@ import torch
 import torch.nn as nn
 from gym import spaces
 from omegaconf import DictConfig
-
 from rlcycle.common.abstract.action_selector import ActionSelector
 from rlcycle.common.utils.common_utils import np2tensor
 
@@ -50,8 +49,7 @@ class EpsGreedy(ActionSelector):
             self.eps - self.eps_final
         ) / hyper_params.max_exploration_frame
 
-    def __call__(
-        self, policy: nn.Module, state: np.ndarray) -> np.ndarray:
+    def __call__(self, policy: nn.Module, state: np.ndarray) -> np.ndarray:
         if self.eps > np.random.random() and self.exploration:
             return self.action_space.sample()
         return self.action_selector(policy, state)

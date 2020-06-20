@@ -4,10 +4,10 @@ from typing import Callable, Tuple
 import hydra
 import numpy as np
 from omegaconf import DictConfig
-
 from rlcycle.build import build_action_selector, build_learner, build_loss
 from rlcycle.common.abstract.agent import Agent
-from rlcycle.common.buffer.prioritized_replay_buffer import PrioritizedReplayBuffer
+from rlcycle.common.buffer.prioritized_replay_buffer import \
+    PrioritizedReplayBuffer
 from rlcycle.common.buffer.replay_buffer import ReplayBuffer
 from rlcycle.common.utils.common_utils import np2tensor, preprocess_nstep
 from rlcycle.dqn_base.action_selector import EpsGreedy
@@ -122,7 +122,7 @@ class DQNBaseAgent(Agent):
                             q_loss = info
 
                         self.action_selector.decay_epsilon()
-                
+
                 state = next_state
 
             print(

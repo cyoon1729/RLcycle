@@ -4,7 +4,6 @@ import gym
 import hydra
 import torch
 from omegaconf import DictConfig
-
 from rlcycle.common.abstract.loss import Loss
 from rlcycle.common.utils.env_wrappers import generate_atari_env, generate_env
 
@@ -54,8 +53,8 @@ def build_action_selector(experiment_info: DictConfig):
     return action_selector
 
 
-def build_loss(experiment_info: DictConfig) -> Loss:
+def build_loss(loss_type: str) -> Loss:
     loss_cfg = DictConfig(dict())
-    loss_cfg["class"] = experiment_info.loss
+    loss_cfg["class"] = loss_type
     loss_fn = hydra.utils.instantiate(loss_cfg)
     return loss_fn

@@ -2,7 +2,6 @@ import hydra
 import torch
 import torch.nn as nn
 from omegaconf import DictConfig
-
 from rlcycle.common.models.base import BaseModel
 
 
@@ -67,7 +66,7 @@ class GaussianPolicy(BaseModel):
             mu_stream.append(hydra.utils.instantiate(layer_info))
         self.log_sigma_stream = nn.Sequential(*log_sigma_stream)
 
-    def forward(self, state: torch.Tensor):
+    def forward(self, state: torch.Tensor) -> Tuple[torch.Tensor]:
         x = self.features.forward(state)
         x = x.view(x.size(0), -1)
         x = self.fc_input.forward(state)
@@ -79,7 +78,7 @@ class GaussianPolicy(BaseModel):
 
         return mean, log_sigma
 
-    def sample(self, state, epsilon=1e-6):
+    def sample(self, state: torch.Tensor, epsilon=1e-6) -> Tuple[torch.Tensor]:
         mu, log_sigma = self.forward(state)
         sigma = log_sigma.exp()
         normal = Normal(mu, sigma)

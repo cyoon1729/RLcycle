@@ -3,11 +3,10 @@ from typing import Tuple
 import torch
 import torch.optim as optim
 from omegaconf import DictConfig
-from torch.nn.utils import clip_grad_norm_
-
 from rlcycle.build import build_loss, build_model
 from rlcycle.common.abstract.learner import Learner
 from rlcycle.common.utils.common_utils import hard_update, soft_update
+from torch.nn.utils import clip_grad_norm_
 
 
 class DQNLearner(Learner):
@@ -33,7 +32,7 @@ class DQNLearner(Learner):
             self.network.parameters(), lr=self.hyper_params.learning_rate
         )
 
-        self.loss_fn = build_loss(self.experiment_info)
+        self.loss_fn = build_loss(self.experiment_info.loss)
 
     def update_model(
         self, experience: Tuple[torch.Tensor, ...]
