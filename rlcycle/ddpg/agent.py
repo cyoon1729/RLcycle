@@ -4,7 +4,6 @@ from typing import Callable, Tuple
 import hydra
 import numpy as np
 from omegaconf import DictConfig
-
 from rlcycle.build import (build_action_selector, build_env, build_learner,
                            build_loss)
 from rlcycle.common.abstract.agent import Agent

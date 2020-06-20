@@ -3,11 +3,10 @@ from typing import Tuple
 import torch
 import torch.optim as optim
 from omegaconf import DictConfig
-from torch.nn.utils import clip_grad_norm_
-
 from rlcycle.build import build_loss, build_model
 from rlcycle.common.abstract.learner import Learner
 from rlcycle.common.utils.common_utils import hard_update, soft_update
+from torch.nn.utils import clip_grad_norm_
 
 
 class DDPGLearner(Learner):
@@ -64,7 +63,7 @@ class DDPGLearner(Learner):
         self.critic_optimizer.step()
 
         self.actor_optimizer.zero_grad()
-        loss.backward()
+        policy_loss.backward()
         clip_grad_norm_(self.actor.parameters(), self.hyper_params.gradient_clip)
         self.actor_optimizer.step()
 
