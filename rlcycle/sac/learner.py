@@ -3,14 +3,15 @@ from typing import Tuple
 import torch
 import torch.optim as optim
 from omegaconf import DictConfig
-from torch.nn.utils import clip_grad_norm_
-
 from rlcycle.build import build_loss, build_model
 from rlcycle.common.abstract.learner import Learner
 from rlcycle.common.utils.common_utils import hard_update, soft_update
+from torch.nn.utils import clip_grad_norm_
 
 
 class SACLearner(Learner):
+    """Learner object for Soft Actor Critic algorithm"""
+
     def __init__(
         self,
         experiment_info: DictConfig,
@@ -24,27 +25,39 @@ class SACLearner(Learner):
         self._initialize()
 
     def _initialize(self):
-        """initialize networks, optimizer, loss function"""
+        """initialize networks, optimizer, loss function, alpha (entropy temperature)"""
+        # Initialize critic and related
         self.critic1 = build_model(self.model_cfg.critic, self.device)
         self.target_critic1 = build_model(self.model_cfg.critic, self.device)
         self.critic2 = build_model(self.model_cfg.critic, self.device)
         self.target_critic2 = build_model(self.model_cfg.critic, self.device)
-        hard_update(self.critic1, self.target_critic1)
-        hard_update(self.critic2, self.target_critic2)
-
-        self.policy = build_model(self.model_cfg.actor, self.device)
-
         self.critic1_optimizer = optim.Adam(
             self.critic1.parameters(), lr=self.hyper_params.critic_learning_rate
         )
         self.critic2_optimizer = optim.Adam(
             self.critic2.parameters(), lr=self.hyper_params.critic_learning_rate
         )
-        self.policy_optimizer = optim.Adam(
-            self.policy.parameters(), lr=self.hyper_params.policy_learning_rate
-        )
+        self.critic_loss_fn = build_loss(self.experiment_info.critic_loss)
 
-        self.critic_loss_fn = build_loss(self.experiment_info)
+        hard_update(self.critic1, self.target_critic1)
+        hard_update(self.critic2, self.target_critic2)
+
+        # Initialize actor and related
+        self.actor = build_model(self.model_cfg.actor, self.device)
+        self.actor_optimizer = optim.Adam(
+            self.actor.parameters(), lr=self.hyper_params.policy_learning_rate
+        )
+        self.actor_loss_fn = build_loss(self.experiment_info.actor_loss)
+
+        # entropy temperature
+        self.alpha = self.hyper_params.alpha
+        self.target_entropy = -torch.prod(
+            torch.Tensor(self.experiment_info.env.action_space.shape).to(self.device)
+        ).item()
+        self.log_alpha = torch.zeros(1, requires_grad=True, device=self.device)
+        self.alpha_optim = optim.Adam(
+            [self.log_alpha], lr=self.hyper_params.alpha_learning_rate
+        )
 
     def update_model(
         self, experience: Tuple[torch.Tensor, ...]
@@ -53,8 +66,16 @@ class SACLearner(Learner):
             indices, weights = experience[-2:]
             experience = experience[0:-2]
 
+        # Compute value loss
         critic1_loss_element_wise, critic2_loss_element_wise = self.critic_loss_fn(
-            (self.critic, self.target_critic, self.policy),
+            (
+                self.critic1,
+                self.target_critic1,
+                self.critic2,
+                self.target_critic2,
+                self.actor,
+            ),
+            self.alpha,
             experience,
             self.hyper_params,
         )
@@ -66,26 +87,42 @@ class SACLearner(Learner):
             critic1_loss = critic1_loss_element_wise.mean()
             critic2_loss = critic2_loss_element_wise.mean()
 
-        # update critic networks
+        # Update critics
         self.critic1_optimizer.zero_grad()
         critic1_loss.backward()
+        clip_grad_norm_(
+            self.critic1.parameters(), self.hyper_params.critic_gradient_clip
+        )
         self.critic1_optimizer.step()
 
         self.critic2_optimizer.zero_grad()
         critic2_loss.backward()
-        self.critic2_optimizer.step()
-
-        # delayed update for policy network and target q networks
-        _, _, new_zs, log_pi = self.policy_net.sample(states)
-        new_actions = torch.tanh(new_zs)
-        min_q = torch.min(
-            self.q_net1.forward(states, new_actions),
-            self.q_net2.forward(states, new_actions),
+        clip_grad_norm_(
+            self.critic2.parameters(), self.hyper_params.critic_gradient_clip
         )
-        policy_loss = (self.alpha * log_pi - min_q).mean()
-        self.policy_optimizer.zero_grad()
-        policy_loss.backward()
-        self.policy_optimizer.step()
+        self.critic2_optimizer.step()
 
         soft_update(self.critic1, self.target_critic1, self.hyper_params.tau)
         soft_update(self.critic2, self.target_critic2, self.hyper_params.tau)
+
+        # Compute policy loss
+        policy_loss = self.policy_loss_fn(
+            (self.critic1, self.critic2, self.actor),
+            self.alpha,
+            experience,
+            self.hyper_params,
+        )
+
+        # Update actor
+        self.actor_optimizer.zero_grad()
+        policy_loss.backward()
+        clip_grad_norm_(self.actor.parameters(), self.hyper_params.actor_gradient_clip)
+        self.actor_optimizer.step()
+
+        # Update alpha
+        alpha_loss = (self.log_alpha * (-log_pi - self.target_entropy).detach()).mean()
+
+        self.alpha_optim.zero_grad()
+        alpha_loss.backward()
+        self.alpha_optim.step()
+        self.alpha = self.log_alpha.exp()
