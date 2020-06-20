@@ -1,4 +1,4 @@
 defaults:
   - experiment_info: dqn_atari
   - hyper_params: dqn_hp
-  - model: dqn
+  - model: duelingdqn
