@@ -125,7 +125,8 @@ class DQNBaseAgent(Agent):
                         self.action_selector.decay_epsilon()
 
             print(
-                f"[TRAIN] episode num: {episode_i} | update step: {self.update_step} | episode reward: {episode_reward} | epsilon: {self.action_selector.eps}"
+                f"[TRAIN] episode num: {episode_i} | update step: {self.update_step} |"
+                f"episode reward: {episode_reward} | epsilon: {self.action_selector.eps}"
             )
 
             if episode_i % self.experiment_info.test_interval == 0:
@@ -153,12 +154,13 @@ class DQNBaseAgent(Agent):
                 episode_reward = episode_reward + reward
 
             print(
-                f"episode num: {episode_i} | test: {test_i} \tepisode reward: {episode_reward}"
+                f"episode num: {episode_i} | test: {test_i} episode reward: {episode_reward}"
             )
             episode_rewards.append(episode_reward)
 
         print(
-            f"EPISODE NUM: {episode_i} | UPDATE STEP: {self.update_step} | MEAN REWARD: {np.mean(episode_rewards)}"
+            f"EPISODE NUM: {episode_i} | UPDATE STEP: {self.update_step} |"
+            f"MEAN REWARD: {np.mean(episode_rewards)}"
         )
         print("====TEST END====")
         self.action_selector.exploration = True
