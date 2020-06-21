@@ -4,6 +4,8 @@ from typing import Tuple
 import torch
 from omegaconf import DictConfig
 
+from rlcycle.common.models.base import BaseModel
+
 
 class LearnerBase(ABC):
     """Abstract class for Learner"""
@@ -12,6 +14,10 @@ class LearnerBase(ABC):
     def update_model(
         self, experience: Tuple[torch.Tensor, ...]
     ) -> Tuple[torch.Tensor, ...]:
+        pass
+
+    @abstractmethod
+    def get_policy(self, target_device: torch.device) -> BaseModel:
         pass
 
 
@@ -39,6 +45,10 @@ class Learner(LearnerBase):
     ) -> Tuple[torch.Tensor, ...]:
         pass
 
+    @abstractmethod
+    def get_policy(self, target_device: torch.device) -> BaseModel:
+        pass
+
 
 class LearnerWrapper(LearnerBase):
     """AbstractClass for Learner Wrappers"""
@@ -46,8 +56,10 @@ class LearnerWrapper(LearnerBase):
     def __init__(self, learner: Learner):
         self.learner = learner
 
-    @abstractmethod
     def update_model(
         self, experience: Tuple[torch.Tensor, ...]
     ) -> Tuple[torch.Tensor, ...]:
-        pass
+        return self.learner.update_model(experience)
+
+    def get_policy(self, taraget_location: torch.device):
+        return self.learner.get_policy(target_device)

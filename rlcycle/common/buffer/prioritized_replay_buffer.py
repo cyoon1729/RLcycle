@@ -7,6 +7,7 @@ import random
 
 import numpy as np
 from omegaconf import DictConfig
+
 from rlcycle.common.abstract.buffer import ReplayBufferWrapper
 from rlcycle.common.buffer.replay_buffer import ReplayBuffer
 from rlcycle.common.buffer.segment_tree import MinSegmentTree, SumSegmentTree

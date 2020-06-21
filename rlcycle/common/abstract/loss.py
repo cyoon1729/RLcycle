@@ -1,19 +1,21 @@
 from abc import ABC, abstractmethod
-from typing import Any, Tuple, Union
+from typing import Tuple
 
 import numpy as np
+import torch
 import torch.nn as nn
-import torch.optim as optim
+from omegaconf import DictConfig
 
 
 class Loss(ABC):
     """Abstract class for callable loss functions"""
 
+    def __init__(self, hyper_params: DictConfig, device: torch.device):
+        self.hyper_params = hyper_params
+        self.device = device
+
     @abstractmethod
     def __call__(
-        self,
-        networks: Tuple[nn.Module, ...],
-        optimizers: Tuple[optim.Optimizer, ...],
-        data: Tuple[np.ndarray, ...],
-    ) -> Tuple[Any, ...]:
+        self, networks: Tuple[nn.Module, ...], data: Tuple[np.ndarray, ...],
+    ) -> Tuple[torch.Tensor, ...]:
         pass

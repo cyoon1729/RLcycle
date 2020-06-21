@@ -4,6 +4,7 @@ from typing import Callable, Tuple
 import hydra
 import numpy as np
 from omegaconf import DictConfig
+
 from rlcycle.build import build_action_selector, build_learner, build_loss
 from rlcycle.common.abstract.agent import Agent
 from rlcycle.common.buffer.prioritized_replay_buffer import \
@@ -86,7 +87,7 @@ class DQNBaseAgent(Agent):
             done = False
 
             while not done:
-                if self.experiment_info.render:
+                if self.experiment_info.train_render:
                     self.env.render()
 
                 action = self.action_selector(self.learner.network, state)
@@ -131,8 +132,8 @@ class DQNBaseAgent(Agent):
             )
 
             if episode_i % self.experiment_info.test_interval == 0:
-                self.test(self.action_selector, episode_i, self.update_step)
+                policy_copy = self.learner.get_policy(self.device)
+                self.test(
+                    policy_copy, self.action_selector, episode_i, self.update_step
+                )
                 # self.learner.save_params()
-
-    def get_policy(self):
-        return self.learner.network

@@ -4,6 +4,7 @@ from typing import Callable, Tuple
 import hydra
 import numpy as np
 from omegaconf import DictConfig
+
 from rlcycle.build import build_action_selector, build_learner, build_loss
 from rlcycle.common.abstract.agent import Agent
 from rlcycle.common.buffer.prioritized_replay_buffer import \
@@ -85,10 +86,10 @@ class SACAgent(Agent):
             done = False
 
             while not done:
-                if self.experiment_info.render:
+                if self.experiment_info.train_render:
                     self.env.render()
 
-                action = self.action_selector(self.learner.network, state)
+                action = self.action_selector(self.learner.actor, state)
                 state, action, reward, next_state, done = self.step(state, action)
                 episode_reward = episode_reward + reward
                 step = step + 1
@@ -97,28 +98,23 @@ class SACAgent(Agent):
                     transition = [state, action, reward, next_state, done]
                     self.transition_queue.append(transition)
                     if len(self.transition_queue) > self.hyper_params.n_step:
-                        n_step_transition = preprocess_n_step(self.transition_queue)
+                        n_step_transition = preprocess_nstep(self.transition_queue)
                         self.replay_buffer.add(*n_step_transition)
                 else:
                     self.replay_buffer.add(state, action, reward, next_state, done)
 
                 if len(self.replay_buffer) >= self.hyper_params.update_starting_point:
-                    if step % self.hyper_params.train_freq == 0:
-                        experience = self.replay_buffer.sample()
-                        info = self.learner.update_model(
-                            self._preprocess_experience(experience)
-                        )
-                        self.update_step = self.update_step + 1
+                    experience = self.replay_buffer.sample()
+                    info = self.learner.update_model(
+                        self._preprocess_experience(experience)
+                    )
+                    self.update_step = self.update_step + 1
 
-                        if self.hyper_params.use_per:
-                            q_loss, indices, new_priorities = info
-                            self.replay_buffer.update_priorities(
-                                indices, new_priorities
-                            )
-                        else:
-                            q_loss = info
-
-                        self.action_selector.decay_epsilon()
+                    if self.hyper_params.use_per:
+                        loss, indices, new_priorities = info
+                        self.replay_buffer.update_priorities(indices, new_priorities)
+                    else:
+                        loss = info
 
             print(
                 f"[TRAIN] episode num: {episode_i} | update step: {self.update_step} |"
@@ -126,5 +122,7 @@ class SACAgent(Agent):
             )
 
             if episode_i % self.experiment_info.test_interval == 0:
-                self.test(self.action_selector, episode_i, self.update_step)
+                self.test(
+                    policy_copy, self.action_selector, episode_i, self.update_step
+                )
                 # self.learner.save_params()

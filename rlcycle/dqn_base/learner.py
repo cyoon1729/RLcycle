@@ -1,12 +1,14 @@
+from copy import deepcopy
 from typing import Tuple
 
 import torch
 import torch.optim as optim
 from omegaconf import DictConfig
+from torch.nn.utils import clip_grad_norm_
+
 from rlcycle.build import build_loss, build_model
 from rlcycle.common.abstract.learner import Learner
 from rlcycle.common.utils.common_utils import hard_update, soft_update
-from torch.nn.utils import clip_grad_norm_
 
 
 class DQNLearner(Learner):
@@ -32,7 +34,9 @@ class DQNLearner(Learner):
             self.network.parameters(), lr=self.hyper_params.learning_rate
         )
 
-        self.loss_fn = build_loss(self.experiment_info.loss)
+        self.loss_fn = build_loss(
+            self.experiment_info.loss, self.hyper_params, self.device
+        )
 
     def update_model(
         self, experience: Tuple[torch.Tensor, ...]
@@ -44,7 +48,7 @@ class DQNLearner(Learner):
             experience = experience[:-2]
 
         q_loss_element_wise = self.loss_fn(
-            (self.network, self.target_network), experience, self.hyper_params,
+            (self.network, self.target_network), experience
         )
 
         # Compute new priorities and correct importance sampling bias
@@ -70,3 +74,8 @@ class DQNLearner(Learner):
             info = info + (indices, new_priorities,)
 
         return info
+
+    def get_policy(self, target_device: torch.device):
+        policy_copy = deepcopy(self.network)
+        policy_copy.to(target_device)
+        return policy_copy

@@ -1,12 +1,14 @@
+from copy import deepcopy
 from typing import Tuple
 
 import torch
 import torch.optim as optim
 from omegaconf import DictConfig
+from torch.nn.utils import clip_grad_norm_
+
 from rlcycle.build import build_loss, build_model
 from rlcycle.common.abstract.learner import Learner
 from rlcycle.common.utils.common_utils import hard_update, soft_update
-from torch.nn.utils import clip_grad_norm_
 
 
 class SACLearner(Learner):
@@ -37,7 +39,9 @@ class SACLearner(Learner):
         self.critic2_optimizer = optim.Adam(
             self.critic2.parameters(), lr=self.hyper_params.critic_learning_rate
         )
-        self.critic_loss_fn = build_loss(self.experiment_info.critic_loss)
+        self.critic_loss_fn = build_loss(
+            self.experiment_info.critic_loss, self.hyper_params, self.device
+        )
 
         hard_update(self.critic1, self.target_critic1)
         hard_update(self.critic2, self.target_critic2)
@@ -47,7 +51,9 @@ class SACLearner(Learner):
         self.actor_optimizer = optim.Adam(
             self.actor.parameters(), lr=self.hyper_params.policy_learning_rate
         )
-        self.actor_loss_fn = build_loss(self.experiment_info.actor_loss)
+        self.actor_loss_fn = build_loss(
+            self.experiment_info.actor_loss, self.hyper_params, self.device
+        )
 
         # entropy temperature
         self.alpha = self.hyper_params.alpha
@@ -126,3 +132,16 @@ class SACLearner(Learner):
         alpha_loss.backward()
         self.alpha_optim.step()
         self.alpha = self.log_alpha.exp()
+
+        info = (critic1_loss, critic2_loss, policy_loss, alpha_loss)
+        if self.use_per:
+            new_priorities = torch.clamp(q_loss_element_wise.view(-1), min=1e-6)
+            new_priorities = new_priorities.cpu().detach().numpy()
+            info = info + (indices, new_priorities,)
+
+        return info
+
+    def get_policy(self, target_device: torch.device):
+        policy_copy = deepcopy(self.actor)
+        policy_copy.to(target_device)
+        return policy_copy

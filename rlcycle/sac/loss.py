@@ -1,17 +1,21 @@
 import torch
 import torch.nn.functional as F
+from omegaconf import DictConfig
+
 from rlcycle.common.abstract.loss import Loss
 
 
 class CriticLoss(Loss):
     """SAC critic loss as described in Haarnoja et al., 2019"""
 
+    def __init__(self, hyper_params: DictConfig, device: torch.device):
+        Loss.__init__(self, hyper_params, device)
+
     def __call__(
         self,
         networks: Tuple[nn.Module, ...],
         alpha: torch.Tensor,
         data: Tuple[torch.Tensor, ...],
-        hyper_params: dict,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         critic1, target_critic1, critic2, target_critic2, actor = networks
 
@@ -26,7 +30,7 @@ class CriticLoss(Loss):
         next_q2 = target_critic2(next_states, next_actions)
         target_q = torch.min(next_q1, next_q2) - alpha * next_log_pi
 
-        n_step_gamma = hyper_params.gamma ** hyper_params.n_step
+        n_step_gamma = self.hyper_params.gamma ** self.hyper_params.n_step
         expected_q = rewards + (1 - dones) * n_step_gamma * target_q
 
         # q loss
@@ -43,12 +47,14 @@ class CriticLoss(Loss):
 class PolicyLoss(Loss):
     """SAC policy loss as described in Haarnoja et al., 2019"""
 
+    def __init__(self, hyper_params: DictConfig, device: torch.device):
+        Loss.__init__(self, hyper_params, device)
+
     def __call__(
         self,
         networks: Tuple[nn.Module, ...],
         alpha: torch.Tensor,
         data: Tuple[torch.Tensor, ...],
-        hyper_params: DictConfig,
     ) -> torch.Tensor:
         critic1, critic2, actor = networks
 

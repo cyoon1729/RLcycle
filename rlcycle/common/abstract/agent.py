@@ -4,6 +4,7 @@ from typing import Tuple, Type
 import numpy as np
 import torch
 from omegaconf import DictConfig
+
 from rlcycle.build import build_env
 from rlcycle.common.abstract.action_selector import ActionSelector
 from rlcycle.common.abstract.learner import Learner
@@ -52,15 +53,13 @@ class Agent(ABC):
     def train(self):
         pass
 
-    @abstractmethod
-    def test(self):
-        pass
-
-    @abstractmethod
-    def get_policy(self) -> BaseModel:
-        pass
-
-    def test(self, action_selector: ActionSelector, episode_i: int, update_step: int):
+    def test(
+        self,
+        policy: BaseModel,
+        action_selector: ActionSelector,
+        episode_i: int,
+        update_step: int,
+    ):
         """Test policy without random exploration a number of times
         
         Params:
@@ -68,7 +67,6 @@ class Agent(ABC):
 
         """
         print("====TEST START====")
-        policy = self.get_policy()
         policy.eval()
         action_selector.exploration = False
         episode_rewards = []
@@ -77,7 +75,8 @@ class Agent(ABC):
             episode_reward = 0
             done = False
             while not done:
-                self.env.render()
+                if self.experiment_info.train_render:
+                    self.env.render()
                 action = action_selector(policy, state)
                 state, action, reward, next_state, done = self.step(state, action)
                 episode_reward = episode_reward + reward
