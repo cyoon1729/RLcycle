@@ -1,0 +1,20 @@
+experiment_info:
+  # Main algorithm choices
+  agent: rlcycle.sac.agent.SACAgent
+  learner: rlcycle.sac.learner.SACLearner
+  critic_loss: rlcycle.sac.loss.CriticLoss
+  actor_loss: rlcycle.sac.loss.PolicyLoss
+  action_selector: rlcycle.sac.action_selector.SACActionSelector
+  device: cpu
+
+  # Environment info
+  env:
+    name: HalfCheetahPyBulletEnv-v0 
+    is_atari: False
+    is_bullet: True
+
+  # Experiment default arguments:
+  total_num_episodes: 3000
+  test_interval: 50  # Test every 50 episodes
+  test_num: 10  # Number of episodes to test during test phase
+  render: True  # Render all episode steps
