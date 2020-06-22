@@ -44,10 +44,8 @@ class SACAgent(Agent):
     def _initialize(self):
         """Initialize agent components"""
         # Build env and env specific model params
-        self.experiment_info.env.state_space = self.env.state_space
-        self.experiment_info.env.action_space = self.env.action_space
-        self.model_cfg.params.model_cfg.state_dim = self.env.observation_space.shape[0]
-        self.model_cfg.params.model_cfg.action_dim = self.env.action_space.shape[0]
+        self.experiment_info.env.state_dim = self.env.observation_space.shape[0]
+        self.experiment_info.env.action_dim = self.env.action_space.shape[0]
 
         # Build learner
         self.learner = build_learner(
@@ -97,8 +95,10 @@ class SACAgent(Agent):
                 if self.use_n_step:
                     transition = [state, action, reward, next_state, done]
                     self.transition_queue.append(transition)
-                    if len(self.transition_queue) > self.hyper_params.n_step:
-                        n_step_transition = preprocess_nstep(self.transition_queue)
+                    if len(self.transition_queue) == self.hyper_params.n_step:
+                        n_step_transition = preprocess_nstep(
+                            self.transition_queue, self.hyper_params.gamma
+                        )
                         self.replay_buffer.add(*n_step_transition)
                 else:
                     self.replay_buffer.add(state, action, reward, next_state, done)
@@ -111,7 +111,7 @@ class SACAgent(Agent):
                     self.update_step = self.update_step + 1
 
                     if self.hyper_params.use_per:
-                        loss, indices, new_priorities = info
+                        indices, new_priorities = info[-2:]
                         self.replay_buffer.update_priorities(indices, new_priorities)
                     else:
                         loss = info
@@ -122,7 +122,27 @@ class SACAgent(Agent):
             )
 
             if episode_i % self.experiment_info.test_interval == 0:
+                policy_copy = self.learner.get_policy(self.device)
                 self.test(
                     policy_copy, self.action_selector, episode_i, self.update_step
                 )
                 # self.learner.save_params()
+
+    def _preprocess_experience(self, experience: Tuple[np.ndarray]):
+        states, actions, rewards, next_states, dones = experience[:5]
+        if self.hyper_params.use_per:
+            indices, weights = experience[-2:]
+
+        states = np2tensor(states, self.device)
+        actions = np2tensor(actions, self.device)
+        rewards = np2tensor(rewards.reshape(-1, 1), self.device)
+        next_states = np2tensor(next_states, self.device)
+        dones = np2tensor(dones.reshape(-1, 1), self.device)
+
+        experience = (states, actions, rewards, next_states, dones)
+
+        if self.hyper_params.use_per:
+            weights = np2tensor(weights.reshape(-1, 1), self.device)
+            experience = experience + (indices, weights,)
+
+        return experience

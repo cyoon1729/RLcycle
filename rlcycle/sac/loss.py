@@ -1,4 +1,7 @@
+from typing import Tuple
+
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from omegaconf import DictConfig
 
@@ -16,6 +19,7 @@ class CriticLoss(Loss):
         networks: Tuple[nn.Module, ...],
         alpha: torch.Tensor,
         data: Tuple[torch.Tensor, ...],
+        hyper_params: DictConfig,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         critic1, target_critic1, critic2, target_critic2, actor = networks
 
@@ -35,10 +39,10 @@ class CriticLoss(Loss):
 
         # q loss
         element_wise_q1_loss = F.smooth_l1_loss(
-            curr_q1, expected_q.detach(), reduction="none"
+            q_value1, expected_q.detach(), reduction="none"
         )
         element_wise_q2_loss = F.smooth_l1_loss(
-            curr_q2, expected_q.detach(), reduction="none"
+            q_value2, expected_q.detach(), reduction="none"
         )
 
         return element_wise_q1_loss, element_wise_q2_loss
@@ -67,4 +71,4 @@ class PolicyLoss(Loss):
         )
         policy_loss = (alpha * log_pi - min_q).mean()
 
-        return policy_loss
+        return policy_loss, log_pi

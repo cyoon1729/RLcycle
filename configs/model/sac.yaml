@@ -1,12 +1,7 @@
 model:
-  state_dim: undefined
-  action_dim: undefined
 
-  log_std_min: -20
-  log_std_max: 2
-  
   critic:
-    class: rlcycle.common.models.value.Critic
+    class: rlcycle.common.models.critic.Critic
     params:
       model_cfg:
         fc:
@@ -52,7 +47,7 @@ model:
                 post_activation_fn: relu
           
           mu_stream:
-            layer1:
+            output:
               class: rlcycle.common.models.layers.LinearLayer
               params:
                 input_size: 256
@@ -61,10 +56,13 @@ model:
                 init_w: 0.003
           
           log_sigma_stream:
-            layer1:
+            output:
               class: rlcycle.common.models.layers.LinearLayer
               params:
                 input_size: 256
-                output_size: identity
+                output_size: undefined
                 post_activation_fn: identity
                 init_w: 0.003
+        
+        log_std_min: -20
+        log_std_max: 2

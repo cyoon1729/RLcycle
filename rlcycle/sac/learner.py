@@ -28,6 +28,14 @@ class SACLearner(Learner):
 
     def _initialize(self):
         """initialize networks, optimizer, loss function, alpha (entropy temperature)"""
+        # Define state dim and action dim for actor and critic
+        self.model_cfg.critic.params.model_cfg.state_dim = (
+            self.model_cfg.actor.params.model_cfg.state_dim
+        ) = self.experiment_info.env.state_dim
+        self.model_cfg.critic.params.model_cfg.action_dim = (
+            self.model_cfg.actor.params.model_cfg.action_dim
+        ) = self.experiment_info.env.action_dim
+
         # Initialize critic and related
         self.critic1 = build_model(self.model_cfg.critic, self.device)
         self.target_critic1 = build_model(self.model_cfg.critic, self.device)
@@ -40,7 +48,9 @@ class SACLearner(Learner):
             self.critic2.parameters(), lr=self.hyper_params.critic_learning_rate
         )
         self.critic_loss_fn = build_loss(
-            self.experiment_info.critic_loss, self.hyper_params, self.device
+            self.experiment_info.critic_loss,
+            self.hyper_params,
+            self.experiment_info.device,
         )
 
         hard_update(self.critic1, self.target_critic1)
@@ -49,16 +59,18 @@ class SACLearner(Learner):
         # Initialize actor and related
         self.actor = build_model(self.model_cfg.actor, self.device)
         self.actor_optimizer = optim.Adam(
-            self.actor.parameters(), lr=self.hyper_params.policy_learning_rate
+            self.actor.parameters(), lr=self.hyper_params.actor_learning_rate
         )
         self.actor_loss_fn = build_loss(
-            self.experiment_info.actor_loss, self.hyper_params, self.device
+            self.experiment_info.actor_loss,
+            self.hyper_params,
+            self.experiment_info.device,
         )
 
         # entropy temperature
         self.alpha = self.hyper_params.alpha
         self.target_entropy = -torch.prod(
-            torch.Tensor(self.experiment_info.env.action_space.shape).to(self.device)
+            torch.Tensor(self.experiment_info.env.action_dim).to(self.device)
         ).item()
         self.log_alpha = torch.zeros(1, requires_grad=True, device=self.device)
         self.alpha_optim = optim.Adam(
@@ -111,17 +123,14 @@ class SACLearner(Learner):
         soft_update(self.critic1, self.target_critic1, self.hyper_params.tau)
         soft_update(self.critic2, self.target_critic2, self.hyper_params.tau)
 
-        # Compute policy loss
-        policy_loss = self.policy_loss_fn(
-            (self.critic1, self.critic2, self.actor),
-            self.alpha,
-            experience,
-            self.hyper_params,
+        # Compute actor (policy) loss
+        actor_loss, log_pi = self.actor_loss_fn(
+            (self.critic1, self.critic2, self.actor), self.alpha, experience,
         )
 
         # Update actor
         self.actor_optimizer.zero_grad()
-        policy_loss.backward()
+        actor_loss.backward()
         clip_grad_norm_(self.actor.parameters(), self.hyper_params.actor_gradient_clip)
         self.actor_optimizer.step()
 
@@ -133,9 +142,9 @@ class SACLearner(Learner):
         self.alpha_optim.step()
         self.alpha = self.log_alpha.exp()
 
-        info = (critic1_loss, critic2_loss, policy_loss, alpha_loss)
+        info = (critic1_loss, critic2_loss, actor_loss, alpha_loss)
         if self.use_per:
-            new_priorities = torch.clamp(q_loss_element_wise.view(-1), min=1e-6)
+            new_priorities = torch.clamp(critic1_loss_element_wise.view(-1), min=1e-6)
             new_priorities = new_priorities.cpu().detach().numpy()
             info = info + (indices, new_priorities,)
 

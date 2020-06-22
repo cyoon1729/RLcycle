@@ -11,15 +11,11 @@ class Critic(BaseModel):
 
     def __init__(self, model_cfg: DictConfig):
         BaseModel.__init__(self, model_cfg)
-
         # set input size of fc input layer, first hidden later
         self.model_cfg.fc.input.params.input_size = self.get_feature_size()
         self.model_cfg.fc.hidden.hidden1.params.input_size = (
             self.model_cfg.action_dim + self.model_cfg.fc.input.params.output_size
         )
-
-        # set output size of fc output layer
-        self.model_cfg.fc.output.params.output_size = self.model_cfg.action_dim
 
         # initialize input layer
         self.fc_input = hydra.utils.instantiate(self.model_cfg.fc.input)

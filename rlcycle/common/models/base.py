@@ -23,7 +23,17 @@ class BaseModel(nn.Module):
             self.features = nn.Identity(0)  # args aren't used in nn.Identity
 
     def get_feature_size(self):
-        feature_size = (
-            self.features(torch.zeros(1, *self.model_cfg.state_dim)).view(-1).size(0)
-        )
+        try:  # if state_dim is a tuple, like atari images
+            feature_size = (
+                self.features(torch.zeros(1, *self.model_cfg.state_dim))
+                .view(-1)
+                .size(0)
+            )
+        except TypeError:
+            assert (
+                type(self.model_cfg.state_dim) is int
+            ), "state_dim must be int or iterable"
+            feature_size = (
+                self.features(torch.zeros(1, self.model_cfg.state_dim)).view(-1).size(0)
+            )
         return feature_size

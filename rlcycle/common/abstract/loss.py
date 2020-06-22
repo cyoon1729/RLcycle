@@ -10,9 +10,9 @@ from omegaconf import DictConfig
 class Loss(ABC):
     """Abstract class for callable loss functions"""
 
-    def __init__(self, hyper_params: DictConfig, device: torch.device):
+    def __init__(self, hyper_params: DictConfig, device: str):
         self.hyper_params = hyper_params
-        self.device = device
+        self.device = torch.device(device)
 
     @abstractmethod
     def __call__(

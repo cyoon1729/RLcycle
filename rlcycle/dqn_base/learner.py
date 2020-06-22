@@ -35,7 +35,7 @@ class DQNLearner(Learner):
         )
 
         self.loss_fn = build_loss(
-            self.experiment_info.loss, self.hyper_params, self.device
+            self.experiment_info.loss, self.hyper_params, self.experiment_info.device
         )
 
     def update_model(

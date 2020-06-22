@@ -9,8 +9,8 @@ from rlcycle.common.utils.common_utils import np2tensor
 
 
 class SACActionSelector(ActionSelector):
-    def __init__(self, device: torch.device):
-        self.device = device
+    def __init__(self, device: str):
+        self.device = torch.device(device)
 
     def __call__(
         self, policy: nn.Module, state: np.ndarray

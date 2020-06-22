@@ -10,6 +10,7 @@ experiment_info:
   env:
     name: "PongNoFrameskip-v4"
     is_atari: True
+    is_discrete: True
     frame_stack: True
 
   # Experiment default arguments:

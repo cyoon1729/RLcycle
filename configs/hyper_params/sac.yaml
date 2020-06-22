@@ -18,4 +18,4 @@ hyper_params:
   q_reg_coeff: 0
   critic_gradient_clip: 10.0
   actor_gradient_clip: 10.0
-  alpha: undefined # dim(action_space)
+  alpha: 2.0
