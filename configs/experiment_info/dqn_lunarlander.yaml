@@ -10,6 +10,7 @@ experiment_info:
   env:
     name: "LunarLander-v2"
     is_atari: False
+    is_discrete: True
     max_episode_steps: 300
 
   # Experiment default arguments:
