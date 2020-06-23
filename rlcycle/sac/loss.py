@@ -38,10 +38,10 @@ class CriticLoss(Loss):
         expected_q = rewards + (1 - dones) * n_step_gamma * target_q
 
         # q loss
-        element_wise_q1_loss = F.smooth_l1_loss(
+        element_wise_q1_loss = F.mse_loss(
             q_value1, expected_q.detach(), reduction="none"
         )
-        element_wise_q2_loss = F.smooth_l1_loss(
+        element_wise_q2_loss = F.mse_loss(
             q_value2, expected_q.detach(), reduction="none"
         )
 
@@ -66,10 +66,10 @@ class PolicyLoss(Loss):
 
         _, _, new_zs, log_pi = actor.sample(states)
         new_actions = torch.tanh(new_zs)
-        # min_q = torch.min(
-        #     critic1.forward(states, new_actions), critic2.forward(states, new_actions)
-        # )
+        min_q = torch.min(
+            critic1.forward(states, new_actions), critic2.forward(states, new_actions)
+        )
         q_value = critic1.forward(states, new_actions)
-        policy_loss = (alpha * log_pi - q_value).mean()
+        policy_loss = (alpha * log_pi - min_q).mean()
 
         return policy_loss, log_pi

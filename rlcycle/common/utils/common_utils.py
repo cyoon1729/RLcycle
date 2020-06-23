@@ -23,6 +23,7 @@ def preprocess_nstep(n_step_queue: Deque, gamma: float) -> tuple:
 
     return state, action, discounted_reward, last_state, done
 
+
 def soft_update(network: nn.Module, target_network: nn.Module, tau: float):
     """Update target network weights with polyak averaging"""
     for param, target_param in zip(network.parameters(), target_network.parameters()):

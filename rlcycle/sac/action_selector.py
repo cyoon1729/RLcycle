@@ -21,7 +21,10 @@ class SACActionSelector(ActionSelector):
         action = torch.tanh(z)
         action_np = action.cpu().detach().view(-1).numpy()
         return action_np
-    
+
     def rescale_action(self, action: np.ndarray):
-        action_rescaled = action * (self.action_max - self.action_min) / 2.0 + (self.action_max + self.action_min) / 2.0
+        action_rescaled = (
+            action * (self.action_max - self.action_min) / 2.0
+            + (self.action_max + self.action_min) / 2.0
+        )
         return action_rescaled
