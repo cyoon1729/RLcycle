@@ -66,9 +66,10 @@ class PolicyLoss(Loss):
 
         _, _, new_zs, log_pi = actor.sample(states)
         new_actions = torch.tanh(new_zs)
-        min_q = torch.min(
-            critic1.forward(states, new_actions), critic2.forward(states, new_actions)
-        )
-        policy_loss = (alpha * log_pi - min_q).mean()
+        # min_q = torch.min(
+        #     critic1.forward(states, new_actions), critic2.forward(states, new_actions)
+        # )
+        q_value = critic1.forward(states, new_actions)
+        policy_loss = (alpha * log_pi - q_value).mean()
 
         return policy_loss, log_pi

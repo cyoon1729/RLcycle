@@ -46,6 +46,9 @@ class SACAgent(Agent):
         # Build env and env specific model params
         self.experiment_info.env.state_dim = self.env.observation_space.shape[0]
         self.experiment_info.env.action_dim = self.env.action_space.shape[0]
+        self.experiment_info.env.action_range = [
+            self.env.action_space.low.tolist(), self.env.action_space.high.tolist()
+        ]
 
         # Build learner
         self.learner = build_learner(
@@ -88,7 +91,9 @@ class SACAgent(Agent):
                     self.env.render()
 
                 action = self.action_selector(self.learner.actor, state)
-                state, action, reward, next_state, done = self.step(state, action)
+                state, action, reward, next_state, done = self.step(
+                    state, self.action_selector.rescale_action(action)
+                )
                 episode_reward = episode_reward + reward
                 step = step + 1
 

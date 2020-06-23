@@ -87,7 +87,7 @@ class DQNBaseAgent(Agent):
             done = False
 
             while not done:
-                if self.experiment_info.train_render:
+                if self.experiment_info.render_train:
                     self.env.render()
 
                 action = self.action_selector(self.learner.network, state)

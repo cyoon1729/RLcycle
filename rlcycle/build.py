@@ -51,6 +51,10 @@ def build_action_selector(experiment_info: DictConfig):
     action_selector_cfg = DictConfig(dict())
     action_selector_cfg["class"] = experiment_info.action_selector
     action_selector_cfg["params"] = dict(device=experiment_info.device)
+    if not experiment_info.env.is_discrete:
+        action_selector_cfg.params.action_range = (
+            experiment_info.env.action_range
+        )
     action_selector = hydra.utils.instantiate(action_selector_cfg)
     return action_selector
 

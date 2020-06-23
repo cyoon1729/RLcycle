@@ -75,7 +75,7 @@ class Agent(ABC):
             episode_reward = 0
             done = False
             while not done:
-                if self.experiment_info.train_render:
+                if self.experiment_info.render_train:
                     self.env.render()
                 action = action_selector(policy, state)
                 state, action, reward, next_state, done = self.step(state, action)
