@@ -12,10 +12,7 @@ hyper_params:
   train_freq: 1  
   gamma: 0.99
   tau: 0.005
-  critic_learning_rate: 0.001
-  actor_learning_rate: 0.001
-  alpha_learning_rate: 0.0003
-  q_reg_coeff: 0
   critic_gradient_clip: 10.0
   actor_gradient_clip: 10.0
-  alpha: 2.0
+  critic_learning_rate: 0.001
+  actor_learning_rate: 0.001

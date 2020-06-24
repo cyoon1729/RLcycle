@@ -1,9 +1,7 @@
 model:
-  state_dim: undefined
-  action_dim: undefined
-  
+
   critic:
-    class: rlcycle.common.models.value.FujimotoCritic
+    class: rlcycle.common.models.critic.FujimotoCritic
     params:
       model_cfg:
         fc:
@@ -17,7 +15,7 @@ model:
             hidden1:
               class: rlcycle.common.models.layers.LinearLayer
               params: 
-                input_size: undefined
+                input_size: 400
                 output_size: 300
                 post_activation_fn: relu
           output:
