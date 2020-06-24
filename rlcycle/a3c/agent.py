@@ -51,10 +51,18 @@ class A3CAgent(Agent):
     def _initialize(self):
         pass
 
-    def run_model_parallel(self):
+    def run_gradient_parallel(self):
         """Run gradient parallel A3C """
         while self.update_step < self.experiment_info.max_update_steps:
-            # NOTE: Ray objects are thread-safe, making hogwild style updates easy
+            # Worker:
+            #   1. sync policy with that of learner
+            #   2. all workers run one trajectory
+            #   3. each worker computes loss and gradent with trajectory
+            #   4. Return gradients
+            
+            # Learner:
+            #   1. Collect and apply gradients
+            #   2. Update network   
 
     def run_data_parallel(self):
         """Run data parellel A3C (as in distributed data collection only)"""
@@ -66,11 +74,7 @@ class A3CAgent(Agent):
         ]
 
         while self.update_step < self.experiment_info.max_update_steps:
-            # NOTE: The reason why we use ray.get (block until all processes to finish)
-            #  instead of ray.wait (block until one of the processes finish) is because 
-            #  we want to keep the updates on-policy.
-
-            # Run and retrieve trajectory            
+            # Run and retrieve trajectories
             trajectories = ray.get(
                 [worker.run_trajectory.remote() for worker in workers]
             )
