@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Tuple, Type
+from typing import Tuple
 
 import numpy as np
 import torch
@@ -7,25 +7,21 @@ from omegaconf import DictConfig
 
 from rlcycle.build import build_env
 from rlcycle.common.abstract.action_selector import ActionSelector
-from rlcycle.common.abstract.learner import Learner
 from rlcycle.common.models.base import BaseModel
-from rlcycle.common.utils.common_utils import np2tensor
-
-# from rlcycle.common.utils.logger import Logger
 
 
 class Agent(ABC):
-    """Abstract base class for RL agents
-    
+    """Abstract base class for RL agents.
+
     Attributes:
-        experiment_info (DictConfig): configurations for running main loop (like args) 
+        experiment_info (DictConfig): configurations for running main loop (like args)
         env_info (DictConfig): env info for initialization gym environment
         hyper_params (DictConfig): algorithm hyperparameters
         model_cfg (DictConfig): configurations for building neural networks
         log_cfg (DictConfig): configurations for logging algorithm run
+        env (gym.Env): gym environment
 
     """
-
     def __init__(
         self,
         experiment_info: DictConfig,
@@ -60,12 +56,7 @@ class Agent(ABC):
         episode_i: int,
         update_step: int,
     ):
-        """Test policy without random exploration a number of times
-        
-        Params:
-            step (int): step information, by episode number of model update step
-
-        """
+        """Test policy without random exploration a number of times."""
         print("====TEST START====")
         policy.eval()
         action_selector.exploration = False

@@ -32,18 +32,14 @@ class CriticLoss(Loss):
         next_actions = torch.tanh(next_zs)
         next_q1 = target_critic1(next_states, next_actions)
         next_q2 = target_critic2(next_states, next_actions)
-        target_q = torch.min(next_q1, next_q2) - alpha * next_log_pi
+        next_q = torch.min(next_q1, next_q2) - alpha * next_log_pi
 
         n_step_gamma = self.hyper_params.gamma ** self.hyper_params.n_step
-        expected_q = rewards + (1 - dones) * n_step_gamma * target_q
+        target_q = rewards + (1 - dones) * n_step_gamma * next_q
 
         # q loss
-        element_wise_q1_loss = F.mse_loss(
-            q_value1, expected_q.detach(), reduction="none"
-        )
-        element_wise_q2_loss = F.mse_loss(
-            q_value2, expected_q.detach(), reduction="none"
-        )
+        element_wise_q1_loss = F.mse_loss(q_value1, target_q.detach(), reduction="none")
+        element_wise_q2_loss = F.mse_loss(q_value2, target_q.detach(), reduction="none")
 
         return element_wise_q1_loss, element_wise_q2_loss
 
@@ -69,7 +65,6 @@ class PolicyLoss(Loss):
         min_q = torch.min(
             critic1.forward(states, new_actions), critic2.forward(states, new_actions)
         )
-        q_value = critic1.forward(states, new_actions)
         policy_loss = (alpha * log_pi - min_q).mean()
 
         return policy_loss, log_pi

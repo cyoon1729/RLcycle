@@ -50,9 +50,9 @@ class QRLoss(Loss):
         n_step_gamma = self.hyper_params.gamma ** self.hyper_params.n_step
         target_q = rewards + (1 - dones) * n_step_gamma * next_q
 
-        distance = q_targets.detach() - curr_q
+        distance = target_q.detach() - q_value
         element_wise_loss = F.smooth_l1_loss(
-            curr_q, q_targets.detach(), reduction="none"
+            q_value, target_q.detach(), reduction="none"
         ) * torch.abs((dqn.tau - (distance.detach() < 0).float()))
 
         return element_wise_loss

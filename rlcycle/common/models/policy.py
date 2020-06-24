@@ -10,6 +10,15 @@ from rlcycle.common.models.base import BaseModel
 
 
 class DeterministicPolicy(BaseModel):
+    """Deterministic continuous action space policy
+
+    Attributes:
+        fc_input (LinearLayer): fully connected input layer
+        fc_hidden (nn.Sequential): hidden layers
+        fc_output (LinearLayer): fully connected output layer
+
+    """
+
     def __init__(self, model_cfg: DictConfig):
         BaseModel.__init__(self, model_cfg)
         # set input size of fc input layer
@@ -32,6 +41,7 @@ class DeterministicPolicy(BaseModel):
         self.fc_output = hydra.utils.instantiate(self.model_cfg.fc.output)
 
     def forward(self, state: torch.Tensor) -> torch.Tensor:
+        """Forward propogate through policy network"""
         x = self.features.forward(state)
         x = x.view(x.size(0), -1)
         x = self.fc_input.forward(x)
@@ -41,7 +51,17 @@ class DeterministicPolicy(BaseModel):
 
 
 class GaussianPolicy(BaseModel):
-    """Gaussian Policy (for Soft Actor Critic)"""
+    """Gaussian Policy
+
+    Attributes:
+        fc_input (LinearLayer): fully connected input layer
+        fc_hidden (nn.Sequential): hidden layers
+        mu_stream (nn.Sequential): layers that output mean of gaussian distribution
+        log_sigma_stream (nn.Sequential): layers that output log_std of gaussian distribution
+        log_std_min (float): lower bound for log_sigma_stream output
+        log_std_max (float): upper bound for log_sigma_stream output
+
+    """
 
     def __init__(self, model_cfg: DictConfig):
         BaseModel.__init__(self, model_cfg)
@@ -78,6 +98,7 @@ class GaussianPolicy(BaseModel):
         self.log_sigma_stream = nn.Sequential(*log_sigma_stream)
 
     def forward(self, state: torch.Tensor) -> Tuple[torch.Tensor]:
+        """Forward propogate through policy network"""
         x = self.features.forward(state)
         x = x.view(x.size(0), -1)
         x = self.fc_input.forward(state)
@@ -90,6 +111,7 @@ class GaussianPolicy(BaseModel):
         return mu, log_sigma
 
     def sample(self, state: torch.Tensor, epsilon=1e-6) -> Tuple[torch.Tensor]:
+        """Sample gaussian distribution"""
         if state.dim() == 1:
             state = state.view(1, -1)
 

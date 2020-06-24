@@ -1,7 +1,7 @@
 import gym
 from omegaconf import DictConfig
 
-from rlcycle.common.utils.env_wrappers import *
+from rlcycle.common.utils.env_wrappers import make_atari, wrap_deepmind, ImageToPyTorch, TimeLimit, ClipRewardEnv
 
 
 def generate_atari_env(env_info: DictConfig):

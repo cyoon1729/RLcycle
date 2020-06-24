@@ -14,6 +14,19 @@ from rlcycle.common.buffer.segment_tree import MinSegmentTree, SumSegmentTree
 
 
 class PrioritizedReplayBuffer(ReplayBufferWrapper):
+    """Buffer wrapper for prioritized sampling
+
+    Attributes:
+        hyper_params (DictConfig): algorithm hyper_params
+        _alpha (float): PER alpha
+        beta (float): PER beta
+        beta_increment (float): beta increment rate
+        _it_sum (SumSegmentTree):
+        _it_min (MinSegmentTree):
+        _max_priority (float): maximum possible priority value
+
+    """
+
     def __init__(
         self, replay_buffer: ReplayBuffer, hyper_params: DictConfig,
     ):

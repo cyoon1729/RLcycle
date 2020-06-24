@@ -11,6 +11,16 @@ from rlcycle.common.abstract.buffer import ReplayBufferBase
 
 
 class ReplayBuffer(ReplayBufferBase):
+    """Replay Buffer
+
+    Attributes:
+        hyper_params (DictConfig): algorithm hyperparameters
+        _storage (list): internal storage
+        _maxsize (int): maximum buffer size
+        _next_idx (int): tracker for index of last appended experience
+
+    """
+
     def __init__(self, hyper_params: DictConfig):
         self.hyper_params = hyper_params
         self._storage = []
@@ -21,6 +31,7 @@ class ReplayBuffer(ReplayBufferBase):
         return len(self._storage)
 
     def add(self, obs_t, action, reward, obs_tp1, done):
+        """Add experience to storage"""
         data = (obs_t, action, reward, obs_tp1, done)
 
         if self._next_idx >= len(self._storage):
@@ -30,6 +41,7 @@ class ReplayBuffer(ReplayBufferBase):
         self._next_idx = (self._next_idx + 1) % self._maxsize
 
     def _encode_sample(self, idxes):
+        """Return encoded sample"""
         obses_t, actions, rewards, obses_tp1, dones = [], [], [], [], []
         for i in idxes:
             data = self._storage[i]
@@ -48,6 +60,7 @@ class ReplayBuffer(ReplayBufferBase):
         )
 
     def sample(self):
+        """Sample and return experience from storage"""
         idxes = [
             random.randint(0, len(self._storage) - 1)
             for _ in range(self.hyper_params.batch_size)

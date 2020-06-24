@@ -12,7 +12,29 @@ from rlcycle.common.utils.common_utils import hard_update, soft_update
 
 
 class SACLearner(Learner):
-    """Learner object for Soft Actor Critic algorithm"""
+    """Learner for Soft Actor Critic
+
+    Attributes:
+        critic1 (BaseModel): critic network
+        target_critic1 (BaseModel): target network for critic1
+        critic2 (BaseModel): second critic network to reduce overestimation
+        target_critic2 (BaseModel): target network for critic2
+        critic1_optimizer (torch.Optimizer): critic1 optimizer
+        critic2_optimizer (torch.Optimizer): critic2 optimizer
+        critic loss_fn (Loss): critic loss function
+        actor (BaseModel): actor network
+        actor_optimizer (torch.Optimizer): actor optimizer
+        actor loss_fn (Loss): actor loss function
+        use_per (bool): indicatation of using prioritized experience replay
+        update_step (int): counter for update step
+        alpha (torch.Tensor): entropy temperature
+        target_entropy (torch.Tensor): target for entropy temperature
+        log_alpha (torch.Tensor): log(alpha)
+        alpha_optimizer: optimizer for entropy temperature
+        use_per (bool): indicatation of using prioritized experience replay
+        update_step (int): counter for update step
+
+    """
 
     def __init__(
         self,
@@ -28,7 +50,7 @@ class SACLearner(Learner):
 
     def _initialize(self):
         """initialize networks, optimizer, loss function, alpha (entropy temperature)"""
-        # Define state dim and action dim for actor and critic
+        # Set env-specific input dims and output dims for models
         self.model_cfg.critic.params.model_cfg.state_dim = (
             self.model_cfg.actor.params.model_cfg.state_dim
         ) = self.experiment_info.env.state_dim
@@ -36,7 +58,7 @@ class SACLearner(Learner):
             self.model_cfg.actor.params.model_cfg.action_dim
         ) = self.experiment_info.env.action_dim
 
-        # Initialize critic and related
+        # Initialize critic models, optimizers, and loss function
         self.critic1 = build_model(self.model_cfg.critic, self.device)
         self.target_critic1 = build_model(self.model_cfg.critic, self.device)
         self.critic2 = build_model(self.model_cfg.critic, self.device)
@@ -56,7 +78,7 @@ class SACLearner(Learner):
         hard_update(self.critic1, self.target_critic1)
         hard_update(self.critic2, self.target_critic2)
 
-        # Initialize actor and related
+        # Initialize actor model, optimizer, and loss function
         self.actor = build_model(self.model_cfg.actor, self.device)
         self.actor_optimizer = optim.Adam(
             self.actor.parameters(), lr=self.hyper_params.actor_learning_rate

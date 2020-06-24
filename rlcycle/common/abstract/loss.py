@@ -8,7 +8,13 @@ from omegaconf import DictConfig
 
 
 class Loss(ABC):
-    """Abstract class for callable loss functions"""
+    """Abstract class for callable loss functions
+
+    Attributes:
+        hyper_params (DictConfig): algorithm hyperparameters
+        device (torch.device): map location for tensor computation
+
+    """
 
     def __init__(self, hyper_params: DictConfig, device: str):
         self.hyper_params = hyper_params

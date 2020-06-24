@@ -7,7 +7,14 @@ from rlcycle.common.models.base import BaseModel
 
 
 class Critic(BaseModel):
-    """Critic network"""
+    """Critic network
+
+    Attributes:
+        fc_input (LinearLayer): fully connected input layer
+        fc_hidden (nn.Sequential): hidden layers
+        fc_output (LinearLayer): fully connected output layer
+
+    """
 
     def __init__(self, model_cfg: DictConfig):
         BaseModel.__init__(self, model_cfg)
@@ -40,8 +47,13 @@ class Critic(BaseModel):
 
 
 class FujimotoCritic(BaseModel):
-    """Critic network based on Fujimoto et al. 2018 
-    'Addressing Function Approximation Error in Actor-Critic Methods'
+    """Critic network based on Fujimoto et al. 2018.
+
+    Attributes:
+        fc_input (LinearLayer): fully connected input layer
+        fc_hidden (nn.Sequential): hidden layers
+        fc_output (LinearLayer): fully connected output layer
+
     """
 
     def __init__(self, model_cfg: DictConfig):

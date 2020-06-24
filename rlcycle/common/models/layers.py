@@ -1,5 +1,3 @@
-from typing import Callable
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -24,7 +22,13 @@ activation_fn_registry = {
 
 
 class Conv2DLayer(nn.Module):
-    """2D convolutional layer for network composition"""
+    """2D convolutional layer for network composition
+
+    Attributes:
+        conv2d (nn.Conv2d): single convolutional layer
+        activation_fn (nn.functional): (post) activation function
+
+    """
 
     def __init__(
         self,
@@ -48,7 +52,13 @@ class Conv2DLayer(nn.Module):
 
 
 class LinearLayer(nn.Module):
-    """LinearLayer for network composition"""
+    """LinearLayer for network composition
+
+    Attributes:
+        linear (nn.Linear): single linear activation layer
+        post_activation_fn (nn.functional): post activation function
+
+    """
 
     def __init__(
         self,
@@ -75,7 +85,14 @@ class LinearLayer(nn.Module):
 
 
 class ActivationLayer(nn.Module):
-    """A configurable activation layer for network composition"""
+    """A configurable activation layer for network composition
+
+    Attributes:
+        input size (int): layer input size
+        output size (int): layer outpt size
+        activation_fn (nn.functional): activation function
+
+    """
 
     def __init__(self, input_size: int, output_size: int, activation_fn: str):
         nn.Module.__init__(self)
@@ -88,5 +105,5 @@ class ActivationLayer(nn.Module):
         self.activation_fn = activation_fn_registry[activation_fn]
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        assert x.size(0) == input_size, "Input dimension mismatch"
+        assert x.size(0) == self.input_size, "Input dimension mismatch"
         return self.activation_fn(x)

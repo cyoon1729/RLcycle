@@ -1,18 +1,15 @@
 from collections import deque
-from typing import Callable, Tuple
+from typing import Tuple
 
-import hydra
 import numpy as np
 from omegaconf import DictConfig
 
-from rlcycle.build import build_action_selector, build_learner, build_loss
+from rlcycle.build import build_action_selector, build_learner
 from rlcycle.common.abstract.agent import Agent
 from rlcycle.common.buffer.prioritized_replay_buffer import \
     PrioritizedReplayBuffer
 from rlcycle.common.buffer.replay_buffer import ReplayBuffer
 from rlcycle.common.utils.common_utils import np2tensor, preprocess_nstep
-from rlcycle.sac.action_selector import SACActionSelector
-from rlcycle.sac.learner import SACLearner
 
 
 class SACAgent(Agent):
@@ -120,8 +117,6 @@ class SACAgent(Agent):
                     if self.hyper_params.use_per:
                         indices, new_priorities = info[-2:]
                         self.replay_buffer.update_priorities(indices, new_priorities)
-                    else:
-                        loss = info
 
                 state = next_state
 

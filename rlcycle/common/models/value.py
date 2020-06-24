@@ -2,12 +2,20 @@ import hydra
 import torch
 import torch.nn as nn
 from omegaconf import DictConfig
+import numpy as np
 
 from rlcycle.common.models.base import BaseModel
 
 
 class DQNModel(BaseModel):
-    """Vanilla (Nature) DQN model initializable with hydra config"""
+    """Vanilla (Nature) DQN model initializable with hydra config
+
+    Attributes:
+        fc_input (LinearLayer): fully connected input layer
+        fc_hidden (nn.Sequential): hidden layers
+        fc_output (LinearLayer): fully connected output layer
+
+    """
 
     def __init__(self, model_cfg: DictConfig):
         BaseModel.__init__(self, model_cfg)
@@ -41,7 +49,14 @@ class DQNModel(BaseModel):
 
 
 class DuelingDQNModel(BaseModel):
-    """Dueling DQN model initializable with hydra configs"""
+    """Dueling DQN model initializable with hydra configs
+
+    Attributes:
+        fc_input (LinearLayer): fully connected input layer
+        advantage_stream (nn.Sequential): advantage stream dueling dqn
+        value_stream (nn.Sequential): value stream of dueling dqn
+
+    """
 
     def __init__(self, model_cfg: DictConfig):
         BaseModel.__init__(self, model_cfg)
@@ -89,7 +104,16 @@ class DuelingDQNModel(BaseModel):
 
 
 class QRDQN(BaseModel):
-    """Quantile Regression DQN Model initializable with hydra configs"""
+    """Quantile Regression DQN Model initializable with hydra configs
+
+    Attributes:
+        fc_input (LinearLayer): fully connected input layer
+        fc_hidden (nn.Sequential): hidden layers
+        fc_output (LinearLayer): fully connected output layer
+        tau (torch.Tensor): quantile weights
+        num_quantiles (int): number of quantiles for distributional representation
+
+    """
 
     def __init__(self, model_cfg):
         BaseModel.__init__(self, model_cfg)
@@ -122,6 +146,7 @@ class QRDQN(BaseModel):
         ).view(1, -1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward propagate through network"""
         x = self.features.forward(x)
         x = x.view(x.size(0), -1)
         x = self.fc_input.forward(x)

@@ -43,11 +43,13 @@ def main(cfg: DictConfig):
     # build learner
     print("===INITIALIZING LEARNER===")
     learner = build_learner(**cfg)
+    print(learner)
     print("=====================")
 
     # build agent
     print("===INITIALIZING AGENT===")
     agent = build_agent(**cfg)
+    print(agent)
     print("=====================")
 
 

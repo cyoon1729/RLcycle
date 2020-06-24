@@ -1,11 +1,8 @@
-from typing import Tuple
 
-import gym
 import hydra
 import torch
 from omegaconf import DictConfig
 
-import pybulletgym
 from rlcycle.common.abstract.loss import Loss
 from rlcycle.common.utils.env_wrappers import generate_atari_env, generate_env
 
@@ -13,6 +10,7 @@ from rlcycle.common.utils.env_wrappers import generate_atari_env, generate_env
 def build_agent(
     experiment_info: DictConfig, hyper_params: DictConfig, model: DictConfig
 ):
+    """Build agent from DictConfigs via hydra.utils.instantiate()"""
     agent_cfg = DictConfig(dict())
     agent_cfg["class"] = experiment_info.agent
     agent_cfg["params"] = dict(
@@ -23,6 +21,7 @@ def build_agent(
 
 
 def build_env(experiment_info: DictConfig):
+    """Build gym environment from DictConfigs via hydra.utils.instantiate()"""
     if experiment_info.env.is_atari:
         env = generate_atari_env(experiment_info.env)
     else:
@@ -33,6 +32,7 @@ def build_env(experiment_info: DictConfig):
 def build_learner(
     experiment_info: DictConfig, hyper_params: DictConfig, model: DictConfig
 ):
+    """Build learner from DictConfigs via hydra.utils.instantiate()"""
     learner_cfg = DictConfig(dict())
     learner_cfg["class"] = experiment_info.learner
     learner_cfg["params"] = dict(
@@ -43,11 +43,13 @@ def build_learner(
 
 
 def build_model(model_cfg: DictConfig, device: torch.device):
+    """Build model from DictConfigs via hydra.utils.instantiate()"""
     model = hydra.utils.instantiate(model_cfg)
     return model.to(device)
 
 
 def build_action_selector(experiment_info: DictConfig):
+    """Build action selector from DictConfig via hydra.utils.instantiate()"""
     action_selector_cfg = DictConfig(dict())
     action_selector_cfg["class"] = experiment_info.action_selector
     action_selector_cfg["params"] = dict(device=experiment_info.device)
@@ -58,6 +60,7 @@ def build_action_selector(experiment_info: DictConfig):
 
 
 def build_loss(loss_type: str, hyper_params: DictConfig, device: torch.device) -> Loss:
+    """Build loss from DictConfigs via hydra.utils.instantiate()"""
     loss_cfg = DictConfig(dict())
     loss_cfg["class"] = loss_type
     loss_cfg["params"] = dict(hyper_params=hyper_params, device=device)

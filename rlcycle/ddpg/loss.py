@@ -1,6 +1,7 @@
 from typing import Tuple
 
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from omegaconf import DictConfig
 
@@ -20,23 +21,25 @@ class CriticLoss(Loss):
 
         states, actions, rewards, next_states, dones = data
 
-        q1_value = critic1.forward(states, actions)
-        q2_value = critic2.forward(states, actions)
+        q_value1 = critic1.forward(states, actions)
+        q_value2 = critic2.forward(states, actions)
 
-        next_actions = actor.forward(states) + self._action_space_noise()
+        next_actions = actor.forward(states) + self._generate_action_space_noise()
         next_q1 = critic1_target.forward(next_states, next_actions)
-        next_q1 = critic2_target.forward(next_states, next_actions)
+        next_q2 = critic2_target.forward(next_states, next_actions)
+        next_q = torch.min(next_q1, next_q2)
 
         n_step_gamma = self.hyper_params.gamma ** self.hyper_params.n_step
-        target_q = rewards + n_step_gamma * torch.min(next_q1, next_q2)
+        target_q = rewards + (1 - dones) * n_step_gamma * next_q
 
-        # critic loss
-        element_wise_critic1_loss = F.smooth_l1_loss(q1_value, target_q.detach())
-        element_wise_critic2_loss = F.smooth_l1_loss(q2_value, target_q.detach())
+        # q loss
+        element_wise_q1_loss = F.mse_loss(q_value1, target_q.detach(), reduction="none")
+        element_wise_q2_loss = F.mse_loss(q_value2, target_q.detach(), reduction="none")
 
-        return element_wise_critic1_loss, element_wise_critic2_loss
+        return element_wise_q1_loss, element_wise_q2_loss
 
-    def _action_space_noise(self) -> torch.Tensor:
+    def _generate_action_space_noise(self) -> torch.Tensor:
+        """Generate action space noise"""
         if self.hyper_params.use_policy_reg:
             zeros = torch.zeros(self.hyper_params.batch_size, 1)
             noise = torch.normal(zeros, self.hyper_params.noise_std).to(self.device)
@@ -52,7 +55,7 @@ class CriticLoss(Loss):
 class ActorLoss(Loss):
     """Compute DDPG actor loss"""
 
-    def __init__(self, hyper_params: DictConfig, device: torch.Device):
+    def __init__(self, hyper_params: DictConfig, device: torch.device):
         Loss.__init__(self, hyper_params, device)
 
     def __call__(

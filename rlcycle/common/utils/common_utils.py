@@ -1,4 +1,4 @@
-from typing import Deque, List
+from typing import Deque
 
 import numpy as np
 import torch
@@ -8,7 +8,7 @@ import torch.nn as nn
 def np2tensor(np_arr: np.ndarray, device: torch.device):
     """Convert numpy array to tensor"""
     tensor_output = torch.FloatTensor(np_arr).to(device)
-    if device.type is "cuda":
+    if device.type == "cuda":
         tensor_output.cuda(non_blocking=True)
     return tensor_output
 

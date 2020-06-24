@@ -12,6 +12,18 @@ from rlcycle.common.utils.common_utils import hard_update, soft_update
 
 
 class DQNLearner(Learner):
+    """Learner for DQN base agent
+
+    Attributes:
+        network (BaseModel): a dqn-based network
+        target_network (BaseModel): target network to network, for unbiased estimates
+        optimizer (torch.Optimizer): network optimizer, using ADAM
+        loss_fn (Loss): loss function specific to dqn network architecture
+        use_per (bool): indicatation of using prioritized experience replay
+        update_step (int): counter for update step
+
+    """
+
     def __init__(
         self,
         experiment_info: DictConfig,
@@ -76,6 +88,7 @@ class DQNLearner(Learner):
         return info
 
     def get_policy(self, target_device: torch.device):
+        """Return policy mapped to target device"""
         policy_copy = deepcopy(self.network)
         policy_copy.to(target_device)
         return policy_copy

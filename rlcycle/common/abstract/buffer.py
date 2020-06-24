@@ -6,6 +6,8 @@ from omegaconf import DictConfig
 
 
 class ReplayBufferBase(ABC):
+    """Abstract base class for replay buffers"""
+
     @abstractmethod
     def add(
         self,
@@ -23,6 +25,14 @@ class ReplayBufferBase(ABC):
 
 
 class ReplayBufferWrapper(ReplayBufferBase):
+    """Base class for replay buffer wrappers
+
+    Attributes:
+        replay_buffer (ReplayBufferBase): replay buffer to be wrapped
+        hyper_params (DictConfig): algorithm hyperparameters
+
+    """
+
     def __init__(self, replay_buffer: ReplayBufferBase, hyper_params: DictConfig):
         self.replay_buffer = replay_buffer
         self.hyper_params = hyper_params

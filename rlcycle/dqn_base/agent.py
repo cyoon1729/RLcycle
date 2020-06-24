@@ -1,18 +1,16 @@
 from collections import deque
-from typing import Callable, Tuple
+from typing import Tuple
 
-import hydra
 import numpy as np
 from omegaconf import DictConfig
 
-from rlcycle.build import build_action_selector, build_learner, build_loss
+from rlcycle.build import build_action_selector, build_learner
 from rlcycle.common.abstract.agent import Agent
 from rlcycle.common.buffer.prioritized_replay_buffer import \
     PrioritizedReplayBuffer
 from rlcycle.common.buffer.replay_buffer import ReplayBuffer
 from rlcycle.common.utils.common_utils import np2tensor, preprocess_nstep
 from rlcycle.dqn_base.action_selector import EpsGreedy
-from rlcycle.dqn_base.learner import DQNLearner
 
 
 class DQNBaseAgent(Agent):
@@ -68,13 +66,7 @@ class DQNBaseAgent(Agent):
     def step(
         self, state: np.ndarray, action: np.ndarray
     ) -> Tuple[np.ndarray, np.ndarray, np.float64, bool]:
-        """Carry out single env step and return info
-
-        Params:
-            state (np.ndarray): current env state
-            action (np.ndarray): action to be executed
-
-        """
+        """Carry out single env step and return info"""
         next_state, reward, done, _ = self.env.step(action)
         return state, action, reward, next_state, done
 
@@ -119,8 +111,6 @@ class DQNBaseAgent(Agent):
                             self.replay_buffer.update_priorities(
                                 indices, new_priorities
                             )
-                        else:
-                            q_loss = info
 
                         self.action_selector.decay_epsilon()
 
@@ -139,6 +129,7 @@ class DQNBaseAgent(Agent):
                 # self.learner.save_params()
 
     def _preprocess_experience(self, experience: Tuple[np.ndarray]):
+        """Convert numpy experiences to tensor"""
         states, actions, rewards, next_states, dones = experience[:5]
         if self.hyper_params.use_per:
             indices, weights = experience[-2:]
