@@ -1,9 +1,8 @@
 import hydra
+import numpy as np
 import torch
 import torch.nn as nn
 from omegaconf import DictConfig
-import numpy as np
-
 from rlcycle.common.models.base import BaseModel
 
 
