@@ -4,11 +4,10 @@ from typing import Tuple
 import torch
 import torch.optim as optim
 from omegaconf import DictConfig
-from torch.nn.utils import clip_grad_norm_
-
 from rlcycle.build import build_loss, build_model
 from rlcycle.common.abstract.learner import Learner
 from rlcycle.common.utils.common_utils import hard_update, soft_update
+from torch.nn.utils import clip_grad_norm_
 
 
 class SACLearner(Learner):
@@ -117,7 +116,6 @@ class SACLearner(Learner):
             ),
             self.alpha,
             experience,
-            self.hyper_params,
         )
 
         if self.use_per:

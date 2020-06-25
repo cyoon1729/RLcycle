@@ -4,7 +4,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from omegaconf import DictConfig
-
 from rlcycle.common.abstract.loss import Loss
 
 
@@ -19,7 +18,6 @@ class CriticLoss(Loss):
         networks: Tuple[nn.Module, ...],
         alpha: torch.Tensor,
         data: Tuple[torch.Tensor, ...],
-        hyper_params: DictConfig,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         critic1, target_critic1, critic2, target_critic2, actor = networks
 

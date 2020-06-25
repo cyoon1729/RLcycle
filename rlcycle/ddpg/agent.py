@@ -3,7 +3,6 @@ from typing import Tuple
 
 import numpy as np
 from omegaconf import DictConfig
-
 from rlcycle.build import build_action_selector, build_learner
 from rlcycle.common.abstract.agent import Agent
 from rlcycle.common.buffer.prioritized_replay_buffer import \
