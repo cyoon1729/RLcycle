@@ -1,7 +1,7 @@
 model:
 
   critic:
-    class: rlcycle.common.models.critic.FujimotoCritic
+    class: rlcycle.common.models.critic.ValueCritic
     params:
       model_cfg:
         fc:
@@ -9,19 +9,19 @@ model:
             class: rlcycle.common.models.layers.LinearLayer
             params: 
               input_size: undefined
-              output_size: 400
+              output_size: 256
               post_activation_fn: relu           
           hidden:
-            hidden1:
-              class: rlcycle.common.models.layers.LinearLayer
-              params: 
-                input_size: 400
-                output_size: 300
-                post_activation_fn: relu
+              hidden1:
+                class: rlcycle.common.models.layers.LinearLayer
+                params: 
+                  input_size: 256
+                  output_size: 256
+                  post_activation_fn: relu
           output:
             class: rlcycle.common.models.layers.LinearLayer
             params:
-              input_size: 300
+              input_size: 256
               output_size: 1
               post_activation_fn: identity
   
@@ -34,20 +34,18 @@ model:
             class: rlcycle.common.models.layers.LinearLayer
             params: 
               input_size: undefined
-              output_size: 400
+              output_size: 256
               post_activation_fn: relu   
           hidden:
-            hidden1:
-              class: rlcycle.common.models.layers.LinearLayer
-              params: 
-                input_size: 400
-                output_size: 300
-                post_activation_fn: relu
+              hidden1:
+                class: rlcycle.common.models.layers.LinearLayer
+                params: 
+                  input_size: 256
+                  output_size: 256
+                  post_activation_fn: relu
           output:
               class: rlcycle.common.models.layers.LinearLayer
               params: 
-                input_size: 300
+                input_size: 256
                 output_size: undefined
-                post_activation_fn: tanh
-
-             
+                post_activation_fn: softmax         
