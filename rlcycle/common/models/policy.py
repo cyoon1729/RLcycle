@@ -4,12 +4,13 @@ import hydra
 import torch
 import torch.nn as nn
 from omegaconf import DictConfig
-from rlcycle.common.models.base import BaseModel
 from torch.distributions import Normal
 
+from rlcycle.common.models.base import BaseModel
 
-class DeterministicPolicy(BaseModel):
-    """Deterministic continuous action space policy
+
+class MLPPolicy(BaseModel):
+    """Configurable MLP based policy (e.g. Softmax policy, deterministic policy)
 
     Attributes:
         fc_input (LinearLayer): fully connected input layer

@@ -1,8 +1,9 @@
 import numpy as np
+from torch.distributions import Categorical
+
 from rlcycle.common.abstract.action_selector import ActionSelector
 from rlcycle.common.models.base import BaseModel
 from rlcycle.common.utils.common_utils import np2tensor
-from torch.distributions import Categorical
 
 
 class A2CDiscreteActionSelector(ActionSelector):
@@ -20,8 +21,8 @@ class A2CDiscreteActionSelector(ActionSelector):
         if self.exploration:
             action = categorical_dist.sample().cpu().detach().numpy()
         else:
-            action = categorical_dist.sample().cpu().argmax()
-        return action
+            action = categorical_dist.sample().cpu().argmax().numpy()
+        return action.item()
 
 
 class A2CContinuousActionSelector(ActionSelector):

@@ -1,13 +1,14 @@
 from copy import deepcopy
-from typing import Tuple
+from typing import List, Tuple
 
 import torch
 import torch.optim as optim
 from omegaconf import DictConfig
+from torch.nn.utils import clip_grad_norm_
+
 from rlcycle.build import build_loss, build_model
 from rlcycle.common.abstract.learner import Learner
 from rlcycle.common.models.base import BaseModel
-from torch.nn.utils import clip_grad_norm_
 
 
 class A2CLearner(Learner):
@@ -70,20 +71,24 @@ class A2CLearner(Learner):
         )
 
     def update_model(
-        self, trajectory: Tuple[torch.Tensor, ...]
+        self, trajectories: List[torch.Tensor]
     ) -> Tuple[torch.Tensor, ...]:
         """Update model."""
-        critic_loss_element_wise = self.critic_loss_fn(
-            (
-                self.critic1,
-                self.target_critic1,
-                self.critic2,
-                self.target_critic2,
-                self.actor,
-            ),
-            trajectory,
-        )
-        critic_loss = critic_loss_element_wise.mean()
+        critic_loss = actor_loss = 0
+        for trajectory in trajectories:
+            # Compute loss
+            critic_loss_element_wise, values = self.critic_loss_fn(
+                (self.critic), trajectory,
+            )
+            critic_loss += critic_loss_element_wise.mean()
+
+            trajectory = trajectory + (values,)
+            actor_loss_element_wise = self.actor_loss_fn((self.actor), trajectory,)
+            actor_loss += actor_loss_element_wise.mean()
+
+        # Take mean of losses computed from all trajectories
+        critic_loss = critic_loss / len(trajectories)
+        actor_loss = actor_loss / len(trajectories)
 
         # Update critic networks
         self.critic_optimizer.zero_grad()
@@ -92,9 +97,6 @@ class A2CLearner(Learner):
             self.critic.parameters(), self.hyper_params.critic_gradient_clip
         )
         self.critic_optimizer.step()
-
-        # Compute actor loss
-        actor_loss = self.actor_loss_fn((self.critic1, self.actor), trajectory,)
 
         # Update actor network
         self.actor_optimizer.zero_grad()

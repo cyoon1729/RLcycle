@@ -57,6 +57,7 @@ class LinearLayer(nn.Module):
     Attributes:
         linear (nn.Linear): single linear activation layer
         post_activation_fn (nn.functional): post activation function
+        activation_args (dict): function parameters for activation_function (e.g. dim)
 
     """
 
@@ -73,37 +74,17 @@ class LinearLayer(nn.Module):
         ), f"{post_activation_fn} is not registered in layer.py. Register."
         self.linear = nn.Linear(input_size, output_size)
         self.post_activation_fn = activation_fn_registry[post_activation_fn]
+        self.afn_name = post_activation_fn
 
         if init_w is not None:
             self.linear.weight.data.uniform_(-init_w, init_w)
             self.linear.bias.data.uniform_(-init_w, init_w)
 
+        self.activation_args = dict()
+        if post_activation_fn == "softmax":
+            self.activation_args["dim"] = 1
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.linear(x)
-        x = self.post_activation_fn(x)
+        x = self.post_activation_fn(x, **self.activation_args)
         return x
-
-
-class ActivationLayer(nn.Module):
-    """A configurable activation layer for network composition
-
-    Attributes:
-        input size (int): layer input size
-        output size (int): layer outpt size
-        activation_fn (nn.functional): activation function
-
-    """
-
-    def __init__(self, input_size: int, output_size: int, activation_fn: str):
-        nn.Module.__init__(self)
-        assert (
-            activation_fn in activation_fn_registry.keys()
-        ), f"{activation_fn} is not registered in layer.py. Register."
-        assert input_size == output_size, "Input dim must equal output dim"
-        self.input_size = input_size
-        self.output_size = output_size
-        self.activation_fn = activation_fn_registry[activation_fn]
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        assert x.size(0) == self.input_size, "Input dimension mismatch"
-        return self.activation_fn(x)

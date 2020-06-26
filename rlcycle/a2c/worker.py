@@ -1,10 +1,10 @@
-from typing import Tuple
+from typing import Dict
 
 import numpy as np
 import torch
 from omegaconf import DictConfig
+
 from rlcycle.build import build_action_selector, build_env, build_model
-from rlcycle.common.utils.common_utils import np2tensor
 
 
 class TrajectoryRolloutWorker:
@@ -23,15 +23,16 @@ class TrajectoryRolloutWorker:
 
         self.rank = rank
         self.env = build_env(experiment_info)
-        self.action_selector = build_action_selector(experiment_info)
-        self.policy = build_model(policy_cfg)
-        self.device = torch.device(self.experiment_info.device)
+        self.action_selector = build_action_selector(self.experiment_info)
+        self.device = torch.device(self.experiment_info.worker_device)
+        self.policy = build_model(policy_cfg, self.device)
 
-    def run_trajectory(self) -> Tuple[np.ndarray]:
+    def run_trajectory(self) -> Dict[str, np.ndarray]:
         """Finish one env episode and return trajectory experience"""
-        trajectory = dict(states=[], actions=[], rewards=[], next_states=[], dones=[])
+        trajectory = dict(states=[], actions=[], rewards=[])
         done = False
         state = self.env.reset()
+        episode_reward = 0
         while not done:
             # Carry out environment step
             action = self.action_selector(self.policy, state)
@@ -41,34 +42,22 @@ class TrajectoryRolloutWorker:
             trajectory["states"].append(state)
             trajectory["actions"].append(action)
             trajectory["rewards"].append(reward)
-            trajectory["next_states"].append(next_state)
-            trajectory["dones"].append(done)
 
             state = next_state
+            episode_reward = episode_reward + reward
+
+        print(f"[TRAIN] [Worker-{self.rank}] Score: {episode_reward}")
 
         trajectory_np = []
-        for key in list(trajectory.keys):
-            trajectory_np.append(trajectory[key])
+        for key in list(trajectory.keys()):
+            trajectory_np.append(np.array(trajectory[key]))
 
-        return tuple(trajectory_np)
+        trajectory_info = dict(
+            rank=self.rank, trajectory=trajectory_np, score=episode_reward
+        )
 
-    def _preprocess_trajectory(
-        self, trajectory: Tuple[np.ndarray, ...], target_location: torch.device
-    ) -> Tuple[torch.Tensor]:
-        states, actions, rewards, next_states, dones = trajectory
-
-        states = np2tensor(states, self.device)
-        actions = np2tensor(actions.reshape(-1, 1), self.device)
-        rewards = np2tensor(rewards.reshape(-1, 1), self.device)
-        next_states = np2tensor(next_states, self.device)
-        dones = np2tensor(dones.reshape(-1, 1), self.device)
-
-        if self.experiment_info.is_discrete:
-            actions = actions.long()
-
-        trajectory = (states, actions, rewards, next_states, dones)
-
-        return trajectory
+        return trajectory_info
 
     def synchronize_policy(self, new_state_dict):
+        """Synchronize policy with received new parameters"""
         self.policy.load_state_dict(new_state_dict)

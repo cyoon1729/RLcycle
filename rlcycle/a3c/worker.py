@@ -2,6 +2,7 @@ from typing import Dict, List, Tuple
 
 import torch
 from omegaconf import DictConfig
+
 from rlcycle.a2c.worker import TrajectoryRolloutWorker
 from rlcycle.build import build_loss, build_model
 
@@ -48,17 +49,18 @@ class ComputesGradients:
         trajectory_tensors = self._preprocess_experience(trajectory)
 
         # Compute loss
-        critic_loss_element_wise = self.critic_loss_fn(
-            (self.critic, self.worker.actor), trajectory_tensors,
+        critic_loss_element_wise, values = self.critic_loss_fn(
+            (self.critic), trajectory_tensors,
         )
         critic_loss = critic_loss_element_wise.mean()
 
+        trajectory_tensors = trajectory_tensors + (values,)
         actor_loss_element_wise = self.actor_loss_fn(
-            (self.critic, self.worker.actor), trajectory_tensors,
+            (self.worker.actor), trajectory_tensors,
         )
         actor_loss = actor_loss_element_wise.mean()
 
-        # Compute (retrieve) gradients
+        # Compute and save gradients
         self.critic.zero_grad()
         critic_loss.backward()
         critic_grads = []

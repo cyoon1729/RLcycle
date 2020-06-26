@@ -1,9 +1,10 @@
 import hydra
 from omegaconf import DictConfig
+
 from rlcycle.build import build_agent
 
 
-@hydra.main(config_path="../configs/ddpg.yaml", strict=False)
+@hydra.main(config_path="../configs/a2c.yaml", strict=False)
 def main(cfg: DictConfig):
     agent = build_agent(**cfg)
     agent.train()

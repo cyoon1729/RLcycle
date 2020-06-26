@@ -31,16 +31,9 @@ class BaseModel(nn.Module):
     def get_feature_size(self):
         """Get output size of feature layers; input size for fc input layer"""
         try:  # if state_dim is a tuple, like atari images
-            feature_size = (
-                self.features(torch.zeros(1, *self.model_cfg.state_dim))
-                .view(-1)
-                .size(0)
-            )
+            dummy_feature = self.features(torch.zeros(1, *self.model_cfg.state_dim))
         except TypeError:
-            assert (
-                type(self.model_cfg.state_dim) is int
-            ), "state_dim must be int or iterable"
-            feature_size = (
-                self.features(torch.zeros(1, self.model_cfg.state_dim)).view(-1).size(0)
-            )
+            dummy_feature = self.features(torch.zeros(1, self.model_cfg.state_dim))
+
+        feature_size = dummy_feature.view(-1).size(0)
         return feature_size
