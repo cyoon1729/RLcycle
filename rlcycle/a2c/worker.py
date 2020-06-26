@@ -25,7 +25,7 @@ class TrajectoryRolloutWorker:
         self.env = build_env(experiment_info)
         self.action_selector = build_action_selector(self.experiment_info)
         self.device = torch.device(self.experiment_info.worker_device)
-        self.policy = build_model(policy_cfg, self.device)
+        self.actor = build_model(policy_cfg, self.device)
 
     def run_trajectory(self) -> Dict[str, np.ndarray]:
         """Finish one env episode and return trajectory experience"""
@@ -35,7 +35,7 @@ class TrajectoryRolloutWorker:
         episode_reward = 0
         while not done:
             # Carry out environment step
-            action = self.action_selector(self.policy, state)
+            action = self.action_selector(self.actor, state)
             next_state, reward, done, _ = self.env.step(action)
 
             # Store to trajectory
@@ -60,4 +60,4 @@ class TrajectoryRolloutWorker:
 
     def synchronize_policy(self, new_state_dict):
         """Synchronize policy with received new parameters"""
-        self.policy.load_state_dict(new_state_dict)
+        self.actor.load_state_dict(new_state_dict)

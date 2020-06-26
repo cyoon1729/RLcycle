@@ -1,10 +1,12 @@
 from typing import Dict, List, Tuple
 
+import numpy as np
 import torch
 from omegaconf import DictConfig
 
 from rlcycle.a2c.worker import TrajectoryRolloutWorker
 from rlcycle.build import build_loss, build_model
+from rlcycle.common.utils.common_utils import np2tensor
 
 
 class ComputesGradients:
@@ -27,9 +29,10 @@ class ComputesGradients:
     ):
         self.worker = worker
         self.hyper_params = hyper_params
+        self.model_cfg = model_cfg
 
         # Build critic
-        self.critic = build_model(self.model_cfg.critic)
+        self.critic = build_model(self.model_cfg.critic, self.worker.device)
 
         # Build loss functions
         self.critic_loss_fn = build_loss(
@@ -45,8 +48,8 @@ class ComputesGradients:
         )
 
     def compute_grads_with_traj(self) -> Tuple[List[torch.Tensor], ...]:
-        trajectory = self.worker.run_trajectory()
-        trajectory_tensors = self._preprocess_experience(trajectory)
+        trajectory_info = self.worker.run_trajectory()
+        trajectory_tensors = self._preprocess_trajectory(trajectory_info["trajectory"])
 
         # Compute loss
         critic_loss_element_wise, values = self.critic_loss_fn(
@@ -78,3 +81,20 @@ class ComputesGradients:
     def synchronize(self, state_dicts: Dict[str, dict]):
         self.critic.load_state_dict(state_dicts["critic"])
         self.worker.synchronize_policy(state_dicts["actor"])
+
+    def _preprocess_trajectory(
+        self, trajectory: Tuple[np.ndarray, ...]
+    ) -> Tuple[torch.Tensor]:
+        """Preprocess trajectory for pytorch training"""
+        states, actions, rewards = trajectory
+
+        states = np2tensor(states, self.worker.device)
+        actions = np2tensor(actions.reshape(-1, 1), self.worker.device)
+        rewards = np2tensor(rewards.reshape(-1, 1), self.worker.device)
+
+        if self.worker.experiment_info.is_discrete:
+            actions = actions.long()
+
+        trajectory = (states, actions, rewards)
+
+        return trajectory

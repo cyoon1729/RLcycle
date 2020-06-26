@@ -43,17 +43,22 @@ class A3CAgent(Agent):
             self.experiment_info, self.hyper_params, self.model_cfg
         )
 
+    def step(self):
+        """A2C agent doesn't use step() in its training, so no need to implement"""
+        pass
+
     def train(self):
         """Run gradient parallel training (A3C)."""
         ray.init()
         workers = []
-        for worker_id in range(self.num_workers):
+        for worker_id in range(self.experiment_info.num_workers):
             worker = TrajectoryRolloutWorker(
                 worker_id, self.experiment_info, self.learner.model_cfg.actor
             )
+
             # Wrap worker with ComputesGradients wrapper
             worker = ray.remote(num_cpus=1)(ComputesGradients).remote(
-                worker, self.experiment_info, self.model_cfg.actor
+                worker, self.hyper_params, self.learner.model_cfg
             )
             workers.append(worker)
 
@@ -74,10 +79,10 @@ class A3CAgent(Agent):
                     param.grad = grad
                 self.learner.critic_optimizer.step()
 
-                self.actor_optimizer.zero_grad()
+                self.learner.actor_optimizer.zero_grad()
                 for param, grad in zip(self.learner.actor.parameters(), actor_grads):
                     param.grad = grad
-                self.actor_optimizer.step()
+                self.learner.actor_optimizer.step()
 
                 self.update_step = self.update_step + 1
 
