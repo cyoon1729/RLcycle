@@ -1,0 +1,28 @@
+# DQN hyperparameters as reported in: (with slight modifications)
+# Nature DQN paper (https://deepmind.com/research/publications/human-level-control-through-deep-reinforcement-learning)
+# OpenAI Baselines
+
+# Hyperparams for replay buffer
+hyper_params:
+  batch_size: 32
+  replay_buffer_size: 10000 # Nature DQN puts 1000000 but this takes up too much memory
+  use_per: True
+  per_alpha: 0.4  # PER alpha value
+  per_beta: 0.6  # PER beta value
+  per_beta_max: 1.0
+  per_beta_total_steps: 10000
+
+  # Exploration configs
+  eps: 1.0  # epsilon-greedy exploration
+  eps_final: 0.1  # minimum epsilon value for exploration
+  max_exploration_frame: 10000  # eps = eps_final at most until # steps
+
+  # Others
+  update_starting_point: 10000 # update steps when buffer has # experiences stored
+  gamma: 0.99
+  tau: 0.005
+  learning_rate: 0.00025
+  q_reg_coeff: 0
+  gradient_clip: 10.0
+  n_step: 5
+  train_freq: 4

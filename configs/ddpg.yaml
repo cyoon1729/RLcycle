@@ -1,0 +1,4 @@
+defaults:
+  - experiment_info: ddpg_pybullet
+  - hyper_params: ddpg
+  - model: ddpg

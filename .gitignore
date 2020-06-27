@@ -1,3 +1,2 @@
-# Latex stuff
-.aux
-.log
+__pycache__/
+outputs/
