@@ -1,10 +1,11 @@
+import numpy as np
 import ray
-from omegaconf import DictConfig
-
+from omegaconf import DictConfig, OmegaConf
 from rlcycle.a2c.worker import TrajectoryRolloutWorker
 from rlcycle.a3c.worker import ComputesGradients
-from rlcycle.build import build_learner
+from rlcycle.build import build_action_selector, build_learner
 from rlcycle.common.abstract.agent import Agent
+from rlcycle.common.utils.logger import Logger
 
 
 class A3CAgent(Agent):
@@ -13,7 +14,8 @@ class A3CAgent(Agent):
     Attributes:
         learner (Learner): learner for A3C
         update_step (int): update step counter
-
+        action_selector (ActionSelector): action selector for testing
+        logger (Logger): WandB logger
     """
 
     def __init__(
@@ -43,9 +45,24 @@ class A3CAgent(Agent):
             self.experiment_info, self.hyper_params, self.model_cfg
         )
 
-    def step(self):
-        """A2C agent doesn't use step() in its training, so no need to implement"""
-        pass
+        self.action_selector = build_action_selector(self.experiment_info)
+
+        # Build logger
+        if self.experiment_info.log_wandb:
+            experiment_cfg = OmegaConf.create(
+                dict(
+                    experiment_info=self.experiment_info,
+                    hyper_params=self.hyper_params,
+                    model=self.learner.model_cfg,
+                )
+            )
+            self.logger = Logger(experiment_cfg)
+
+    def step(self, state: np.ndarray, action: np.ndarray):
+        """Carry out one environment step"""
+        # A3C only uses this for test
+        next_state, reward, done, _ = self.env.step(action)
+        return state, action, reward, next_state, done
 
     def train(self):
         """Run gradient parallel training (A3C)."""
@@ -70,7 +87,7 @@ class A3CAgent(Agent):
             computed_grads_ids, _ = ray.wait(list(gradients))
             if computed_grads_ids:
                 # Retrieve computed gradients
-                computed_grads = ray.get(computed_grads_ids[0])
+                computed_grads, step_info = ray.get(computed_grads_ids[0])
                 critic_grads, actor_grads = computed_grads
 
                 # Apply computed gradients and update models
@@ -94,5 +111,30 @@ class A3CAgent(Agent):
                 worker = gradients.pop(computed_grads_ids[0])
                 worker.synchronize.remote(state_dicts)
                 gradients[worker.compute_grads_with_traj.remote()] = worker
+
+                if self.experiment_info.log_wandb:
+                    self.logger.write_log(
+                        dict(
+                            critic_loss=step_info["critic_loss"],
+                            actor_loss=step_info["actor_loss"],
+                        )
+                    )
+                    if step_info["worker_rank"] == 0:
+                        self.logger.write_log(dict(eipsode_reward=step_info["score"]))
+
+            if self.update_step % self.experiment_info.test_interval == 0:
+                policy_copy = self.learner.get_policy(self.device)
+                average_test_score = self.test(
+                    policy_copy,
+                    self.action_selector,
+                    self.update_step,
+                    self.update_step,
+                )
+                if self.experiment_info.log_wandb:
+                    self.logger.write_log(
+                        log_dict=dict(average_test_score=average_test_score),
+                    )
+
+                self.learner.save_params()
 
         ray.shut_down()

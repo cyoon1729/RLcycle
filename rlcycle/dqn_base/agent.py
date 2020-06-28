@@ -2,14 +2,14 @@ from collections import deque
 from typing import Tuple
 
 import numpy as np
-from omegaconf import DictConfig
-
+from omegaconf import DictConfig, OmegaConf
 from rlcycle.build import build_action_selector, build_learner
 from rlcycle.common.abstract.agent import Agent
 from rlcycle.common.buffer.prioritized_replay_buffer import \
     PrioritizedReplayBuffer
 from rlcycle.common.buffer.replay_buffer import ReplayBuffer
 from rlcycle.common.utils.common_utils import np2tensor, preprocess_nstep
+from rlcycle.common.utils.logger import Logger
 from rlcycle.dqn_base.action_selector import EpsGreedy
 
 
@@ -23,7 +23,7 @@ class DQNBaseAgent(Agent):
         action_selector (ActionSelector): Callable for DQN action selection (EpsGreedy as wrapper)
         use_n_step (bool): Indication of using n-step updates
         transition_queue (Deque): deque for tracking and preprocessing n-step transitions
-
+        logger (Logger): WandB logger
     """
 
     def __init__(
@@ -63,6 +63,16 @@ class DQNBaseAgent(Agent):
             self.action_selector, self.env.action_space, self.hyper_params
         )
 
+        if self.experiment_info.log_wandb:
+            experiment_cfg = OmegaConf.create(
+                dict(
+                    experiment_info=self.experiment_info,
+                    hyper_params=self.hyper_params,
+                    model=self.learner.model_cfg,
+                )
+            )
+            self.logger = Logger(experiment_cfg)
+
     def step(
         self, state: np.ndarray, action: np.ndarray
     ) -> Tuple[np.ndarray, np.ndarray, np.float64, bool]:
@@ -98,6 +108,8 @@ class DQNBaseAgent(Agent):
                 else:
                     self.replay_buffer.add(state, action, reward, next_state, done)
 
+                state = next_state
+
                 if len(self.replay_buffer) >= self.hyper_params.update_starting_point:
                     if step % self.hyper_params.train_freq == 0:
                         experience = self.replay_buffer.sample()
@@ -114,19 +126,30 @@ class DQNBaseAgent(Agent):
 
                         self.action_selector.decay_epsilon()
 
-                state = next_state
+                    if self.experiment_info.log_wandb:
+                        self.logger.write_log(log_dict=dict(q_loss=q_loss),)
 
             print(
                 f"[TRAIN] episode num: {episode_i} | update step: {self.update_step} |"
                 f"episode reward: {episode_reward} | epsilon: {self.action_selector.eps}"
             )
 
+            if self.experiment_info.log_wandb:
+                log_info = dict(
+                    episode_reward=episode_reward, epsilon=self.action_selector.eps
+                )
+                self.logger.write_log(log_dict=log_info)
+
             if episode_i % self.experiment_info.test_interval == 0:
                 policy_copy = self.learner.get_policy(self.device)
-                self.test(
+                average_test_score = self.test(
                     policy_copy, self.action_selector, episode_i, self.update_step
                 )
-                # self.learner.save_params()
+                if self.experiment_info.log_wandb:
+                    self.logger.write_log(
+                        log_dict=dict(average_test_score=average_test_score),
+                    )
+                self.learner.save_params()
 
     def _preprocess_experience(self, experience: Tuple[np.ndarray]):
         """Convert numpy experiences to tensor"""

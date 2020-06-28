@@ -1,9 +1,10 @@
+import os
 from abc import ABC, abstractmethod
+from datetime import datetime
 from typing import Tuple
 
 import torch
 from omegaconf import DictConfig
-
 from rlcycle.common.models.base import BaseModel
 
 
@@ -42,6 +43,14 @@ class Learner(LearnerBase):
         self.hyper_params = hyper_params
         self.model_cfg = model_cfg
         self.device = torch.device(experiment_info.device)
+
+        time_info = datetime.now()
+        timestamp = f"{time_info.year}-{time_info.month}-{time_info.day}"
+        self.ckpt_path = (
+            f"../../../../checkpoints/{self.experiment_info.env.name}"
+            f"/{self.experiment_info.experiment_name}/{timestamp}/"
+        )
+        os.makedirs(self.ckpt_path, exist_ok=True)
 
     @abstractmethod
     def _initialize(self):

@@ -2,14 +2,14 @@ from collections import deque
 from typing import Tuple
 
 import numpy as np
-from omegaconf import DictConfig
-
+from omegaconf import DictConfig, OmegaConf
 from rlcycle.build import build_action_selector, build_learner
 from rlcycle.common.abstract.agent import Agent
 from rlcycle.common.buffer.prioritized_replay_buffer import \
     PrioritizedReplayBuffer
 from rlcycle.common.buffer.replay_buffer import ReplayBuffer
 from rlcycle.common.utils.common_utils import np2tensor, preprocess_nstep
+from rlcycle.common.utils.logger import Logger
 from rlcycle.ddpg.action_selector import OUNoise
 
 
@@ -61,9 +61,20 @@ class DDPGAgent(Agent):
                 self.replay_buffer, self.hyper_params
             )
 
-        # Build action selector, wrap with e-greedy exploration
+        # Build action selector
         self.action_selector = build_action_selector(self.experiment_info)
         self.action_selector = OUNoise(self.action_selector, self.env.action_space)
+
+        # Build logger
+        if self.experiment_info.log_wandb:
+            experiment_cfg = OmegaConf.create(
+                dict(
+                    experiment_info=self.experiment_info,
+                    hyper_params=self.hyper_params,
+                    model=self.learner.model_cfg,
+                )
+            )
+            self.logger = Logger(experiment_cfg)
 
     def step(
         self, state: np.ndarray, action: np.ndarray
@@ -101,6 +112,8 @@ class DDPGAgent(Agent):
                 else:
                     self.replay_buffer.add(state, action, reward, next_state, done)
 
+                state = next_state
+
                 if len(self.replay_buffer) >= self.hyper_params.update_starting_point:
                     experience = self.replay_buffer.sample()
                     info = self.learner.update_model(
@@ -112,19 +125,34 @@ class DDPGAgent(Agent):
                         indices, new_priorities = info[-2:]
                         self.replay_buffer.update_priorities(indices, new_priorities)
 
-                state = next_state
+                    if self.experiment_info.log_wandb:
+                        self.logger.write_log(
+                            log_dict=dict(
+                                critic1_loss=info[0],
+                                critic2_loss=info[1],
+                                actor_loss=info[2],
+                            ),
+                        )
 
             print(
                 f"[TRAIN] episode num: {episode_i} | update step: {self.update_step} |"
                 f" episode reward: {episode_reward}"
             )
 
+            if self.experiment_info.log_wandb:
+                self.logger.write_log(log_dict=dict(episode_reward=episode_reward))
+
             if episode_i % self.experiment_info.test_interval == 0:
                 policy_copy = self.learner.get_policy(self.device)
-                self.test(
+                average_test_score = self.test(
                     policy_copy, self.action_selector, episode_i, self.update_step
                 )
-                # self.learner.save_params()
+                if self.experiment_info.log_wandb:
+                    self.logger.write_log(
+                        log_dict=dict(average_test_score=average_test_score),
+                    )
+
+                self.learner.save_params()
 
     def _preprocess_experience(self, experience: Tuple[np.ndarray]):
         """Convert collected experience to pytorch tensors."""

@@ -1,14 +1,14 @@
+import os
 from copy import deepcopy
 from typing import Tuple
 
 import torch
 import torch.optim as optim
 from omegaconf import DictConfig
-from torch.nn.utils import clip_grad_norm_
-
 from rlcycle.build import build_loss, build_model
 from rlcycle.common.abstract.learner import Learner
 from rlcycle.common.utils.common_utils import hard_update, soft_update
+from torch.nn.utils import clip_grad_norm_
 
 
 class DQNLearner(Learner):
@@ -92,3 +92,12 @@ class DQNLearner(Learner):
         policy_copy = deepcopy(self.network)
         policy_copy.to(target_device)
         return policy_copy
+
+    def save_params(self):
+        ckpt = self.ckpt_path + f"/update-step-{self.update_step}"
+        os.makedirs(ckpt, exist_ok=True)
+        path = os.path.join(ckpt + ".pt")
+
+        torch.save(self.network.state_dict(), path)
+        torch.save(self.target_network.state_dict(), path)
+        torch.save(self.optimizer.state_dict(), path)
