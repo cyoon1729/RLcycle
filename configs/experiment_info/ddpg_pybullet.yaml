@@ -1,11 +1,13 @@
 experiment_info:
   # Main algorithm choices
+  experiment_name: DDPG-Agent
   agent: rlcycle.ddpg.agent.DDPGAgent
   learner: rlcycle.ddpg.learner.DDPGLearner
   critic_loss: rlcycle.ddpg.loss.CriticLoss
   actor_loss: rlcycle.ddpg.loss.ActorLoss
   action_selector: rlcycle.ddpg.action_selector.DDPGActionSelector
-  device: cuda
+  device: cpu
+  log_wandb: True
 
   # Environment info
   env:

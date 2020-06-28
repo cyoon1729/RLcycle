@@ -1,11 +1,13 @@
 experiment_info:
   # Main algorithm choices
+  experiment_name: SAC-Agent
   agent: rlcycle.sac.agent.SACAgent
   learner: rlcycle.sac.learner.SACLearner
   critic_loss: rlcycle.sac.loss.CriticLoss
   actor_loss: rlcycle.sac.loss.PolicyLoss
   action_selector: rlcycle.sac.action_selector.SACActionSelector
-  device: cuda
+  device: cpu
+  log_wandb: True
 
   # Environment info
   env:

@@ -1,10 +1,12 @@
 experiment_info:
   # Main algorithm choices
+  experiment_name: DDQN-Agent
   agent: rlcycle.dqn_base.agent.DQNBaseAgent
   learner: rlcycle.dqn_base.learner.DQNLearner
   loss: rlcycle.dqn_base.loss.DQNLoss
   action_selector: rlcycle.dqn_base.action_selector.DQNActionSelector
   device: cpu
+  log_wandb: True
 
   # Environment info
   env:

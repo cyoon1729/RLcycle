@@ -1,14 +1,14 @@
+import os
 from copy import deepcopy
 from typing import List, Tuple
 
 import torch
 import torch.optim as optim
 from omegaconf import DictConfig
-from torch.nn.utils import clip_grad_norm_
-
 from rlcycle.build import build_loss, build_model
 from rlcycle.common.abstract.learner import Learner
 from rlcycle.common.models.base import BaseModel
+from torch.nn.utils import clip_grad_norm_
 
 
 class A2CLearner(Learner):
@@ -109,6 +109,16 @@ class A2CLearner(Learner):
 
     def get_policy(self, target_device: torch.device) -> BaseModel:
         """Return policy mapped to target device"""
-        policy_copy = deepcopy(self.network)
+        policy_copy = deepcopy(self.actor)
         policy_copy.to(target_device)
         return policy_copy
+
+    def save_params(self):
+        ckpt = self.ckpt_path + f"/update-step-{self.update_step}"
+        os.makedirs(ckpt, exist_ok=True)
+        path = os.path.join(ckpt + ".pt")
+
+        torch.save(self.critic.state_dict(), path)
+        torch.save(self.actor.state_dict(), path)
+        torch.save(self.critic_optimizer.state_dict(), path)
+        torch.save(self.actor_optimizer.state_dict(), path)

@@ -4,12 +4,12 @@ from typing import Tuple
 import numpy as np
 import ray
 import torch
-from omegaconf import DictConfig
-
+from omegaconf import DictConfig, OmegaConf
 from rlcycle.a2c.worker import TrajectoryRolloutWorker
-from rlcycle.build import build_learner
+from rlcycle.build import build_action_selector, build_learner
 from rlcycle.common.abstract.agent import Agent
 from rlcycle.common.utils.common_utils import np2tensor
+from rlcycle.common.utils.logger import Logger
 
 
 class A2CAgent(Agent):
@@ -18,6 +18,8 @@ class A2CAgent(Agent):
     Attributes:
         learner (Learner): learner for A2C
         update_step (int): update step counter
+        action_selector (ActionSelector): action selector for testing
+        logger (Logger): WandB logger
 
     """
 
@@ -48,9 +50,24 @@ class A2CAgent(Agent):
             self.experiment_info, self.hyper_params, self.model_cfg
         )
 
-    def step(self):
-        """A2C agent doesn't use step() in its training, so no need to implement"""
-        pass
+        self.action_selector = build_action_selector(self.experiment_info)
+
+        # Build logger
+        if self.experiment_info.log_wandb:
+            experiment_cfg = OmegaConf.create(
+                dict(
+                    experiment_info=self.experiment_info,
+                    hyper_params=self.hyper_params,
+                    model=self.learner.model_cfg,
+                )
+            )
+            self.logger = Logger(experiment_cfg)
+
+    def step(self, state: np.ndarray, action: np.ndarray):
+        """Carry out one environment step"""
+        # A2C only uses this for test
+        next_state, reward, done, _ = self.env.step(action)
+        return state, action, reward, next_state, done
 
     def train(self):
         """Run data parellel training (A2C)."""
@@ -75,13 +92,40 @@ class A2CAgent(Agent):
                 self._preprocess_trajectory(traj["trajectory"])
                 for traj in trajectory_infos
             ]
-            self.learner.update_model(trajectories_tensor)
+            info = self.learner.update_model(trajectories_tensor)
             self.update_step = self.update_step + 1
 
             # Synchronize worker policies
             policy_state_dict = self.learner.actor.state_dict()
             for worker in workers:
                 worker.synchronize_policy.remote(policy_state_dict)
+
+            if self.experiment_info.log_wandb:
+                worker_average_score = np.mean(
+                    [traj["score"] for traj in trajectory_infos]
+                )
+                self.logger.write_log(
+                    dict(
+                        critic_loss=info[0],
+                        actor_loss=info[1],
+                        episode_reward=worker_average_score,
+                    )
+                )
+
+            if self.update_step % self.experiment_info.test_interval == 0:
+                policy_copy = self.learner.get_policy(self.device)
+                average_test_score = self.test(
+                    policy_copy,
+                    self.action_selector,
+                    self.update_step,
+                    self.update_step,
+                )
+                if self.experiment_info.log_wandb:
+                    self.logger.write_log(
+                        log_dict=dict(average_test_score=average_test_score),
+                    )
+
+                self.learner.save_params()
 
     def _preprocess_trajectory(
         self, trajectory: Tuple[np.ndarray, ...]

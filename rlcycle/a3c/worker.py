@@ -3,7 +3,6 @@ from typing import Dict, List, Tuple
 import numpy as np
 import torch
 from omegaconf import DictConfig
-
 from rlcycle.a2c.worker import TrajectoryRolloutWorker
 from rlcycle.build import build_loss, build_model
 from rlcycle.common.utils.common_utils import np2tensor
@@ -76,7 +75,15 @@ class ComputesGradients:
         for param in self.worker.actor.parameters():
             actor_grads.append(param.grad)
 
-        return critic_grads, actor_grads
+        computed_grads = (critic_grads, actor_grads)
+        step_info = dict(
+            worker_rank=self.worker.rank,
+            critic_loss=critic_loss,
+            actor_loss=actor_loss,
+            score=trajectory_info["score"],
+        )
+
+        return computed_grads, step_info
 
     def synchronize(self, state_dicts: Dict[str, dict]):
         self.critic.load_state_dict(state_dicts["critic"])

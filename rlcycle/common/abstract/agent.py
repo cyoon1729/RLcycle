@@ -4,7 +4,6 @@ from typing import Tuple
 import numpy as np
 import torch
 from omegaconf import DictConfig
-
 from rlcycle.build import build_env
 from rlcycle.common.abstract.action_selector import ActionSelector
 from rlcycle.common.models.base import BaseModel
@@ -79,9 +78,12 @@ class Agent(ABC):
             )
             episode_rewards.append(episode_reward)
 
-        action_selector.exploration = True
+        mean_rewards = np.mean(episode_rewards)
         print(
             f"EPISODE NUM: {episode_i} | UPDATE STEP: {update_step} |"
             f"MEAN REWARD: {np.mean(episode_rewards)}"
         )
+        action_selector.exploration = True
         print("====TEST END====")
+
+        return mean_rewards

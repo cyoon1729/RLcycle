@@ -1,14 +1,14 @@
+import os
 from copy import deepcopy
 from typing import Tuple
 
 import torch
 import torch.optim as optim
 from omegaconf import DictConfig
-from torch.nn.utils import clip_grad_norm_
-
 from rlcycle.build import build_loss, build_model
 from rlcycle.common.abstract.learner import Learner
 from rlcycle.common.utils.common_utils import hard_update, soft_update
+from torch.nn.utils import clip_grad_norm_
 
 
 class SACLearner(Learner):
@@ -175,3 +175,15 @@ class SACLearner(Learner):
         policy_copy = deepcopy(self.actor)
         policy_copy.to(target_device)
         return policy_copy
+
+    def save_params(self):
+        ckpt = self.ckpt_path + f"/update-step-{self.update_step}"
+        os.makedirs(ckpt, exist_ok=True)
+        path = os.path.join(ckpt + ".pt")
+
+        torch.save(self.critic1.state_dict(), path)
+        torch.save(self.critic2.state_dict(), path)
+        torch.save(self.actor.state_dict(), path)
+        torch.save(self.critic1_optimizer.state_dict(), path)
+        torch.save(self.critic2_optimizer.state_dict(), path)
+        torch.save(self.actor_optimizer.state_dict(), path)

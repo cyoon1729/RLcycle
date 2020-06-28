@@ -1,5 +1,6 @@
 experiment_info:
   # Main algorithm choices
+  experiment_name: A3C-Agent
   agent: rlcycle.a3c.agent.A3CAgent
   learner: rlcycle.a2c.learner.A2CLearner
   critic_loss: rlcycle.a2c.loss.DiscreteCriticLoss
@@ -7,6 +8,7 @@ experiment_info:
   action_selector: rlcycle.a2c.action_selector.A2CDiscreteActionSelector
   worker_device: cpu
   device: cpu
+  log_wandb: True
   
   # Environment info
   env:

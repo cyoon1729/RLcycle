@@ -4,9 +4,8 @@ import hydra
 import torch
 import torch.nn as nn
 from omegaconf import DictConfig
-from torch.distributions import Normal
-
 from rlcycle.common.models.base import BaseModel
+from torch.distributions import Normal
 
 
 class MLPPolicy(BaseModel):
