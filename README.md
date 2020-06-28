@@ -10,7 +10,7 @@ Currently, RLcycle provides:
 - Soft Actor Critic with automatic entropy coefficient tuning.
 - Prioritized Experience Replay for all off-policy algorithhms
 
-RLcycle uses 
+RLcycle uses:
 - [PyTorch](https://github.com/pytorch/pytorch) for computations and building and optimizing models.
 - [Hydra](https://github.com/facebookresearch/hydra) for configuring and building agents.
 - [Ray](https://github.com/ray-project/ray) for parallelization. 
