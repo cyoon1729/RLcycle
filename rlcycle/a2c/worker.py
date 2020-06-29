@@ -1,8 +1,9 @@
 from typing import Dict
 
 import numpy as np
-import torch
 from omegaconf import DictConfig
+import torch
+
 from rlcycle.build import build_action_selector, build_env, build_model
 
 

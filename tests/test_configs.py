@@ -1,8 +1,15 @@
 import hydra
-import torch
 from omegaconf import DictConfig
-from rlcycle.build import (build_action_selector, build_agent, build_env,
-                           build_learner, build_loss, build_model)
+import torch
+
+from rlcycle.build import (
+    build_action_selector,
+    build_agent,
+    build_env,
+    build_learner,
+    build_loss,
+    build_model,
+)
 
 
 @hydra.main(config_path="../configs/meta_config.yaml", strict=False)

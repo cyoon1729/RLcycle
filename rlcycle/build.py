@@ -1,6 +1,7 @@
 import hydra
-import torch
 from omegaconf import DictConfig
+import torch
+
 from rlcycle.common.abstract.loss import Loss
 from rlcycle.common.utils.env_wrappers import generate_atari_env, generate_env
 

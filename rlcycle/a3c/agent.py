@@ -1,6 +1,7 @@
 import numpy as np
-import ray
 from omegaconf import DictConfig, OmegaConf
+import ray
+
 from rlcycle.a2c.worker import TrajectoryRolloutWorker
 from rlcycle.a3c.worker import ComputesGradients
 from rlcycle.build import build_action_selector, build_learner

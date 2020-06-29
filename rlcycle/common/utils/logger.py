@@ -1,7 +1,7 @@
 from datetime import datetime
 
-import wandb
 from omegaconf import DictConfig, OmegaConf
+import wandb
 
 
 class Logger:

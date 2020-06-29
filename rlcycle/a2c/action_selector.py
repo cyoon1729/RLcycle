@@ -1,8 +1,9 @@
 import numpy as np
+from torch.distributions import Categorical
+
 from rlcycle.common.abstract.action_selector import ActionSelector
 from rlcycle.common.models.base import BaseModel
 from rlcycle.common.utils.common_utils import np2tensor
-from torch.distributions import Categorical
 
 
 class A2CDiscreteActionSelector(ActionSelector):

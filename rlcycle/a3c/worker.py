@@ -1,8 +1,9 @@
 from typing import Dict, List, Tuple
 
 import numpy as np
-import torch
 from omegaconf import DictConfig
+import torch
+
 from rlcycle.a2c.worker import TrajectoryRolloutWorker
 from rlcycle.build import build_loss, build_model
 from rlcycle.common.utils.common_utils import np2tensor

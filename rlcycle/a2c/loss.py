@@ -1,11 +1,12 @@
 from typing import Tuple
 
-import torch
-import torch.nn.functional as F
 from omegaconf import DictConfig
+import torch
+from torch.distributions import Categorical
+import torch.nn.functional as F
+
 from rlcycle.common.abstract.loss import Loss
 from rlcycle.common.models.base import BaseModel
-from torch.distributions import Categorical
 
 
 class DiscreteCriticLoss(Loss):

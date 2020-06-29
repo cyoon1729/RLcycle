@@ -1,10 +1,11 @@
-import os
 from abc import ABC, abstractmethod
 from datetime import datetime
+import os
 from typing import Tuple
 
-import torch
 from omegaconf import DictConfig
+import torch
+
 from rlcycle.common.models.base import BaseModel
 
 
