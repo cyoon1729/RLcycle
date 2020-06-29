@@ -1,7 +1,7 @@
 # RLcycle
 
 
-RLcycle (to be pronounced as "recycle") is a reinforcement learning (RL) agents framework. RLcycle provides ready-made RL agents, as well as reusable components for easy prototyping. 
+RLcycle (pronounced as "recycle") is a reinforcement learning (RL) agents framework. RLcycle provides ready-made RL agents, as well as reusable components for easy prototyping. 
 
 Currently, RLcycle provides:
 - DQN + enhancements.
