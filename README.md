@@ -10,7 +10,7 @@ RLcycle (pronounced as "recycle") is a reinforcement learning (RL) agents framew
 Currently, RLcycle provides:
 - DQN + enhancements, Distributional: C51, Quantile Regression
 - A2C (data parallel) and A3C (gradient parallel).
-- DDPG, both Lillicrap et al. (2015) and Fujimoto et al., (2018) versions.
+- DDPG, both Lillicrap et al. (2015) and Fujimoto et al., (2018) versions (Technically TD3).
 - Soft Actor Critic with automatic entropy coefficient tuning.
 - Prioritized Experience Replay for all off-policy algorithhms
 
