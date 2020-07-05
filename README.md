@@ -76,7 +76,7 @@ If you would like to know more about `hydra`,  [check it out](https://hydra.cc/)
 <details>
 <summary> <b> 2. Initializing Components in RLcycle (models, learners, agents, etc) </b></summary>
 
-Most of the components in `RLcycle` are instantiated via `hydra.utils.instantiate`. 
+Most of the components in `RLcycle` are instantiated via `hydra.utils.instantiate`, as illustrated in the section above. 
 Examples:
 1. models:
 ```yaml
