@@ -27,6 +27,15 @@ See below for an introduction and guide to using RLcycle, performance benchmarks
 If you have any questions, or would like to contribute to RLcycle or offer any suggestions, feel free to raise an issue or reach out at `cjy2129 [at] columbia [dot] edu`!
 
 ## Getting Started
+To install:
+```
+conda create --name myenv python=3.6.9 pip
+conda activate myenv
+git clone https://github.com/cyoon1729/RLcycle.git
+cd RLcycle
+pip install -U -r requirements.txt
+pip install -e .
+```
 
 <details>
 <summary> <b> 1. A quick look at Hydra for managing configurations </b></summary>
