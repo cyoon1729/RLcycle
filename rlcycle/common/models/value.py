@@ -103,7 +103,7 @@ class DuelingDQNModel(BaseModel):
         return value + advantage - advantage.mean()
 
 
-class QRDQN(BaseModel):
+class QRDQNModel(BaseModel):
     """Quantile Regression DQN Model initializable with hydra configs
 
     Attributes:
@@ -153,4 +153,4 @@ class QRDQN(BaseModel):
         x = self.fc_hidden.forward(x)
         x = self.fc_output.forward(x)
 
-        return x.view(-1, self.num_actions, self.num_quantiles)
+        return x.view(-1, self.action_dim, self.num_quantiles)

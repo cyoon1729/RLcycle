@@ -1,0 +1,5 @@
+defaults:
+  - experiment_info: qrdqn_lunarlander
+  - hyper_params: dqn_nature
+  - model: qrdqn
+
