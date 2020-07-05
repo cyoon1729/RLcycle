@@ -11,8 +11,6 @@ from rlcycle.build import (
     build_model,
 )
 
-
-@hydra.main(config_path="../configs/meta_config.yaml", strict=False)
 def main(cfg: DictConfig):
     # print all configs
     print(cfg.pretty())

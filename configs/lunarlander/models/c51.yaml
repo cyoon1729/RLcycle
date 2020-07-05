@@ -1,0 +1,31 @@
+model:
+  class: rlcycle.common.models.value.CategoricalDQN
+  params:
+    model_cfg:
+      state_dim: undefined
+      action_dim: undefined
+      num_atoms: 51
+      v_min: -20
+      v_max: 20
+             
+      fc:
+        input:
+          class: rlcycle.common.models.layers.LinearLayer
+          params: 
+            input_size: undefined
+            output_size: 512
+            post_activation_fn: relu           
+        hidden:
+          hidden1:
+            class: rlcycle.common.models.layers.LinearLayer
+            params: 
+              input_size: 512
+              output_size: 512
+              post_activation_fn: relu
+
+        output:
+          class: rlcycle.common.models.layers.LinearLayer
+          params:
+            input_size: 512
+            output_size: undefined
+            post_activation_fn: identity
