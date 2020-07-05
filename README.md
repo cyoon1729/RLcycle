@@ -134,9 +134,7 @@ self.learner = build_learner(
 
 # in ./rlcycle/build.py
 def build_learner(
-    experiment_info: DictConfig,
-    hyper_params: DictConfig,
-    model: DictConfig
+    experiment_info: DictConfig, hyper_params: DictConfig, model: DictConfig
 ):
     """Build learner from DictConfigs via hydra.utils.instantiate()"""
     learner_cfg = DictConfig(dict())
@@ -160,9 +158,7 @@ def main(cfg: DictConfig):
 
 # in ./rlcycle.build.py
 def build_agent(
-    experiment_info: DictConfig,
-    hyper_params: DictConfig,
-    model: DictConfig
+    experiment_info: DictConfig, hyper_params: DictConfig, model: DictConfig
 ):
     """Build agent from DictConfigs via hydra.utils.instantiate()"""
     agent_cfg = DictConfig(dict())
