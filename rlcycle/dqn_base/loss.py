@@ -1,4 +1,4 @@
-from typing import Tuple, List
+from typing import List, Tuple
 
 from omegaconf import DictConfig
 import torch
@@ -57,8 +57,9 @@ class QRLoss(Loss):
 
         distance = target_z - z_dists
         element_wise_loss = torch.mean(
-                self.quantile_huber_loss(distance) * (qrdqn.tau - (distance.detach() < 0).float()).abs(),
-                dim=1
+            self.quantile_huber_loss(distance)
+            * (qrdqn.tau - (distance.detach() < 0).float()).abs(),
+            dim=1,
         )
 
         return element_wise_loss
