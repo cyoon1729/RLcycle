@@ -1,7 +1,7 @@
 # RLcycle
 
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/cyoon1729/RLcycle.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/cyoon1729/RLcycle/alerts/)
-[![Total alerts](https://img.shields.io/lgtm/alerts/g/cyoon1729/RLcycle.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/cyoon1729/RLcycle/alerts/)
+[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/cyoon1729/RLcycle.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/cyoon1729/RLcycle/context:python)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
