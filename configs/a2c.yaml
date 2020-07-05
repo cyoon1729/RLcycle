@@ -1,4 +1,0 @@
-defaults:
-  - experiment_info: a2c_lunarlander
-  - hyper_params: a2c
-  - model: a2c

@@ -1,9 +1,12 @@
 model:
-  class: rlcycle.common.models.value.DQNModel
+  class: rlcycle.common.models.value.CategoricalDQN
   params:
     model_cfg:
       state_dim: undefined
       action_dim: undefined
+      num_atoms: 51
+      v_min: -20
+      v_max: 20
 
       use_conv: True
       conv_features:
@@ -37,19 +40,19 @@ model:
           class: rlcycle.common.models.layers.LinearLayer
           params: 
             input_size: undefined
-            output_size: 128
+            output_size: 512
             post_activation_fn: relu           
         hidden:
           hidden1:
             class: rlcycle.common.models.layers.LinearLayer
             params: 
-              input_size: 128
-              output_size: 128
+              input_size: 512
+              output_size: 512
               post_activation_fn: relu
 
         output:
           class: rlcycle.common.models.layers.LinearLayer
           params:
-            input_size: 128
+            input_size: 512
             output_size: undefined
             post_activation_fn: identity

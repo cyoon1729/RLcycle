@@ -1,0 +1,53 @@
+model:
+
+  critic:
+    class: rlcycle.common.models.critic.FujimotoCritic
+    params:
+      model_cfg:
+        fc:
+          input:
+            class: rlcycle.common.models.layers.LinearLayer
+            params: 
+              input_size: undefined
+              output_size: 400
+              post_activation_fn: relu           
+          hidden:
+            hidden1:
+              class: rlcycle.common.models.layers.LinearLayer
+              params: 
+                input_size: 400
+                output_size: 300
+                post_activation_fn: relu
+          output:
+            class: rlcycle.common.models.layers.LinearLayer
+            params:
+              input_size: 300
+              output_size: 1
+              post_activation_fn: identity
+  
+  actor:
+    class: rlcycle.common.models.policy.MLPPolicy
+    params:
+      model_cfg:
+        fc:
+          input:
+            class: rlcycle.common.models.layers.LinearLayer
+            params: 
+              input_size: undefined
+              output_size: 400
+              post_activation_fn: relu   
+          hidden:
+            hidden1:
+              class: rlcycle.common.models.layers.LinearLayer
+              params: 
+                input_size: 400
+                output_size: 300
+                post_activation_fn: relu
+          output:
+              class: rlcycle.common.models.layers.LinearLayer
+              params: 
+                input_size: 300
+                output_size: undefined
+                post_activation_fn: tanh
+
+             

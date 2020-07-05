@@ -4,7 +4,7 @@ from omegaconf import DictConfig
 from rlcycle.build import build_agent
 
 
-@hydra.main(config_path="../configs/a3c.yaml", strict=False)
+@hydra.main(config_path="../configs/lunarlander/a3c.yaml", strict=False)
 def main(cfg: DictConfig):
     agent = build_agent(**cfg)
     agent.train()

@@ -25,3 +25,8 @@ experiment_info:
   train_render: False  # Render all episode steps
   test_render: True # Render test
   num_workers: 2
+
+
+defaults:
+  - hyper_params: a3c_mnih2015
+  - models: a3c

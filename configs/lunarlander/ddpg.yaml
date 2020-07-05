@@ -1,0 +1,26 @@
+experiment_info:
+  # Main algorithm choices
+  experiment_name: DDPG-Agent
+  agent: rlcycle.ddpg.agent.DDPGAgent
+  learner: rlcycle.ddpg.learner.DDPGLearner
+  critic_loss: rlcycle.ddpg.loss.CriticLoss
+  actor_loss: rlcycle.ddpg.loss.ActorLoss
+  action_selector: rlcycle.ddpg.action_selector.DDPGActionSelector
+  device: cpu
+  log_wandb: True
+
+  # Environment info
+  env:
+    name: LunarLanderContinuous-v2
+    max_episode_steps: 300
+    
+  # Experiment default arguments:
+  total_num_episodes: 1500
+  test_interval: 100  # Test every 50 episodes
+  test_num: 5  # Number of episodes to test during test phase
+  render_train: True 
+  render_test: True
+
+defaults:
+ - hyper_params: ddpg_lillicrap2015
+ - models: ddpg

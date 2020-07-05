@@ -1,6 +1,6 @@
 experiment_info:
   # Main algorithm choices
-  experiment_name: A2C-Agent
+  experiment_name: A2C
   agent: rlcycle.a2c.agent.A2CAgent
   learner: rlcycle.a2c.learner.A2CLearner
   critic_loss: rlcycle.a2c.loss.DiscreteCriticLoss
@@ -25,3 +25,7 @@ experiment_info:
   train_render: False  # Render all episode steps
   test_render: True # Render test
   num_workers: 2
+
+defaults:
+  - hyper_params: a2c_mnih2015
+  - models: a2c

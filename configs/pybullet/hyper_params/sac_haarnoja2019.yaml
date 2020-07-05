@@ -1,0 +1,21 @@
+hyper_params:
+  batch_size: 64
+  replay_buffer_size: 100000 # Nature DQN puts 1000000 but this takes up too much memory
+  use_per: True
+  per_alpha: 0.4  # PER alpha value
+  per_beta: 0.6  # PER beta value
+  per_beta_max: 1.0
+  per_beta_total_steps: 10000
+
+  update_starting_point: 64 # update steps when buffer has # experiences stored
+  n_step: 1
+  train_freq: 1  
+  gamma: 0.99
+  tau: 0.005
+  critic_learning_rate: 0.001
+  actor_learning_rate: 0.001
+  alpha_learning_rate: 0.0003
+  q_reg_coeff: 0
+  critic_gradient_clip: 10.0
+  actor_gradient_clip: 10.0
+  alpha: 2.0
