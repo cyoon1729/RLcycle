@@ -37,10 +37,10 @@ Let's first take a  look at one of the many useful things [hydra](https://hydra.
 
 # in ./examples/rectangle.yaml
 shape:
-	class: examples.shapes.Rectangle
-	params:
-		height: 5
-		weight: 4
+    class: examples.shapes.Rectangle
+        params:
+            height: 5
+            weight: 4
 ```
 
 Initializing `shapes.Rectangle` with `hydra` as in the above yaml file:
