@@ -1,5 +1,9 @@
 # RLcycle
 
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/cyoon1729/RLcycle.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/cyoon1729/RLcycle/alerts/)
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/cyoon1729/RLcycle.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/cyoon1729/RLcycle/alerts/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 RLcycle (pronounced as "recycle") is a reinforcement learning (RL) agents framework. RLcycle provides ready-made RL agents, as well as reusable components for easy prototyping. 
 
