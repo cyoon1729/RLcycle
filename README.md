@@ -70,7 +70,7 @@ def main(cfg: DictConfig):
 if __main__ == "__main__":
     main()
 ```
-If you're qurious about `hydra`,  [check it out](https://hydra.cc/)!
+If you would like to know more about `hydra`,  [check it out](https://hydra.cc/)!
 </details>
 
 <details>
