@@ -4,11 +4,11 @@ model:
     model_cfg:
       state_dim: undefined
       action_dim: undefined
-      num_atoms: 51
-      v_min: -20
-      v_max: 20
+      num_atoms: 1530
+      v_min: -300
+      v_max: 300
 
-      use_conv: True
+      use_conv: False
       conv_features:
         feature1:
           class: rlcycle.common.models.layers.Conv2DLayer
