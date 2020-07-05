@@ -1,0 +1,31 @@
+# General
+numpy==1.18.5
+torch==1.5.1
+
+# Configs
+hydra-core
+omegaconf
+pyyaml
+
+# Gym
+gym
+gym[atari]
+pybullet
+box2d
+
+# Parallel / distributed
+ray
+ray[debug]
+
+
+# Logging
+wandb
+
+# Formatting
+black
+isort
+flake8
+
+# General-general
+wheel
+setuptools
