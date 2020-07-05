@@ -3,6 +3,7 @@ import numpy as np
 from omegaconf import DictConfig
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from rlcycle.common.models.base import BaseModel
 
@@ -103,7 +104,7 @@ class DuelingDQNModel(BaseModel):
         return value + advantage - advantage.mean()
 
 
-class QRDQN(BaseModel):
+class QRDQNModel(BaseModel):
     """Quantile Regression DQN Model initializable with hydra configs
 
     Attributes:
@@ -119,6 +120,9 @@ class QRDQN(BaseModel):
         BaseModel.__init__(self, model_cfg)
         self.action_dim = self.model_cfg.action_dim
         self.num_quantiles = self.model_cfg.num_quantiles
+        self.tau = torch.FloatTensor(
+            (2.0 * np.arange(self.num_quantiles) + 1) / (2.0 * self.num_quantiles)
+        ).view(1, -1)
 
         # set input size of fc input layer
         self.model_cfg.fc.input.params.input_size = self.get_feature_size()
@@ -141,10 +145,6 @@ class QRDQN(BaseModel):
         # initialize output layer
         self.fc_output = hydra.utils.instantiate(self.model_cfg.fc.output)
 
-        self.tau = torch.FloatTensor(
-            (2.0 * np.arange(self.num_quantiles) + 1) / (2.0 * self.num_quantiles)
-        ).view(1, -1)
-
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward propagate through network"""
         x = self.features.forward(x)
@@ -153,4 +153,45 @@ class QRDQN(BaseModel):
         x = self.fc_hidden.forward(x)
         x = self.fc_output.forward(x)
 
-        return x.view(-1, self.num_actions, self.num_quantiles)
+        return x.view(-1, self.action_dim, self.num_quantiles)
+
+
+class CategoricalDQN(BaseModel):
+    def __init__(self, model_cfg):
+        BaseModel.__init__(self, model_cfg)
+        self.action_dim = self.model_cfg.action_dim
+        self.num_atoms = self.model_cfg.num_atoms
+        self.v_min = self.model_cfg.v_min
+        self.v_max = self.model_cfg.v_max
+        self.delta_z = (self.v_max - self.v_min) / (self.num_atoms - 1)
+        self.support = torch.linspace(self.v_min, self.v_max, self.num_atoms)
+        # set input size of fc input layer
+        self.model_cfg.fc.input.params.input_size = self.get_feature_size()
+
+        # set output size of fc output layer
+        self.model_cfg.fc.output.params.output_size = self.num_atoms * self.action_dim
+
+        # initialize input layer
+        self.fc_input = hydra.utils.instantiate(self.model_cfg.fc.input)
+
+        # initialize hidden layers
+        hidden_layers = []
+        for layer in self.model_cfg.fc.hidden:
+            layer_info = self.model_cfg.fc.hidden[layer]
+            hidden_layers.append(hydra.utils.instantiate(layer_info))
+        self.fc_hidden = nn.Sequential(*hidden_layers)
+
+        # initialize output layer
+        self.fc_output = hydra.utils.instantiate(self.model_cfg.fc.output)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        input_sz = x.size(0)
+        x = self.features.forward(x)
+        x = x.view(x.size(0), -1)
+        x = self.fc_input.forward(x)
+        x = self.fc_hidden.forward(x)
+        x = self.fc_output.forward(x)
+        dist = x.view(input_sz, -1, self.num_atoms)
+        dist = F.softmax(dist, dim=1)
+
+        return dist

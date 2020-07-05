@@ -3,7 +3,7 @@ experiment_info:
   agent: rlcycle.dqn_base.agent.DQNBaseAgent
   learner: rlcycle.dqn_base.learner.DQNLearner
   loss: rlcycle.dqn_base.loss.CategoricalLoss
-  action_selector: rlcycle.dqn_base.action_selector.C51ActionSelector
+  action_selector: rlcycle.dqn_base.action_selector.CategoricalActionSelector
   device: cpu
   log_wandb: False
 

@@ -3,6 +3,7 @@ from typing import Tuple
 from gym import spaces
 import numpy as np
 from omegaconf import DictConfig
+import torch
 import torch.nn as nn
 
 from rlcycle.common.abstract.action_selector import ActionSelector
@@ -19,8 +20,9 @@ class DQNActionSelector(ActionSelector):
         if state.ndim == 1:
             state = state.reshape(1, -1)
         state = np2tensor(state, self.device)
-        qvals = policy.forward(state)
-        qvals = qvals.cpu().detach().numpy()
+        with torch.no_grad():
+            qvals = policy.forward(state)
+            qvals = qvals.cpu().numpy()
         action = np.argmax(qvals)
         return action
 
@@ -35,9 +37,27 @@ class QRActionSelector(ActionSelector):
         if state.ndim == 1:
             state = state.reshape(1, -1)
         state = np2tensor(state, self.device).unsqueeze(0)
-        qvals = policy.forward(state).mean(2)  # fix dim
-        qvals = qvals.cpu().detach().numpy()
+        with torch.no_grad():
+            qvals = policy.forward(state).mean(2)  # fix dim
+            qvals = qvals.cpu().numpy()
         action = np.argmax(qvals)
+        return action
+
+
+class CategoricalActionSelector(ActionSelector):
+    """Action selector for categorical Q-value presentations"""
+
+    def __init__(self, device: str):
+        ActionSelector.__init__(self, device)
+
+    def __call__(self, policy: nn.Module, state: np.ndarray) -> Tuple[np.ndarray, ...]:
+        state = np2tensor(state, self.device).unsqueeze(0)
+        with torch.no_grad():
+            dist = policy.forward(state)
+            weights = dist * policy.support
+            qvals = weights.sum(dim=2).cpu().numpy()
+        action = np.argmax(qvals)
+
         return action
 
 
