@@ -141,7 +141,15 @@ class DDPGLearner(Learner):
         clip_grad_norm_(self.actor.parameters(), self.hyper_params.actor_gradient_clip)
         self.actor_optimizer.step()
 
-        info = (critic1_loss, critic2_loss, policy_loss)
+        critic1_loss = float(critic1_loss.detach().cpu().item())
+        critic2_loss = float(critic2_loss.detach().cpu().item())
+        policy_loss = float(policy_loss.detach().cpu().item())
+        info = (
+            critic1_loss,
+            critic2_loss,
+            policy_loss,
+        )
+
         if self.use_per:
             new_priorities = torch.clamp(critic1_loss_element_wise.view(-1), min=1e-6)
             new_priorities = new_priorities.cpu().detach().numpy()

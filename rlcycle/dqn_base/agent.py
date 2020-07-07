@@ -85,6 +85,7 @@ class DQNBaseAgent(Agent):
         step = 0
         for episode_i in range(self.experiment_info.total_num_episodes):
             state = self.env.reset()
+            losses = []
             episode_reward = 0
             done = False
 
@@ -117,17 +118,15 @@ class DQNBaseAgent(Agent):
                             self._preprocess_experience(experience)
                         )
                         self.update_step = self.update_step + 1
+                        losses.append(info[0])
 
                         if self.hyper_params.use_per:
-                            q_loss, indices, new_priorities = info
+                            indices, new_priorities = info[-2:]
                             self.replay_buffer.update_priorities(
                                 indices, new_priorities
                             )
 
                         self.action_selector.decay_epsilon()
-
-                    if self.experiment_info.log_wandb:
-                        self.logger.write_log(log_dict=dict(q_loss=q_loss),)
 
             print(
                 f"[TRAIN] episode num: {episode_i} | update step: {self.update_step} |"
@@ -135,8 +134,11 @@ class DQNBaseAgent(Agent):
             )
 
             if self.experiment_info.log_wandb:
+                mean_loss = np.mean(losses)
                 log_info = dict(
-                    episode_reward=episode_reward, epsilon=self.action_selector.eps
+                    episode_reward=episode_reward,
+                    epsilon=self.action_selector.eps,
+                    loss=mean_loss,
                 )
                 self.logger.write_log(log_dict=log_info)
 

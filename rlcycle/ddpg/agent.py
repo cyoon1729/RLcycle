@@ -14,7 +14,7 @@ from rlcycle.ddpg.action_selector import OUNoise
 
 
 class DDPGAgent(Agent):
-    """Configurable DQN base agent; works with Dueling DQN, C51, QR-DQN, etc.
+    """DDPG base agent; can be configured to work like TD3
 
     Attributes:
         env (gym.ENV): Gym environment for RL agent
@@ -88,6 +88,7 @@ class DDPGAgent(Agent):
         step = 0
         for episode_i in range(self.experiment_info.total_num_episodes):
             state = self.env.reset()
+            losses = dict(critic1_loss=[], critic2_loss=[], actor_loss=[])
             episode_reward = 0
             done = False
 
@@ -120,19 +121,14 @@ class DDPGAgent(Agent):
                         self._preprocess_experience(experience)
                     )
                     self.update_step = self.update_step + 1
+                    critic1_loss, critic2_loss, actor_loss = info[:3]
+                    losses["critic1_loss"].append(critic1_loss)
+                    losses["critic2_loss"].append(critic2_loss)
+                    losses["actor_loss"].append(actor_loss)
 
                     if self.hyper_params.use_per:
                         indices, new_priorities = info[-2:]
                         self.replay_buffer.update_priorities(indices, new_priorities)
-
-                    if self.experiment_info.log_wandb:
-                        self.logger.write_log(
-                            log_dict=dict(
-                                critic1_loss=info[0],
-                                critic2_loss=info[1],
-                                actor_loss=info[2],
-                            ),
-                        )
 
             print(
                 f"[TRAIN] episode num: {episode_i} | update step: {self.update_step} |"
@@ -140,7 +136,13 @@ class DDPGAgent(Agent):
             )
 
             if self.experiment_info.log_wandb:
-                self.logger.write_log(log_dict=dict(episode_reward=episode_reward))
+                log_dict = dict(
+                    episode_reward=episode_reward,
+                    critic1_loss=np.mean(losses["critic1_loss"]),
+                    critic2_loss=np.mean(losses["critic2_loss"]),
+                    actor_loss=np.mean(losses["actor_loss"]),
+                )
+                self.logger.write_log(log_dict)
 
             if episode_i % self.experiment_info.test_interval == 0:
                 policy_copy = self.learner.get_policy(self.device)

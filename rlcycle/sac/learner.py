@@ -164,7 +164,17 @@ class SACLearner(Learner):
         self.alpha_optim.step()
         self.alpha = self.log_alpha.exp()
 
-        info = (critic1_loss, critic2_loss, actor_loss, alpha_loss)
+        critic1_loss = float(critic1_loss.detach().cpu().item())
+        critic2_loss = float(critic2_loss.detach().cpu().item())
+        actor_loss = float(actor_loss.detach().cpu().item())
+        alpha_loss = float(alpha_loss.detach().cpu().item())
+        info = (
+            critic1_loss,
+            critic2_loss,
+            actor_loss,
+            alpha_loss,
+        )
+
         if self.use_per:
             new_priorities = torch.clamp(critic1_loss_element_wise.view(-1), min=1e-6)
             new_priorities = new_priorities.cpu().detach().numpy()

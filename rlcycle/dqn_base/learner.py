@@ -80,7 +80,9 @@ class DQNLearner(Learner):
 
         soft_update(self.network, self.target_network, self.hyper_params.tau)
 
+        q_loss = float(q_loss.detach().cpu().item())
         info = (q_loss,)
+
         if self.use_per:
             new_priorities = torch.clamp(q_loss_element_wise.view(-1), min=1e-6)
             new_priorities = new_priorities.cpu().detach().numpy()
