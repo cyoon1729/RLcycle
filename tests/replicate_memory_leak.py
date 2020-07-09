@@ -2,17 +2,18 @@ import numpy as np
 import torch
 
 from rlcycle.common.utils.debug.memory import MemProfiler
+from rlcycle.common.utils.common_utils import np2tensor, np2tensor2
 
 
 def leak():
     mp = MemProfiler(stopper=False)
     device = torch.device("cuda")
-    nparr = np.zeros((32, 84, 84, 3)).astype(np.float64)
+
 
     for _ in range(100):
+        nparr = np.random.randn(32, 3, 84, 84)
         mp.start()
-        tens = torch.from_numpy(nparr).float().to(device)
-        tens.cuda(non_blocking=True)
+        tens = np2tensor(nparr, device)
         mp.stop()
 
 

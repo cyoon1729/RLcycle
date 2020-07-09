@@ -6,7 +6,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from rlcycle.common.abstract.loss import Loss
-from rlcycle.common.utils.debugging import gc_mem_profile
 
 
 class DQNLoss(Loss):
