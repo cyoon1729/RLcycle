@@ -1,8 +1,8 @@
 import gc
-import resource
+import os
 
 from guppy import hpy
-import torch
+import psutil
 
 
 class MemProfiler:
@@ -18,30 +18,21 @@ class MemProfiler:
         """Set base memory size"""
         self.rss_base = self._get_rss()
         self.gc_base = self._get_gc_size()
+        print("--------------------------------------------")
+        print(f"rss base = {self.rss_base} \tgc size = {self.gc_base}")
 
-    def end(self):
+    def stop(self):
         """Compute memory consumption relative to starting point"""
         rss_size = self._get_rss() - self.rss_base
         gc_size = self._get_gc_size() - self.gc_base
-        print(f"rss size = {rss_size} \tgc size = {gc_size}")
+        print(f"leak = {rss_size} \tgc size = {gc_size}")
+        print("--------------------------------------------")
+
         if self.stopper:
-            input("------------")
-
-    def view_gc_tensors(self):
-        """view garbage collected tensors"""
-        tensor_info = []
-        gc_objects = gc.get_objects()
-        for gc_object in gc_objects():
-            if torch.is_tensor(gc_object):
-                tensor_info.append(
-                    (str(gc_object.device), gc_object.dtype, tuple(gc_object.size()))
-                )
-
-        for info in tensor_info:
-            print(f"{info[0]}, {info[1]}, {info[2]}")
+            input()
 
     def _get_rss(self):
-        return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        return psutil.Process(os.getpid()).memory_info().rss // 1024
 
     def _get_gc_size(self):
         return self.heap.heap().size

@@ -120,9 +120,13 @@ class QRDQNModel(BaseModel):
         BaseModel.__init__(self, model_cfg)
         self.action_dim = self.model_cfg.action_dim
         self.num_quantiles = self.model_cfg.num_quantiles
-        self.tau = torch.FloatTensor(
-            (2.0 * np.arange(self.num_quantiles) + 1) / (2.0 * self.num_quantiles)
-        ).view(1, -1)
+        self.tau = (
+            torch.FloatTensor(
+                (2.0 * np.arange(self.num_quantiles) + 1) / (2.0 * self.num_quantiles)
+            )
+            .view(1, -1)
+            .to(torch.device(self.model_cfg.device))
+        )
 
         # set input size of fc input layer
         self.model_cfg.fc.input.params.input_size = self.get_feature_size()

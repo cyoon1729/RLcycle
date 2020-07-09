@@ -3,12 +3,14 @@ from typing import Tuple
 
 import numpy as np
 from omegaconf import DictConfig, OmegaConf
+import torch
 
 from rlcycle.build import build_action_selector, build_learner
 from rlcycle.common.abstract.agent import Agent
 from rlcycle.common.buffer.prioritized_replay_buffer import PrioritizedReplayBuffer
 from rlcycle.common.buffer.replay_buffer import ReplayBuffer
-from rlcycle.common.utils.common_utils import np2tensor, preprocess_nstep
+from rlcycle.common.utils.common_utils import np2tensor, np2tensor2, preprocess_nstep
+from rlcycle.common.utils.debug.memory import MemProfiler
 from rlcycle.common.utils.logger import Logger
 from rlcycle.dqn_base.action_selector import EpsGreedy
 
@@ -36,6 +38,7 @@ class DQNBaseAgent(Agent):
         self.use_n_step = self.hyper_params.n_step > 1
         self.transition_queue = deque(maxlen=self.hyper_params.n_step)
         self.update_step = 0
+        self.mp = MemProfiler(stopper=False)
 
         self._initialize()
 
@@ -85,10 +88,9 @@ class DQNBaseAgent(Agent):
         step = 0
         for episode_i in range(self.experiment_info.total_num_episodes):
             state = self.env.reset()
-            losses = []
+            losses = [0]
             episode_reward = 0
             done = False
-
             while not done:
                 if self.experiment_info.render_train:
                     self.env.render()
@@ -114,20 +116,27 @@ class DQNBaseAgent(Agent):
                 if len(self.replay_buffer) >= self.hyper_params.update_starting_point:
                     if step % self.hyper_params.train_freq == 0:
                         experience = self.replay_buffer.sample()
-                        info = self.learner.update_model(
-                            self._preprocess_experience(experience)
-                        )
-                        self.update_step = self.update_step + 1
-                        losses.append(info[0])
 
-                        if self.hyper_params.use_per:
-                            indices, new_priorities = info[-2:]
-                            self.replay_buffer.update_priorities(
-                                indices, new_priorities
-                            )
+                        ######################
+                        ### MEMORY LEAK!!! ###
+                        experience = self._preprocess_experience(experience)
+                        ######################
 
-                        self.action_selector.decay_epsilon()
+                        # info = self.learner.update_model(
+                        #     experience
+                        # )
+                        # self.update_step = self.update_step + 1
+                        # losses.append(info[0])
 
+                        # if self.hyper_params.use_per:
+                        #     indices, new_priorities = info[-2:]
+                        #     self.replay_buffer.update_priorities(
+                        #         indices, new_priorities
+                        #     )
+
+                    self.action_selector.decay_epsilon()
+
+            # self.mp.end()
             print(
                 f"[TRAIN] episode num: {episode_i} | update step: {self.update_step} |"
                 f"episode reward: {episode_reward} | epsilon: {self.action_selector.eps}"
@@ -154,21 +163,27 @@ class DQNBaseAgent(Agent):
                 self.learner.save_params()
 
     def _preprocess_experience(self, experience: Tuple[np.ndarray]):
-        """Convert numpy experiences to tensor"""
+        """Convert numpy experiences to tensor: MEMORY """
         states, actions, rewards, next_states, dones = experience[:5]
         if self.hyper_params.use_per:
             indices, weights = experience[-2:]
 
-        states = np2tensor(states, self.device)
-        actions = np2tensor(actions.reshape(-1, 1), self.device)
-        rewards = np2tensor(rewards.reshape(-1, 1), self.device)
-        next_states = np2tensor(next_states, self.device)
-        dones = np2tensor(dones.reshape(-1, 1), self.device)
+        states = np2tensor2(states.astype(np.float64), self.device)
+        actions = np2tensor2(actions.astype(np.float64).reshape(-1, 1), self.device)
+        rewards = np2tensor2(rewards.astype(np.float64).reshape(-1, 1), self.device)
+        next_states = np2tensor2(next_states.astype(np.float64), self.device)
+        dones = np2tensor2(dones.astype(np.float64).reshape(-1, 1), self.device)
+
+        # states = np2tensor(states, self.device)
+        # actions = np2tensor(actions.reshape(-1, 1), self.device)
+        # rewards = np2tensor(rewards.reshape(-1, 1), self.device)
+        # next_states = np2tensor(next_states, self.device)
+        # dones = np2tensor(dones.reshape(-1, 1), self.device)
 
         experience = (states, actions.long(), rewards, next_states, dones)
 
         if self.hyper_params.use_per:
-            weights = np2tensor(weights.reshape(-1, 1), self.device)
+            weights = np2tensor2(weights.astype(np.float64).reshape(-1, 1), self.device)
             experience = experience + (indices, weights,)
 
         return experience

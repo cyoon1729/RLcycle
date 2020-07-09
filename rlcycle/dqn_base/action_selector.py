@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 
 from rlcycle.common.abstract.action_selector import ActionSelector
-from rlcycle.common.utils.common_utils import np2tensor
+from rlcycle.common.utils.common_utils import np2tensor, np2tensor2
 
 
 class DQNActionSelector(ActionSelector):
@@ -19,7 +19,7 @@ class DQNActionSelector(ActionSelector):
     def __call__(self, policy: nn.Module, state: np.ndarray) -> Tuple[np.ndarray, ...]:
         if state.ndim == 1:
             state = state.reshape(1, -1)
-        state = np2tensor(state, self.device)
+        state = np2tensor2(state.astype(np.float64), self.device).unsqueeze(0)
         with torch.no_grad():
             qvals = policy.forward(state)
             qvals = qvals.cpu().numpy()

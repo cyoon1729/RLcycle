@@ -10,6 +10,7 @@ import torch.optim as optim
 from rlcycle.build import build_loss, build_model
 from rlcycle.common.abstract.learner import Learner
 from rlcycle.common.utils.common_utils import hard_update, soft_update
+from rlcycle.common.utils.debug.memory import MemProfiler
 
 
 class DQNLearner(Learner):
@@ -63,7 +64,6 @@ class DQNLearner(Learner):
         q_loss_element_wise = self.loss_fn(
             (self.network, self.target_network), experience
         )
-
         # Compute new priorities and correct importance sampling bias
         if self.use_per:
             q_loss = torch.mean((q_loss_element_wise * weights))
@@ -74,13 +74,13 @@ class DQNLearner(Learner):
         loss = q_loss + dqn_reg
 
         self.optimizer.zero_grad()
-        loss.backward()
+        q_loss.backward()
         clip_grad_norm_(self.network.parameters(), self.hyper_params.gradient_clip)
         self.optimizer.step()
 
         soft_update(self.network, self.target_network, self.hyper_params.tau)
 
-        q_loss = float(q_loss.detach().cpu().item())
+        q_loss = float(q_loss.cpu().detach().item())
         info = (q_loss,)
 
         if self.use_per:

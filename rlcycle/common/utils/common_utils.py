@@ -13,6 +13,14 @@ def np2tensor(np_arr: np.ndarray, device: torch.device):
     return tensor_output
 
 
+def np2tensor2(np_arr: np.ndarray, device: torch.device):
+    """Convert numpy array to tensor"""
+    tensor_output = torch.from_numpy(np_arr).float().to(device)
+    if device.type == "cuda":
+        tensor_output.cuda(non_blocking=True)
+    return tensor_output
+
+
 def preprocess_nstep(n_step_queue: Deque, gamma: float) -> tuple:
     """Return n-step transition data with discounted n-step rewards"""
     discounted_reward = 0
