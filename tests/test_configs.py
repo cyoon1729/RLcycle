@@ -11,6 +11,7 @@ from rlcycle.build import (
     build_model,
 )
 
+
 def main(cfg: DictConfig):
     # print all configs
     print(cfg.pretty())
