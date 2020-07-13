@@ -11,8 +11,8 @@ from rlcycle.common.abstract.loss import Loss
 class CriticLoss(Loss):
     """Critic loss using clipped double q learning as in Fujimoto et al., 2018"""
 
-    def __init__(self, hyper_params: DictConfig, device: torch.device):
-        Loss.__init__(self, hyper_params, device)
+    def __init__(self, hyper_params: DictConfig, use_cuda: bool):
+        Loss.__init__(self, hyper_params, use_cuda)
 
     def __call__(
         self, networks: Tuple[nn.Module, ...], data: Tuple[torch.Tensor, ...]
@@ -42,21 +42,24 @@ class CriticLoss(Loss):
         """Generate action space noise"""
         if self.hyper_params.use_policy_reg:
             zeros = torch.zeros(self.hyper_params.batch_size, 1)
-            noise = torch.normal(zeros, self.hyper_params.noise_std).to(self.device)
+            noise = torch.normal(zeros, self.hyper_params.noise_std)
             noise = torch.clamp(
                 noise,
                 min=-self.hyper_params.policy_noise_bound,
                 max=self.hyper_params.policy_noise_bound,
             )
-            return noise
+            if self.use_cuda:
+                return noise.cuda()
+            else:
+                return noise.cpu()
         return 0
 
 
 class ActorLoss(Loss):
     """Compute DDPG actor loss"""
 
-    def __init__(self, hyper_params: DictConfig, device: torch.device):
-        Loss.__init__(self, hyper_params, device)
+    def __init__(self, hyper_params: DictConfig, use_cuda: bool):
+        Loss.__init__(self, hyper_params, use_cuda)
 
     def __call__(
         self, networks: Tuple[nn.Module, ...], data: Tuple[torch.Tensor, ...],

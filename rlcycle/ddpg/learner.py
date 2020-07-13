@@ -54,10 +54,10 @@ class DDPGLearner(Learner):
         ) = self.experiment_info.env.action_dim
 
         # Initialize critic models, optimizers, and loss function
-        self.critic1 = build_model(self.model_cfg.critic, self.device)
-        self.target_critic1 = build_model(self.model_cfg.critic, self.device)
-        self.critic2 = build_model(self.model_cfg.critic, self.device)
-        self.target_critic2 = build_model(self.model_cfg.critic, self.device)
+        self.critic1 = build_model(self.model_cfg.critic, self.use_cuda)
+        self.target_critic1 = build_model(self.model_cfg.critic, self.use_cuda)
+        self.critic2 = build_model(self.model_cfg.critic, self.use_cuda)
+        self.target_critic2 = build_model(self.model_cfg.critic, self.use_cuda)
 
         self.critic1_optimizer = optim.Adam(
             self.critic1.parameters(), lr=self.hyper_params.critic_learning_rate
@@ -66,23 +66,19 @@ class DDPGLearner(Learner):
             self.critic2.parameters(), lr=self.hyper_params.critic_learning_rate
         )
         self.critic_loss_fn = build_loss(
-            self.experiment_info.critic_loss,
-            self.hyper_params,
-            self.experiment_info.device,
+            self.experiment_info.critic_loss, self.hyper_params, self.use_cuda,
         )
 
         hard_update(self.critic1, self.target_critic1)
         hard_update(self.critic2, self.target_critic2)
 
         # Initialize actor model, optimizer, and loss function
-        self.actor = build_model(self.model_cfg.actor, self.device)
+        self.actor = build_model(self.model_cfg.actor, self.use_cuda)
         self.actor_optimizer = optim.Adam(
             self.actor.parameters(), lr=self.hyper_params.actor_learning_rate
         )
         self.actor_loss_fn = build_loss(
-            self.experiment_info.actor_loss,
-            self.hyper_params,
-            self.experiment_info.device,
+            self.experiment_info.actor_loss, self.hyper_params, self.use_cuda,
         )
 
     def update_model(
@@ -157,10 +153,12 @@ class DDPGLearner(Learner):
 
         return info
 
-    def get_policy(self, target_device: torch.device):
+    def get_policy(self, to_cuda: bool):
         policy_copy = deepcopy(self.actor)
-        policy_copy.to(target_device)
-        return policy_copy
+        if to_cuda:
+            return policy_copy.cuda()
+        else:
+            return policy_copy.cpu()
 
     def save_params(self):
         ckpt = self.ckpt_path + f"/update-step-{self.update_step}"

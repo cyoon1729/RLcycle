@@ -12,14 +12,15 @@ class DDPGActionSelector(ActionSelector):
     """Action selector for (vanilla) DDPG policy
 
     Attributes:
-        device (torch.device): map location for tensor computations
+        use_cuda (bool): true if using gpu
+
         action_min (np.ndarray): lower bound for continuous actions
         action_max (np.ndarray): upper bound for continuous actions
 
     """
 
-    def __init__(self, action_range: list, device: str):
-        self.device = torch.device(device)
+    def __init__(self, action_range: list, use_cuda: bool):
+        ActionSelector.__init__(self, use_cuda)
         self.action_min = np.array(action_range[0])
         self.action_max = np.array(action_range[1])
 
@@ -27,7 +28,7 @@ class DDPGActionSelector(ActionSelector):
         """Generate action via policy"""
         if state.ndim == 1:
             state = state.reshape(1, -1)
-        action = policy.forward(np2tensor(state, self.device))
+        action = policy.forward(np2tensor(state, self.use_cuda))
         action_np = action.cpu().detach().view(-1).numpy()
         return action_np
 
@@ -55,6 +56,7 @@ class OUNoise(ActionSelector):
         min_sigma: float = 0.3,
         decay_period: int = 100000,
     ):
+        ActionSelector.__init__(self, action_selector.use_cuda)
         self.action_selector = action_selector
         self.mu = mu
         self.theta = theta
