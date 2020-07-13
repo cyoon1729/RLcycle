@@ -10,7 +10,6 @@ import torch.optim as optim
 from rlcycle.build import build_loss, build_model
 from rlcycle.common.abstract.learner import Learner
 from rlcycle.common.utils.common_utils import hard_update, soft_update
-from rlcycle.common.utils.debug.memory import MemProfiler
 
 
 class DQNLearner(Learner):
@@ -40,8 +39,8 @@ class DQNLearner(Learner):
 
     def _initialize(self):
         """initialize networks, optimizer, loss function"""
-        self.network = build_model(self.model_cfg, self.device)
-        self.target_network = build_model(self.model_cfg, self.device)
+        self.network = build_model(self.model_cfg, self.use_cuda)
+        self.target_network = build_model(self.model_cfg, self.use_cuda)
         hard_update(self.network, self.target_network)
 
         self.optimizer = optim.Adam(
@@ -49,13 +48,12 @@ class DQNLearner(Learner):
         )
 
         self.loss_fn = build_loss(
-            self.experiment_info.loss, self.hyper_params, self.experiment_info.device
+            self.experiment_info.loss, self.hyper_params, self.use_cuda
         )
 
     def update_model(
         self, experience: Tuple[torch.Tensor, ...]
     ) -> Tuple[torch.Tensor, ...]:
-
         # Separate indices and weights from experience if using PER
         if self.use_per:
             indices, weights = experience[-2:]
@@ -64,6 +62,7 @@ class DQNLearner(Learner):
         q_loss_element_wise = self.loss_fn(
             (self.network, self.target_network), experience
         )
+
         # Compute new priorities and correct importance sampling bias
         if self.use_per:
             q_loss = torch.mean((q_loss_element_wise * weights))
@@ -90,11 +89,13 @@ class DQNLearner(Learner):
 
         return info
 
-    def get_policy(self, target_device: torch.device):
+    def get_policy(self, to_cuda: bool):
         """Return policy mapped to target device"""
         policy_copy = deepcopy(self.network)
-        policy_copy.to(target_device)
-        return policy_copy
+        if to_cuda:
+            return policy_copy.cuda()
+        else:
+            return policy_copy.cpu()
 
     def save_params(self):
         ckpt = self.ckpt_path + f"/update-step-{self.update_step}"

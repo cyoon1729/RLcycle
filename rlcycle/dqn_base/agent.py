@@ -9,8 +9,7 @@ from rlcycle.build import build_action_selector, build_learner
 from rlcycle.common.abstract.agent import Agent
 from rlcycle.common.buffer.prioritized_replay_buffer import PrioritizedReplayBuffer
 from rlcycle.common.buffer.replay_buffer import ReplayBuffer
-from rlcycle.common.utils.common_utils import np2tensor, np2tensor2, preprocess_nstep
-from rlcycle.common.utils.debug.memory import MemProfiler
+from rlcycle.common.utils.common_utils import np2tensor, preprocess_nstep
 from rlcycle.common.utils.logger import Logger
 from rlcycle.dqn_base.action_selector import EpsGreedy
 
@@ -38,7 +37,6 @@ class DQNBaseAgent(Agent):
         self.use_n_step = self.hyper_params.n_step > 1
         self.transition_queue = deque(maxlen=self.hyper_params.n_step)
         self.update_step = 0
-        self.mp = MemProfiler(stopper=False)
 
         self._initialize()
 
@@ -47,6 +45,7 @@ class DQNBaseAgent(Agent):
         # set env specific model params
         self.model_cfg.params.model_cfg.state_dim = self.env.observation_space.shape
         self.model_cfg.params.model_cfg.action_dim = self.env.action_space.n
+        self.model_cfg.params.model_cfg.use_cuda = self.use_cuda
 
         # Build learner
         self.learner = build_learner(
@@ -61,7 +60,9 @@ class DQNBaseAgent(Agent):
             )
 
         # Build action selector, wrap with e-greedy exploration
-        self.action_selector = build_action_selector(self.experiment_info)
+        self.action_selector = build_action_selector(
+            self.experiment_info, self.use_cuda
+        )
         self.action_selector = EpsGreedy(
             self.action_selector, self.env.action_space, self.hyper_params
         )
@@ -87,10 +88,24 @@ class DQNBaseAgent(Agent):
         """Main training loop"""
         step = 0
         for episode_i in range(self.experiment_info.total_num_episodes):
+            # Test when we have to
+            if episode_i % self.experiment_info.test_interval == 0:
+                policy_copy = self.learner.get_policy(self.use_cuda)
+                average_test_score = self.test(
+                    policy_copy, self.action_selector, episode_i, self.update_step
+                )
+                if self.experiment_info.log_wandb:
+                    self.logger.write_log(
+                        log_dict=dict(average_test_score=average_test_score),
+                    )
+                self.learner.save_params()
+
+            # carry out episode
             state = self.env.reset()
-            losses = [0]
+            losses = []
             episode_reward = 0
             done = False
+
             while not done:
                 if self.experiment_info.render_train:
                     self.env.render()
@@ -117,26 +132,20 @@ class DQNBaseAgent(Agent):
                     if step % self.hyper_params.train_freq == 0:
                         experience = self.replay_buffer.sample()
 
-                        ######################
-                        ### MEMORY LEAK!!! ###
-                        experience = self._preprocess_experience(experience)
-                        ######################
+                        info = self.learner.update_model(
+                            self._preprocess_experience(experience)
+                        )
+                        self.update_step = self.update_step + 1
+                        losses.append(info[0])
 
-                        # info = self.learner.update_model(
-                        #     experience
-                        # )
-                        # self.update_step = self.update_step + 1
-                        # losses.append(info[0])
-
-                        # if self.hyper_params.use_per:
-                        #     indices, new_priorities = info[-2:]
-                        #     self.replay_buffer.update_priorities(
-                        #         indices, new_priorities
-                        #     )
+                        if self.hyper_params.use_per:
+                            indices, new_priorities = info[-2:]
+                            self.replay_buffer.update_priorities(
+                                indices, new_priorities
+                            )
 
                     self.action_selector.decay_epsilon()
 
-            # self.mp.end()
             print(
                 f"[TRAIN] episode num: {episode_i} | update step: {self.update_step} |"
                 f"episode reward: {episode_reward} | epsilon: {self.action_selector.eps}"
@@ -151,39 +160,22 @@ class DQNBaseAgent(Agent):
                 )
                 self.logger.write_log(log_dict=log_info)
 
-            if episode_i % self.experiment_info.test_interval == 0:
-                policy_copy = self.learner.get_policy(self.device)
-                average_test_score = self.test(
-                    policy_copy, self.action_selector, episode_i, self.update_step
-                )
-                if self.experiment_info.log_wandb:
-                    self.logger.write_log(
-                        log_dict=dict(average_test_score=average_test_score),
-                    )
-                self.learner.save_params()
-
     def _preprocess_experience(self, experience: Tuple[np.ndarray]):
         """Convert numpy experiences to tensor: MEMORY """
         states, actions, rewards, next_states, dones = experience[:5]
         if self.hyper_params.use_per:
             indices, weights = experience[-2:]
 
-        states = np2tensor2(states.astype(np.float64), self.device)
-        actions = np2tensor2(actions.astype(np.float64).reshape(-1, 1), self.device)
-        rewards = np2tensor2(rewards.astype(np.float64).reshape(-1, 1), self.device)
-        next_states = np2tensor2(next_states.astype(np.float64), self.device)
-        dones = np2tensor2(dones.astype(np.float64).reshape(-1, 1), self.device)
-
-        # states = np2tensor(states, self.device)
-        # actions = np2tensor(actions.reshape(-1, 1), self.device)
-        # rewards = np2tensor(rewards.reshape(-1, 1), self.device)
-        # next_states = np2tensor(next_states, self.device)
-        # dones = np2tensor(dones.reshape(-1, 1), self.device)
+        states = np2tensor(states, self.use_cuda)
+        actions = np2tensor(actions.reshape(-1, 1), self.use_cuda)
+        rewards = np2tensor(rewards.reshape(-1, 1), self.use_cuda)
+        next_states = np2tensor(next_states, self.use_cuda)
+        dones = np2tensor(dones.reshape(-1, 1), self.use_cuda)
 
         experience = (states, actions.long(), rewards, next_states, dones)
 
         if self.hyper_params.use_per:
-            weights = np2tensor2(weights.astype(np.float64).reshape(-1, 1), self.device)
+            weights = np2tensor(weights, self.use_cuda)
             experience = experience + (indices, weights,)
 
         return experience

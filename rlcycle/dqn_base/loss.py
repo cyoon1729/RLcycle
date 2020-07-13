@@ -11,8 +11,8 @@ from rlcycle.common.abstract.loss import Loss
 class DQNLoss(Loss):
     """Compute double DQN loss"""
 
-    def __init__(self, hyper_params: DictConfig, device: torch.device):
-        Loss.__init__(self, hyper_params, device)
+    def __init__(self, hyper_params: DictConfig, use_cuda: bool):
+        Loss.__init__(self, hyper_params, use_cuda)
 
     def __call__(
         self, networks: Tuple[nn.Module, ...], data: Tuple[torch.Tensor, ...]
@@ -31,16 +31,14 @@ class DQNLoss(Loss):
             q_value, target_q.detach(), reduction="none"
         )
 
-        # gc_mem_profile()
-        # input()
         return element_wise_loss
 
 
 class QRLoss(Loss):
     """Compute quantile regression loss"""
 
-    def __init__(self, hyper_params: DictConfig, device: torch.device):
-        Loss.__init__(self, hyper_params, device)
+    def __init__(self, hyper_params: DictConfig, use_cuda: bool):
+        Loss.__init__(self, hyper_params, use_cuda)
 
     def __call__(
         self, networks: Tuple[nn.Module, ...], data: Tuple[torch.Tensor, ...],
@@ -76,8 +74,8 @@ class QRLoss(Loss):
 class CategoricalLoss(Loss):
     """Compute C51 loss"""
 
-    def __init__(self, hyper_params: DictConfig, device: torch.device):
-        Loss.__init__(self, hyper_params, device)
+    def __init__(self, hyper_params: DictConfig, use_cuda: bool):
+        Loss.__init__(self, hyper_params, use_cuda)
 
     def __call__(
         self, networks: Tuple[nn.Module, ...], data: Tuple[torch.Tensor, ...]
@@ -90,8 +88,11 @@ class CategoricalLoss(Loss):
             .long()
             .unsqueeze(1)
             .expand(batch_size, network.num_atoms)
-            .to(self.device)
         )
+        if self.use_cuda:
+            offset.cuda()
+        else:
+            offset.cpu()
 
         z_dists = network.forward(states)
         z_dists = z_dists[list(range(states.size(0))), actions.view(-1)]
@@ -122,7 +123,12 @@ class CategoricalLoss(Loss):
         l = b.floor().long()
         u = b.ceil().long()
 
-        proj_dist = torch.zeros(next_z.size(), device=self.device)
+        proj_dist = torch.zeros(next_z.size())
+        if self.use_cuda:
+            proj_dist.cuda()
+        else:
+            proj_dist.cpu()
+
         proj_dist.view(-1).index_add_(
             0, (l + offset).view(-1), (next_z * (u.float() - b)).view(-1)
         )
