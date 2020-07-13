@@ -1,6 +1,7 @@
 import gym
 from omegaconf import DictConfig
 
+import pybulletgym
 from rlcycle.common.utils.env_wrappers import (
     ClipRewardEnv,
     ImageToPyTorch,

@@ -10,12 +10,12 @@ class ActionSelector(ABC):
     """Abstract base class for callable action selection methods
 
     Attributes:
-        device (torch.device): map location for tensors
+        use_cuda (bool): true if using gpu
         exploration (bool): turn on/off exploratory scheme
     """
 
-    def __init__(self, device: str):
-        self.device = torch.device(device)
+    def __init__(self, use_cuda: bool):
+        self.use_cuda = use_cuda
         self.exploration = True
 
     @abstractmethod

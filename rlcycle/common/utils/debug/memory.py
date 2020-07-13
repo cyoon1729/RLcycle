@@ -13,23 +13,30 @@ class MemProfiler:
         self.gc_base = 0
         self.heap = hpy()
         self.stopper = stopper
+        self.total_leaked = 0
 
     def start(self):
         """Set base memory size"""
         self.rss_base = self._get_rss()
         self.gc_base = self._get_gc_size()
-        print("--------------------------------------------")
-        print(f"rss base = {self.rss_base} \tgc size = {self.gc_base}")
 
     def stop(self):
         """Compute memory consumption relative to starting point"""
-        rss_size = self._get_rss() - self.rss_base
+        leak = self._get_rss() - self.rss_base
         gc_size = self._get_gc_size() - self.gc_base
-        print(f"leak = {rss_size} \tgc size = {gc_size}")
+        self.total_leaked += leak
+        print("--------------------------------------------")
+        print(
+            f"rss base = {self.rss_base} \tgc size = {self.gc_base}\n"
+            f"leak = {leak} \tgc size = {gc_size}, \ttotal leaked = {self.total_leaked}"
+        )
         print("--------------------------------------------")
 
         if self.stopper:
             input()
+
+    def set_rss_ckpt(self):
+        self.rss_ckpt = self._get_rss()
 
     def _get_rss(self):
         return psutil.Process(os.getpid()).memory_info().rss // 1024
