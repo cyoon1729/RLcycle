@@ -12,14 +12,13 @@ class SACActionSelector(ActionSelector):
     """Action selector for (vanilla) DDPG policy
 
     Attributes:
-        device (torch.device): map location for tensor computations
         action_min (np.ndarray): lower bound for continuous actions
         action_max (np.ndarray): upper bound for continuous actions
 
     """
 
-    def __init__(self, action_range: list, device: str):
-        self.device = torch.device(device)
+    def __init__(self, action_range: list, use_cuda: bool):
+        ActionSelector.__init__(self, use_cuda)
         self.action_min = np.array(action_range[0])
         self.action_max = np.array(action_range[1])
 
@@ -29,7 +28,7 @@ class SACActionSelector(ActionSelector):
         """Generate action via policy"""
         if state.ndim == 1:
             state = state.reshape(1, -1)
-        mu, sigma, z, log_pi = policy.sample(np2tensor(state, self.device))
+        mu, sigma, z, log_pi = policy.sample(np2tensor(state, self.use_cuda))
         action = torch.tanh(z)
         action_np = action.cpu().detach().view(-1).numpy()
         return action_np

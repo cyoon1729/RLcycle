@@ -1,4 +1,3 @@
-import gc
 import os
 
 from guppy import hpy

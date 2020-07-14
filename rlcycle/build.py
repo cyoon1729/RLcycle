@@ -1,6 +1,5 @@
 import hydra
 from omegaconf import DictConfig
-import torch
 
 from rlcycle.common.abstract.loss import Loss
 from rlcycle.common.utils.env_generator import generate_atari_env, generate_env
@@ -43,6 +42,7 @@ def build_learner(
 
 def build_model(model_cfg: DictConfig, use_cuda: bool):
     """Build model from DictConfigs via hydra.utils.instantiate()"""
+    model_cfg.use_cuda = use_cuda
     model = hydra.utils.instantiate(model_cfg)
     if use_cuda:
         return model.cuda()

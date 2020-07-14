@@ -46,7 +46,9 @@ class A3CAgent(Agent):
             self.experiment_info, self.hyper_params, self.model_cfg
         )
 
-        self.action_selector = build_action_selector(self.experiment_info)
+        self.action_selector = build_action_selector(
+            self.experiment_info, self.use_cuda
+        )
 
         # Build logger
         if self.experiment_info.log_wandb:
@@ -124,7 +126,7 @@ class A3CAgent(Agent):
                         self.logger.write_log(dict(eipsode_reward=step_info["score"]))
 
             if self.update_step % self.experiment_info.test_interval == 0:
-                policy_copy = self.learner.get_policy(self.device)
+                policy_copy = self.learner.get_policy(self.use_cuda)
                 average_test_score = self.test(
                     policy_copy,
                     self.action_selector,

@@ -51,7 +51,9 @@ class A2CAgent(Agent):
             self.experiment_info, self.hyper_params, self.model_cfg
         )
 
-        self.action_selector = build_action_selector(self.experiment_info)
+        self.action_selector = build_action_selector(
+            self.experiment_info, self.use_cuda
+        )
 
         # Build logger
         if self.experiment_info.log_wandb:
@@ -114,7 +116,7 @@ class A2CAgent(Agent):
                 )
 
             if self.update_step % self.experiment_info.test_interval == 0:
-                policy_copy = self.learner.get_policy(self.device)
+                policy_copy = self.learner.get_policy(self.use_cuda)
                 average_test_score = self.test(
                     policy_copy,
                     self.action_selector,
@@ -134,9 +136,9 @@ class A2CAgent(Agent):
         """Preprocess trajectory for pytorch training"""
         states, actions, rewards = trajectory
 
-        states = np2tensor(states, self.device)
-        actions = np2tensor(actions.reshape(-1, 1), self.device)
-        rewards = np2tensor(rewards.reshape(-1, 1), self.device)
+        states = np2tensor(states, self.use_cuda)
+        actions = np2tensor(actions.reshape(-1, 1), self.use_cuda)
+        rewards = np2tensor(rewards.reshape(-1, 1), self.use_cuda)
 
         if self.experiment_info.is_discrete:
             actions = actions.long()

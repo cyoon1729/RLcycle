@@ -12,8 +12,8 @@ from rlcycle.common.models.base import BaseModel
 class DiscreteCriticLoss(Loss):
     """Copmute critic loss for softmax-ed policy in discrete action space."""
 
-    def __init__(self, hyper_params: DictConfig, device: torch.device):
-        Loss.__init__(self, hyper_params, device)
+    def __init__(self, hyper_params: DictConfig, use_cuda: bool):
+        Loss.__init__(self, hyper_params, use_cuda)
 
     def __call__(
         self, networks: Tuple[BaseModel, ...], data: Tuple[torch.Tensor, ...]
@@ -25,9 +25,10 @@ class DiscreteCriticLoss(Loss):
         values = critic.forward(states)
 
         # Compute value targets
-        value_targets = torch.zeros_like(rewards).to(self.device)
-        if self.device.type == "cuda":
-            value_targets.cuda(non_blocking=True)
+        value_targets = torch.zeros_like(rewards)
+        if self.use_cuda:
+            value_targets = value_targets.cuda(non_blocking=True)
+
         for t in reversed(range(rewards.size(0) - 1)):
             value_targets[t] = rewards[t] + self.hyper_params.gamma * value_targets[t]
 
@@ -40,8 +41,8 @@ class DiscreteCriticLoss(Loss):
 class DiscreteActorLoss(Loss):
     """Copmute actor loss for softmax-ed policy in discrete action space."""
 
-    def __init__(self, hyper_params: DictConfig, device: torch.device):
-        Loss.__init__(self, hyper_params, device)
+    def __init__(self, hyper_params: DictConfig, use_cuda: bool):
+        Loss.__init__(self, hyper_params, use_cuda)
 
     def __call__(
         self, networks: Tuple[BaseModel, ...], data: Tuple[torch.Tensor, ...]

@@ -61,7 +61,9 @@ class SACAgent(Agent):
             )
 
         # Build action selector
-        self.action_selector = build_action_selector(self.experiment_info)
+        self.action_selector = build_action_selector(
+            self.experiment_info, self.use_cuda
+        )
 
         # Build logger
         if self.experiment_info.log_wandb:
@@ -93,6 +95,19 @@ class SACAgent(Agent):
         """Main training loop"""
         step = 0
         for episode_i in range(self.experiment_info.total_num_episodes):
+            # Test when we have to
+            if episode_i % self.experiment_info.test_interval == 0:
+                policy_copy = self.learner.get_policy(self.use_cuda)
+                average_test_score = self.test(
+                    policy_copy, self.action_selector, episode_i, self.update_step
+                )
+                if self.experiment_info.log_wandb:
+                    self.logger.write_log(
+                        log_dict=dict(average_test_score=average_test_score),
+                    )
+                self.learner.save_params()
+
+            # Run episode
             state = self.env.reset()
             losses = dict(
                 critic1_loss=[], critic2_loss=[], actor_loss=[], alpha_loss=[]
@@ -139,16 +154,6 @@ class SACAgent(Agent):
                         indices, new_priorities = info[-2:]
                         self.replay_buffer.update_priorities(indices, new_priorities)
 
-                    if self.experiment_info.log_wandb:
-                        self.logger.write_log(
-                            log_dict=dict(
-                                critic1_loss=info[0],
-                                critic2_loss=info[1],
-                                actor_loss=info[2],
-                                alpha_loss=info[3],
-                            ),
-                        )
-
             print(
                 f"[TRAIN] episode num: {episode_i} | update step: {self.update_step} |"
                 f" episode reward: {episode_reward}"
@@ -164,33 +169,22 @@ class SACAgent(Agent):
                 )
                 self.logger.write_log(log_dict)
 
-            if episode_i % self.experiment_info.test_interval == 0:
-                policy_copy = self.learner.get_policy(self.device)
-                average_test_score = self.test(
-                    policy_copy, self.action_selector, episode_i, self.update_step
-                )
-                if self.experiment_info.log_wandb:
-                    self.logger.write_log(
-                        log_dict=dict(average_test_score=average_test_score),
-                    )
-
-                self.learner.save_params()
-
     def _preprocess_experience(self, experience: Tuple[np.ndarray]):
+        """Convert collected experience to pytorch tensors."""
         states, actions, rewards, next_states, dones = experience[:5]
         if self.hyper_params.use_per:
             indices, weights = experience[-2:]
 
-        states = np2tensor(states, self.device)
-        actions = np2tensor(actions, self.device)
-        rewards = np2tensor(rewards.reshape(-1, 1), self.device)
-        next_states = np2tensor(next_states, self.device)
-        dones = np2tensor(dones.reshape(-1, 1), self.device)
+        states = np2tensor(states, self.use_cuda)
+        actions = np2tensor(actions, self.use_cuda)
+        rewards = np2tensor(rewards.reshape(-1, 1), self.use_cuda)
+        next_states = np2tensor(next_states, self.use_cuda)
+        dones = np2tensor(dones.reshape(-1, 1), self.use_cuda)
 
         experience = (states, actions, rewards, next_states, dones)
 
         if self.hyper_params.use_per:
-            weights = np2tensor(weights.reshape(-1, 1), self.device)
+            weights = np2tensor(weights.reshape(-1, 1), self.use_cuda)
             experience = experience + (indices, weights,)
 
         return experience

@@ -73,7 +73,7 @@ class DQNLearner(Learner):
         loss = q_loss + dqn_reg
 
         self.optimizer.zero_grad()
-        q_loss.backward()
+        loss.backward()
         clip_grad_norm_(self.network.parameters(), self.hyper_params.gradient_clip)
         self.optimizer.step()
 

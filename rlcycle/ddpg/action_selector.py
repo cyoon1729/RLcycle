@@ -1,7 +1,6 @@
 from typing import Tuple
 
 import numpy as np
-import torch
 import torch.nn as nn
 
 from rlcycle.common.abstract.action_selector import ActionSelector

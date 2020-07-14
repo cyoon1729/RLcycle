@@ -2,7 +2,6 @@ from typing import Dict
 
 import numpy as np
 from omegaconf import DictConfig
-import torch
 
 from rlcycle.build import build_action_selector, build_env, build_model
 
@@ -23,9 +22,11 @@ class TrajectoryRolloutWorker:
 
         self.rank = rank
         self.env = build_env(experiment_info)
-        self.action_selector = build_action_selector(self.experiment_info)
-        self.device = torch.device(self.experiment_info.worker_device)
-        self.actor = build_model(policy_cfg, self.device)
+        self.use_cuda = self.experiment_info.worker_device == "cuda"
+        self.action_selector = build_action_selector(
+            self.experiment_info, self.use_cuda
+        )
+        self.actor = build_model(policy_cfg, self.use_cuda)
 
     def run_trajectory(self) -> Dict[str, np.ndarray]:
         """Finish one env episode and return trajectory experience"""

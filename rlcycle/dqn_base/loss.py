@@ -90,9 +90,7 @@ class CategoricalLoss(Loss):
             .expand(batch_size, network.num_atoms)
         )
         if self.use_cuda:
-            offset.cuda()
-        else:
-            offset.cpu()
+            offset = offset.cuda()
 
         z_dists = network.forward(states)
         z_dists = z_dists[list(range(states.size(0))), actions.view(-1)]
@@ -120,20 +118,18 @@ class CategoricalLoss(Loss):
         offset: torch.Tensor,
     ) -> torch.Tensor:
         b = (target_z - network.v_min) / network.delta_z
-        l = b.floor().long()
-        u = b.ceil().long()
+        lb = b.floor().long()
+        ub = b.ceil().long()
 
         proj_dist = torch.zeros(next_z.size())
         if self.use_cuda:
-            proj_dist.cuda()
-        else:
-            proj_dist.cpu()
+            proj_dist = proj_dist.cuda()
 
         proj_dist.view(-1).index_add_(
-            0, (l + offset).view(-1), (next_z * (u.float() - b)).view(-1)
+            0, (lb + offset).view(-1), (next_z * (ub.float() - b)).view(-1)
         )
         proj_dist.view(-1).index_add_(
-            0, (u + offset).view(-1), (next_z * (b - l.float())).view(-1)
+            0, (ub + offset).view(-1), (next_z * (b - lb.float())).view(-1)
         )
 
         return proj_dist

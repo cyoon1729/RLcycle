@@ -3,7 +3,6 @@ from typing import Tuple
 
 import numpy as np
 from omegaconf import DictConfig
-import torch
 
 from rlcycle.build import build_env
 from rlcycle.common.abstract.action_selector import ActionSelector

@@ -40,7 +40,6 @@ class A2CLearner(Learner):
     def _initialize(self):
         """Initialize networks, optimizer, loss function."""
         # Set env-specific input dims and output dims for models
-
         self.model_cfg.critic.params.model_cfg.state_dim = (
             self.model_cfg.actor.params.model_cfg.state_dim
         ) = self.experiment_info.env.state_dim
@@ -49,26 +48,22 @@ class A2CLearner(Learner):
         ) = self.experiment_info.env.action_dim
 
         # Initialize critic models, optimizers, and loss function
-        self.critic = build_model(self.model_cfg.critic, self.device)
+        self.critic = build_model(self.model_cfg.critic, self.use_cuda)
 
         self.critic_optimizer = optim.Adam(
             self.critic.parameters(), lr=self.hyper_params.critic_learning_rate
         )
         self.critic_loss_fn = build_loss(
-            self.experiment_info.critic_loss,
-            self.hyper_params,
-            self.experiment_info.device,
+            self.experiment_info.critic_loss, self.hyper_params, self.use_cuda,
         )
 
         # Initialize actor model, optimizer, and loss function
-        self.actor = build_model(self.model_cfg.actor, self.device)
+        self.actor = build_model(self.model_cfg.actor, self.use_cuda)
         self.actor_optimizer = optim.Adam(
             self.actor.parameters(), lr=self.hyper_params.actor_learning_rate
         )
         self.actor_loss_fn = build_loss(
-            self.experiment_info.actor_loss,
-            self.hyper_params,
-            self.experiment_info.device,
+            self.experiment_info.actor_loss, self.hyper_params, self.use_cuda,
         )
 
     def update_model(
@@ -108,10 +103,13 @@ class A2CLearner(Learner):
         info = (critic_loss, actor_loss)
         return info
 
-    def get_policy(self, target_device: torch.device) -> BaseModel:
+    def get_policy(self, to_cuda: bool) -> BaseModel:
         """Return policy mapped to target device"""
         policy_copy = deepcopy(self.actor)
-        policy_copy.to(target_device)
+        if self.use_cuda:
+            policy_copy.cuda()
+        else:
+            policy_copy.cpu()
         return policy_copy
 
     def save_params(self):

@@ -60,10 +60,10 @@ class SACLearner(Learner):
         ) = self.experiment_info.env.action_dim
 
         # Initialize critic models, optimizers, and loss function
-        self.critic1 = build_model(self.model_cfg.critic, self.device)
-        self.target_critic1 = build_model(self.model_cfg.critic, self.device)
-        self.critic2 = build_model(self.model_cfg.critic, self.device)
-        self.target_critic2 = build_model(self.model_cfg.critic, self.device)
+        self.critic1 = build_model(self.model_cfg.critic, self.use_cuda)
+        self.target_critic1 = build_model(self.model_cfg.critic, self.use_cuda)
+        self.critic2 = build_model(self.model_cfg.critic, self.use_cuda)
+        self.target_critic2 = build_model(self.model_cfg.critic, self.use_cuda)
         self.critic1_optimizer = optim.Adam(
             self.critic1.parameters(), lr=self.hyper_params.critic_learning_rate
         )
@@ -71,31 +71,30 @@ class SACLearner(Learner):
             self.critic2.parameters(), lr=self.hyper_params.critic_learning_rate
         )
         self.critic_loss_fn = build_loss(
-            self.experiment_info.critic_loss,
-            self.hyper_params,
-            self.experiment_info.device,
+            self.experiment_info.critic_loss, self.hyper_params, self.use_cuda
         )
 
         hard_update(self.critic1, self.target_critic1)
         hard_update(self.critic2, self.target_critic2)
 
         # Initialize actor model, optimizer, and loss function
-        self.actor = build_model(self.model_cfg.actor, self.device)
+        self.actor = build_model(self.model_cfg.actor, self.use_cuda)
         self.actor_optimizer = optim.Adam(
             self.actor.parameters(), lr=self.hyper_params.actor_learning_rate
         )
         self.actor_loss_fn = build_loss(
-            self.experiment_info.actor_loss,
-            self.hyper_params,
-            self.experiment_info.device,
+            self.experiment_info.actor_loss, self.hyper_params, self.use_cuda
         )
 
         # entropy temperature
         self.alpha = self.hyper_params.alpha
         self.target_entropy = -torch.prod(
-            torch.Tensor(self.experiment_info.env.action_dim).to(self.device)
+            torch.Tensor(self.experiment_info.env.action_dim)
         ).item()
-        self.log_alpha = torch.zeros(1, requires_grad=True, device=self.device)
+        self.log_alpha = torch.zeros(1)
+        if self.use_cuda:
+            self.log_alpha = self.log_alpha.cuda()
+        self.log_alpha.requires_grad_()
         self.alpha_optim = optim.Adam(
             [self.log_alpha], lr=self.hyper_params.alpha_learning_rate
         )
@@ -182,9 +181,12 @@ class SACLearner(Learner):
 
         return info
 
-    def get_policy(self, target_device: torch.device):
+    def get_policy(self, to_cuda: bool):
         policy_copy = deepcopy(self.actor)
-        policy_copy.to(target_device)
+        if to_cuda:
+            policy_copy.cuda()
+        else:
+            policy_copy.cpu()
         return policy_copy
 
     def save_params(self):

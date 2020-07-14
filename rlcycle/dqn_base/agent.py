@@ -3,7 +3,6 @@ from typing import Tuple
 
 import numpy as np
 from omegaconf import DictConfig, OmegaConf
-import torch
 
 from rlcycle.build import build_action_selector, build_learner
 from rlcycle.common.abstract.agent import Agent
@@ -100,7 +99,7 @@ class DQNBaseAgent(Agent):
                     )
                 self.learner.save_params()
 
-            # carry out episode
+            # Carry out episode
             state = self.env.reset()
             losses = []
             episode_reward = 0
