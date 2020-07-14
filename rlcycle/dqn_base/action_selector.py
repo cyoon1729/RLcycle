@@ -13,16 +13,16 @@ from rlcycle.common.utils.common_utils import np2tensor
 class DQNActionSelector(ActionSelector):
     """DQN arg-max action selector"""
 
-    def __init__(self, device: str):
-        ActionSelector.__init__(self, device)
+    def __init__(self, use_cuda: bool):
+        ActionSelector.__init__(self, use_cuda)
 
     def __call__(self, policy: nn.Module, state: np.ndarray) -> Tuple[np.ndarray, ...]:
         if state.ndim == 1:
             state = state.reshape(1, -1)
-        state = np2tensor(state, self.device)
+        state = np2tensor(state, self.use_cuda).unsqueeze(0)
         with torch.no_grad():
             qvals = policy.forward(state)
-            qvals = qvals.cpu().numpy()
+            qvals = qvals.cpu().detach().numpy()
         action = np.argmax(qvals)
         return action
 
@@ -30,13 +30,13 @@ class DQNActionSelector(ActionSelector):
 class QRActionSelector(ActionSelector):
     """Action selector for Quantile Q-value representations"""
 
-    def __init__(self, device: str):
-        ActionSelector.__init__(self, device)
+    def __init__(self, use_cuda: bool):
+        ActionSelector.__init__(self, use_cuda)
 
     def __call__(self, policy: nn.Module, state: np.ndarray) -> Tuple[np.ndarray, ...]:
         if state.ndim == 1:
             state = state.reshape(1, -1)
-        state = np2tensor(state, self.device).unsqueeze(0)
+        state = np2tensor(state, self.use_cuda).unsqueeze(0)
         with torch.no_grad():
             qvals = policy.forward(state).mean(2)  # fix dim
             qvals = qvals.cpu().numpy()
@@ -47,11 +47,11 @@ class QRActionSelector(ActionSelector):
 class CategoricalActionSelector(ActionSelector):
     """Action selector for categorical Q-value presentations"""
 
-    def __init__(self, device: str):
-        ActionSelector.__init__(self, device)
+    def __init__(self, use_cuda: bool):
+        ActionSelector.__init__(self, use_cuda)
 
     def __call__(self, policy: nn.Module, state: np.ndarray) -> Tuple[np.ndarray, ...]:
-        state = np2tensor(state, self.device).unsqueeze(0)
+        state = np2tensor(state, self.use_cuda).unsqueeze(0)
         with torch.no_grad():
             dist = policy.forward(state)
             weights = dist * policy.support
@@ -79,7 +79,7 @@ class EpsGreedy(ActionSelector):
         action_space: spaces.Discrete,
         hyper_params: DictConfig,
     ):
-        ActionSelector.__init__(self, action_selector.device)
+        ActionSelector.__init__(self, action_selector.use_cuda)
         self.action_selector = action_selector
         self.action_space = action_space
         self.eps = hyper_params.eps

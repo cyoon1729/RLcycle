@@ -1,4 +1,3 @@
-import hydra
 from omegaconf import DictConfig
 import torch
 
@@ -10,6 +9,7 @@ from rlcycle.build import (
     build_loss,
     build_model,
 )
+
 
 def main(cfg: DictConfig):
     # print all configs

@@ -12,13 +12,13 @@ class Loss(ABC):
 
     Attributes:
         hyper_params (DictConfig): algorithm hyperparameters
-        device (torch.device): map location for tensor computation
+        use_cuda (bool): true if using gpu
 
     """
 
-    def __init__(self, hyper_params: DictConfig, device: str):
+    def __init__(self, hyper_params: DictConfig, use_cuda: bool):
         self.hyper_params = hyper_params
-        self.device = torch.device(device)
+        self.use_cuda = use_cuda
 
     @abstractmethod
     def __call__(

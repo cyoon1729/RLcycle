@@ -9,13 +9,13 @@ from rlcycle.common.utils.common_utils import np2tensor
 class A2CDiscreteActionSelector(ActionSelector):
     """Action selector for A2C discrete action space"""
 
-    def __init__(self, device: str):
-        ActionSelector.__init__(self, device)
+    def __init__(self, use_cuda: bool):
+        ActionSelector.__init__(self, use_cuda)
 
     def __call__(self, policy: BaseModel, state: np.ndarray) -> np.ndarray:
         if state.ndim == 1:
             state = state.reshape(1, -1)
-        state = np2tensor(state, self.device)
+        state = np2tensor(state, self.use_cuda)
         dist = policy.forward(state)
         categorical_dist = Categorical(dist)
         if self.exploration:
@@ -28,8 +28,8 @@ class A2CDiscreteActionSelector(ActionSelector):
 class A2CContinuousActionSelector(ActionSelector):
     """Action selector for A2C continuous action space."""
 
-    def __init__(self, device: str):
-        ActionSelector.__init__(self, device)
+    def __init__(self, use_cuda: bool):
+        ActionSelector.__init__(self, use_cuda)
 
     def __call__(self, policy: BaseModel, state: np.ndarray) -> np.ndarray:
         pass

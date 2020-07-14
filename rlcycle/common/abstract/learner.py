@@ -19,7 +19,7 @@ class LearnerBase(ABC):
         pass
 
     @abstractmethod
-    def get_policy(self, target_device: torch.device) -> BaseModel:
+    def get_policy(self, to_cuda: bool) -> BaseModel:
         pass
 
 
@@ -30,7 +30,7 @@ class Learner(LearnerBase):
         experiment_info (DictConfig): experiment info
         hyper_params (DictConfig): algorithm hyperparameters
         model_cfg (DictConfig): model configurations
-        device (torch.device): map location for tensor computation
+        use_cuda (bool): true if using gpu
 
     """
 
@@ -43,7 +43,7 @@ class Learner(LearnerBase):
         self.experiment_info = experiment_info
         self.hyper_params = hyper_params
         self.model_cfg = model_cfg
-        self.device = torch.device(experiment_info.device)
+        self.use_cuda = self.experiment_info.device == "cuda"
 
         time_info = datetime.now()
         timestamp = f"{time_info.year}-{time_info.month}-{time_info.day}"
@@ -64,7 +64,7 @@ class Learner(LearnerBase):
         pass
 
     @abstractmethod
-    def get_policy(self, target_device: torch.device) -> BaseModel:
+    def get_policy(self, to_cuda: bool) -> BaseModel:
         pass
 
 
@@ -85,6 +85,6 @@ class LearnerWrapper(LearnerBase):
         """Call wrapped learner update_model()"""
         return self.learner.update_model(experience)
 
-    def get_policy(self, target_device: torch.device):
+    def get_policy(self, to_cuda: bool):
         """Call wrapped learner get_policy()"""
-        return self.learner.get_policy(target_device)
+        return self.learner.get_policy(to_cuda)

@@ -46,7 +46,9 @@ class A3CAgent(Agent):
             self.experiment_info, self.hyper_params, self.model_cfg
         )
 
-        self.action_selector = build_action_selector(self.experiment_info)
+        self.action_selector = build_action_selector(
+            self.experiment_info, self.use_cuda
+        )
 
         # Build logger
         if self.experiment_info.log_wandb:
@@ -114,17 +116,16 @@ class A3CAgent(Agent):
                 gradients[worker.compute_grads_with_traj.remote()] = worker
 
                 if self.experiment_info.log_wandb:
-                    self.logger.write_log(
-                        dict(
-                            critic_loss=step_info["critic_loss"],
-                            actor_loss=step_info["actor_loss"],
-                        )
-                    )
+                    log_dict = dict()
                     if step_info["worker_rank"] == 0:
-                        self.logger.write_log(dict(eipsode_reward=step_info["score"]))
+                        log_dict["Worker 0 score"] = step_info["score"]
+                    if self.update_step > 0:
+                        log_dict["critic_loss"] = step_info["critic_loss"]
+                        log_dict["actor_loss"] = step_info["actor_loss"]
+                    self.logger.write_log(log_dict)
 
             if self.update_step % self.experiment_info.test_interval == 0:
-                policy_copy = self.learner.get_policy(self.device)
+                policy_copy = self.learner.get_policy(self.use_cuda)
                 average_test_score = self.test(
                     policy_copy,
                     self.action_selector,

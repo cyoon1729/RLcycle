@@ -8,7 +8,6 @@ import os
 
 import cv2
 import gym
-from gym import spaces
 import numpy as np
 from omegaconf import DictConfig
 
@@ -212,7 +211,7 @@ class FrameStack(gym.Wrapper):
         self.k = k
         self.frames = deque([], maxlen=k)
         shp = env.observation_space.shape
-        self.observation_space = spaces.Box(
+        self.observation_space = gym.spaces.Box(
             low=0,
             high=255,
             shape=(shp[:-1] + (shp[-1] * k,)),
@@ -305,8 +304,6 @@ class TimeLimit(gym.Wrapper):
 
 class ClipActionsWrapper(gym.Wrapper):
     def step(self, action):
-        import numpy as np
-
         action = np.nan_to_num(action)
         action = np.clip(action, self.action_space.low, self.action_space.high)
         return self.env.step(action)
@@ -361,23 +358,3 @@ class ImageToPyTorch(gym.ObservationWrapper):
 
     def observation(self, observation):
         return np.swapaxes(observation, 2, 0)
-
-
-def generate_atari_env(env_info: DictConfig):
-    """Generate atari env from given config"""
-    assert env_info.is_atari is True
-    env = make_atari(env_id=env_info.name, max_episode_steps=env_info.max_episode_steps)
-    env = wrap_deepmind(env, frame_stack=env_info.frame_stack)
-    env = ImageToPyTorch(env)
-    return env
-
-
-def generate_env(env_info: DictConfig):
-    """Generate non-atari env from given config"""
-    assert env_info.is_atari is False, "For atari envs use generate_atari_env()"
-    env = gym.make(env_info.name)
-    if env_info.max_episode_steps is not None:
-        env = TimeLimit(env, env_info.max_episode_steps)
-    # if env_info.clip_rewards is not 'None':
-    #     env = ClipRewardEnv(env)
-    return env

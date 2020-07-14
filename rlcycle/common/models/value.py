@@ -121,8 +121,10 @@ class QRDQNModel(BaseModel):
         self.action_dim = self.model_cfg.action_dim
         self.num_quantiles = self.model_cfg.num_quantiles
         self.tau = torch.FloatTensor(
-            (2.0 * np.arange(self.num_quantiles) + 1) / (2.0 * self.num_quantiles)
+            (2.0 * np.arange(self.num_quantiles) + 1) / (2.0 * self.num_quantiles),
         ).view(1, -1)
+        if self.model_cfg.use_cuda:
+            self.tau = self.tau.cuda()
 
         # set input size of fc input layer
         self.model_cfg.fc.input.params.input_size = self.get_feature_size()
@@ -160,11 +162,15 @@ class CategoricalDQN(BaseModel):
     def __init__(self, model_cfg):
         BaseModel.__init__(self, model_cfg)
         self.action_dim = self.model_cfg.action_dim
+
         self.num_atoms = self.model_cfg.num_atoms
         self.v_min = self.model_cfg.v_min
         self.v_max = self.model_cfg.v_max
         self.delta_z = (self.v_max - self.v_min) / (self.num_atoms - 1)
         self.support = torch.linspace(self.v_min, self.v_max, self.num_atoms)
+        if self.model_cfg.use_cuda:
+            self.support = self.support.cuda()
+
         # set input size of fc input layer
         self.model_cfg.fc.input.params.input_size = self.get_feature_size()
 

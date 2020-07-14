@@ -11,8 +11,8 @@ from rlcycle.common.abstract.loss import Loss
 class CriticLoss(Loss):
     """SAC critic loss as described in Haarnoja et al., 2019"""
 
-    def __init__(self, hyper_params: DictConfig, device: torch.device):
-        Loss.__init__(self, hyper_params, device)
+    def __init__(self, hyper_params: DictConfig, use_cuda: bool):
+        Loss.__init__(self, hyper_params, use_cuda)
 
     def __call__(
         self,
@@ -36,7 +36,6 @@ class CriticLoss(Loss):
         n_step_gamma = self.hyper_params.gamma ** self.hyper_params.n_step
         target_q = rewards + (1 - dones) * n_step_gamma * next_q
 
-        # q loss
         element_wise_q1_loss = F.mse_loss(q_value1, target_q.detach(), reduction="none")
         element_wise_q2_loss = F.mse_loss(q_value2, target_q.detach(), reduction="none")
 
@@ -46,8 +45,8 @@ class CriticLoss(Loss):
 class PolicyLoss(Loss):
     """SAC policy loss as described in Haarnoja et al., 2019"""
 
-    def __init__(self, hyper_params: DictConfig, device: torch.device):
-        Loss.__init__(self, hyper_params, device)
+    def __init__(self, hyper_params: DictConfig, use_cuda: bool):
+        Loss.__init__(self, hyper_params, use_cuda)
 
     def __call__(
         self,

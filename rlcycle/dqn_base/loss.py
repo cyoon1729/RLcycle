@@ -11,8 +11,8 @@ from rlcycle.common.abstract.loss import Loss
 class DQNLoss(Loss):
     """Compute double DQN loss"""
 
-    def __init__(self, hyper_params: DictConfig, device: torch.device):
-        Loss.__init__(self, hyper_params, device)
+    def __init__(self, hyper_params: DictConfig, use_cuda: bool):
+        Loss.__init__(self, hyper_params, use_cuda)
 
     def __call__(
         self, networks: Tuple[nn.Module, ...], data: Tuple[torch.Tensor, ...]
@@ -37,8 +37,8 @@ class DQNLoss(Loss):
 class QRLoss(Loss):
     """Compute quantile regression loss"""
 
-    def __init__(self, hyper_params: DictConfig, device: torch.device):
-        Loss.__init__(self, hyper_params, device)
+    def __init__(self, hyper_params: DictConfig, use_cuda: bool):
+        Loss.__init__(self, hyper_params, use_cuda)
 
     def __call__(
         self, networks: Tuple[nn.Module, ...], data: Tuple[torch.Tensor, ...],
@@ -74,8 +74,8 @@ class QRLoss(Loss):
 class CategoricalLoss(Loss):
     """Compute C51 loss"""
 
-    def __init__(self, hyper_params: DictConfig, device: torch.device):
-        Loss.__init__(self, hyper_params, device)
+    def __init__(self, hyper_params: DictConfig, use_cuda: bool):
+        Loss.__init__(self, hyper_params, use_cuda)
 
     def __call__(
         self, networks: Tuple[nn.Module, ...], data: Tuple[torch.Tensor, ...]
@@ -88,8 +88,9 @@ class CategoricalLoss(Loss):
             .long()
             .unsqueeze(1)
             .expand(batch_size, network.num_atoms)
-            .to(self.device)
         )
+        if self.use_cuda:
+            offset = offset.cuda()
 
         z_dists = network.forward(states)
         z_dists = z_dists[list(range(states.size(0))), actions.view(-1)]
@@ -117,15 +118,18 @@ class CategoricalLoss(Loss):
         offset: torch.Tensor,
     ) -> torch.Tensor:
         b = (target_z - network.v_min) / network.delta_z
-        l = b.floor().long()
-        u = b.ceil().long()
+        lb = b.floor().long()
+        ub = b.ceil().long()
 
-        proj_dist = torch.zeros(next_z.size(), device=self.device)
+        proj_dist = torch.zeros(next_z.size())
+        if self.use_cuda:
+            proj_dist = proj_dist.cuda()
+
         proj_dist.view(-1).index_add_(
-            0, (l + offset).view(-1), (next_z * (u.float() - b)).view(-1)
+            0, (lb + offset).view(-1), (next_z * (ub.float() - b)).view(-1)
         )
         proj_dist.view(-1).index_add_(
-            0, (u + offset).view(-1), (next_z * (b - l.float())).view(-1)
+            0, (ub + offset).view(-1), (next_z * (b - lb.float())).view(-1)
         )
 
         return proj_dist

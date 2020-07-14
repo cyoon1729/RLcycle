@@ -1,9 +1,8 @@
 import hydra
 from omegaconf import DictConfig
-import torch
 
 from rlcycle.common.abstract.loss import Loss
-from rlcycle.common.utils.env_wrappers import generate_atari_env, generate_env
+from rlcycle.common.utils.env_generator import generate_atari_env, generate_env
 
 
 def build_agent(
@@ -41,27 +40,31 @@ def build_learner(
     return learner
 
 
-def build_model(model_cfg: DictConfig, device: torch.device):
+def build_model(model_cfg: DictConfig, use_cuda: bool):
     """Build model from DictConfigs via hydra.utils.instantiate()"""
+    model_cfg.use_cuda = use_cuda
     model = hydra.utils.instantiate(model_cfg)
-    return model.to(device)
+    if use_cuda:
+        return model.cuda()
+    else:
+        return model.cpu()
 
 
-def build_action_selector(experiment_info: DictConfig):
+def build_action_selector(experiment_info: DictConfig, use_cuda: bool):
     """Build action selector from DictConfig via hydra.utils.instantiate()"""
     action_selector_cfg = DictConfig(dict())
     action_selector_cfg["class"] = experiment_info.action_selector
-    action_selector_cfg["params"] = dict(device=experiment_info.device)
+    action_selector_cfg["params"] = dict(use_cuda=use_cuda)
     if not experiment_info.env.is_discrete:
         action_selector_cfg.params.action_range = experiment_info.env.action_range
     action_selector = hydra.utils.instantiate(action_selector_cfg)
     return action_selector
 
 
-def build_loss(loss_type: str, hyper_params: DictConfig, device: torch.device) -> Loss:
+def build_loss(loss_type: str, hyper_params: DictConfig, use_cuda: bool) -> Loss:
     """Build loss from DictConfigs via hydra.utils.instantiate()"""
     loss_cfg = DictConfig(dict())
     loss_cfg["class"] = loss_type
-    loss_cfg["params"] = dict(hyper_params=hyper_params, device=device)
+    loss_cfg["params"] = dict(hyper_params=hyper_params, use_cuda=use_cuda)
     loss_fn = hydra.utils.instantiate(loss_cfg)
     return loss_fn

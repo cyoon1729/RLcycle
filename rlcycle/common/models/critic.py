@@ -104,9 +104,6 @@ class FujimotoCritic(BaseModel):
             self.model_cfg.action_dim + self.model_cfg.fc.input.params.output_size
         )
 
-        # set output size of fc output layer
-        self.model_cfg.fc.output.params.output_size = self.model_cfg.action_dim
-
         # initialize input layer
         self.fc_input = hydra.utils.instantiate(self.model_cfg.fc.input)
 

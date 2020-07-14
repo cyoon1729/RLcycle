@@ -5,12 +5,11 @@ import torch
 import torch.nn as nn
 
 
-def np2tensor(np_arr: np.ndarray, device: torch.device):
+def np2tensor(np_arr: np.ndarray, use_cuda: bool):
     """Convert numpy array to tensor"""
-    tensor_output = torch.FloatTensor(np_arr).to(device)
-    if device.type == "cuda":
-        tensor_output.cuda(non_blocking=True)
-    return tensor_output
+    if use_cuda:
+        return torch.from_numpy(np_arr).cuda(non_blocking=True).float()
+    return torch.from_numpy(np_arr).cpu().float()
 
 
 def preprocess_nstep(n_step_queue: Deque, gamma: float) -> tuple:

@@ -5,6 +5,7 @@ model:
       state_dim: undefined
       action_dim: undefined
       num_quantiles: 4
+      device: cuda
 
       use_conv: True
       conv_features:

@@ -32,19 +32,19 @@ class ComputesGradients:
         self.model_cfg = model_cfg
 
         # Build critic
-        self.critic = build_model(self.model_cfg.critic, self.worker.device)
+        self.critic = build_model(self.model_cfg.critic, self.worker.use_cuda)
 
         # Build loss functions
         self.critic_loss_fn = build_loss(
             self.worker.experiment_info.critic_loss,
             self.hyper_params,
-            self.worker.experiment_info.device,
+            self.worker.use_cuda,
         )
 
         self.actor_loss_fn = build_loss(
             self.worker.experiment_info.actor_loss,
             self.hyper_params,
-            self.worker.experiment_info.device,
+            self.worker.use_cuda,
         )
 
     def compute_grads_with_traj(self) -> Tuple[List[torch.Tensor], ...]:
@@ -96,9 +96,9 @@ class ComputesGradients:
         """Preprocess trajectory for pytorch training"""
         states, actions, rewards = trajectory
 
-        states = np2tensor(states, self.worker.device)
-        actions = np2tensor(actions.reshape(-1, 1), self.worker.device)
-        rewards = np2tensor(rewards.reshape(-1, 1), self.worker.device)
+        states = np2tensor(states, self.worker.use_cuda)
+        actions = np2tensor(actions.reshape(-1, 1), self.worker.use_cuda)
+        rewards = np2tensor(rewards.reshape(-1, 1), self.worker.use_cuda)
 
         if self.worker.experiment_info.is_discrete:
             actions = actions.long()

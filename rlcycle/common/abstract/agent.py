@@ -3,7 +3,6 @@ from typing import Tuple
 
 import numpy as np
 from omegaconf import DictConfig
-import torch
 
 from rlcycle.build import build_env
 from rlcycle.common.abstract.action_selector import ActionSelector
@@ -32,7 +31,7 @@ class Agent(ABC):
         self.experiment_info = experiment_info
         self.hyper_params = hyper_params
         self.model_cfg = model_cfg
-        self.device = torch.device(self.experiment_info.device)
+        self.use_cuda = (self.experiment_info.device == "cuda")
 
         self.env = build_env(self.experiment_info)
 
