@@ -160,13 +160,12 @@ class SACAgent(Agent):
             )
 
             if self.experiment_info.log_wandb:
-                log_dict = dict(
-                    episode_reward=episode_reward,
-                    critic1_loss=np.mean(losses["critic1_loss"]),
-                    critic2_loss=np.mean(losses["critic2_loss"]),
-                    actor_loss=np.mean(losses["actor_loss"]),
-                    alpha_loss=np.mean(losses["alpha_loss"]),
-                )
+                log_dict = dict(episode_reward = episode_reward)
+                if self.update_step > 0:
+                    log_dict["critic1_loss"] = np.mean(losses["critic1_loss"])
+                    log_dict["critic2_loss"] = np.mean(losses["critic2_loss"])
+                    log_dict["actor_loss"] = np.mean(losses["actor_loss"])
+                    log_dict["alpha_loss"] = np.mean(losses["alpha_loss"])
                 self.logger.write_log(log_dict)
 
     def _preprocess_experience(self, experience: Tuple[np.ndarray]):

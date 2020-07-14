@@ -107,13 +107,11 @@ class A2CAgent(Agent):
                 worker_average_score = np.mean(
                     [traj["score"] for traj in trajectory_infos]
                 )
-                self.logger.write_log(
-                    dict(
-                        critic_loss=info[0],
-                        actor_loss=info[1],
-                        episode_reward=worker_average_score,
-                    )
-                )
+                log_dict = dict(episode_reward=worker_average_score)
+                if self.update_step > 0:
+                    log_dict["critic_loss"] = info[0]
+                    log_dict["actor_loss"] = info[1]
+                self.logger.write_log(log_dict)
 
             if self.update_step % self.experiment_info.test_interval == 0:
                 policy_copy = self.learner.get_policy(self.use_cuda)
