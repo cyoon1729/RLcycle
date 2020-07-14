@@ -152,7 +152,7 @@ class DDPGAgent(Agent):
             )
 
             if self.experiment_info.log_wandb:
-                log_dict = dict(episode_reward = episode_reward)
+                log_dict = dict(episode_reward=episode_reward)
                 if self.update_step > 0:
                     log_dict["critic1_loss"] = np.mean(losses["critic1_loss"])
                     log_dict["critic2_loss"] = np.mean(losses["critic2_loss"])

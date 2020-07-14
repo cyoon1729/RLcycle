@@ -22,7 +22,7 @@ class TrajectoryRolloutWorker:
 
         self.rank = rank
         self.env = build_env(experiment_info)
-        self.use_cuda = (self.experiment_info.worker_device == "cuda")
+        self.use_cuda = self.experiment_info.worker_device == "cuda"
         self.action_selector = build_action_selector(
             self.experiment_info, self.use_cuda
         )
