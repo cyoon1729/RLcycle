@@ -24,5 +24,5 @@ hyper_params:
   learning_rate: 0.00025
   q_reg_coeff: 0
   gradient_clip: 10.0
-  n_step: 5
-  train_freq: 1
+  n_step: 3
+  train_freq: 4

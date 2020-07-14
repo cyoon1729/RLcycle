@@ -27,5 +27,5 @@ experiment_info:
   num_workers: 2
 
 defaults:
-  - hyper_params: a2c_mnih2015
+  - hyper_params: a2c_mnih2016
   - models: a2c

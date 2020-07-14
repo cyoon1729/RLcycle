@@ -1,7 +1,7 @@
 model:
 
   critic:
-    class: rlcycle.common.models.critic.Critic
+    class: rlcycle.common.models.critic.FujimotoCritic
     params:
       model_cfg:
         fc:

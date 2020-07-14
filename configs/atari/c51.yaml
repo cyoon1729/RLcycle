@@ -4,7 +4,7 @@ experiment_info:
   learner: rlcycle.dqn_base.learner.DQNLearner
   loss: rlcycle.dqn_base.loss.CategoricalLoss
   action_selector: rlcycle.dqn_base.action_selector.CategoricalActionSelector
-  device: cpu
+  device: cuda
   log_wandb: False
 
   # Environment info

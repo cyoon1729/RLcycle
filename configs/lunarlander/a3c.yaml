@@ -1,6 +1,6 @@
 experiment_info:
   # Main algorithm choices
-  experiment_name: A3C-Agent
+  experiment_name: A3C
   agent: rlcycle.a3c.agent.A3CAgent
   learner: rlcycle.a2c.learner.A2CLearner
   critic_loss: rlcycle.a2c.loss.DiscreteCriticLoss
@@ -26,7 +26,6 @@ experiment_info:
   test_render: True # Render test
   num_workers: 2
 
-
 defaults:
-  - hyper_params: a3c_mnih2015
+  - hyper_params: a2c_mnih2016
   - models: a3c
