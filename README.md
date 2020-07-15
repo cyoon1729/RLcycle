@@ -49,7 +49,7 @@ shape:
     class: examples.shapes.Rectangle
         params:
             height: 5
-            weight: 4
+            width: 4
 ```
 
 Initializing `shapes.Rectangle` with `hydra` as in the above yaml file:
