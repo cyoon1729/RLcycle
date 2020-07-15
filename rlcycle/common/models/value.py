@@ -198,6 +198,6 @@ class CategoricalDQN(BaseModel):
         x = self.fc_hidden.forward(x)
         x = self.fc_output.forward(x)
         dist = x.view(input_sz, -1, self.num_atoms)
-        dist = F.softmax(dist, dim=1)
+        dist = F.softmax(dist, dim=2)
 
         return dist
