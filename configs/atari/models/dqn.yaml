@@ -1,5 +1,5 @@
 model:
-  class: rlcycle.common.models.value.DQNModel
+  class: rlcycle.common.models.value.DQN
   params:
     model_cfg:
       state_dim: undefined

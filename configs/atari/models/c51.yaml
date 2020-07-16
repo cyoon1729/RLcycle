@@ -5,8 +5,8 @@ model:
       state_dim: undefined
       action_dim: undefined
       num_atoms: 51
-      v_min: -20
-      v_max: 20
+      v_min: -10
+      v_max: 10
 
       use_conv: True
       conv_features:
