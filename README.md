@@ -191,7 +191,7 @@ To be added shortly.
 
 Below are some things I hope to incorporate to RLcycle:
 - TRPO and PPO  *(medium priority)*
-- Rainbow-DQN and IQN *(medium priority)*
+- IQN *(low priority)*
 - Compatibility with my distributed RL framework [distributedRL](https://github.com/cyoon1729/distributedRL). (i.e. Ape-X for all off-policy algorithms). *(high priority)*
 
 ## References
