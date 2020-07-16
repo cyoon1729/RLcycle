@@ -31,7 +31,7 @@ class Agent(ABC):
         self.experiment_info = experiment_info
         self.hyper_params = hyper_params
         self.model_cfg = model_cfg
-        self.use_cuda = (self.experiment_info.device == "cuda")
+        self.use_cuda = self.experiment_info.device == "cuda"
 
         self.env = build_env(self.experiment_info)
 

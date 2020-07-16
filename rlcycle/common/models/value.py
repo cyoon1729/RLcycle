@@ -107,7 +107,7 @@ class DuelingDQN(BaseModel):
 
 class CategoricalDQN(BaseModel):
     """Categorical DQN (a.k.a C51) Model
-    
+
     Attributes:
         v_min (float): lower bound for support
         v_max (float): upper bound for support
@@ -242,15 +242,13 @@ class DuelingCategoricalDQN(DuelingDQN):
 
         # set output size of advantage stream to represent distribution:
         output_layer_key = list(model_cfg.advantage.keys())[-1]
-        model_cfg.advantage[
-            output_layer_key
-        ].params.output_size = self.num_atoms * self.action_dim
+        model_cfg.advantage[output_layer_key].params.output_size = (
+            self.num_atoms * self.action_dim
+        )
 
         # set output size of value stream to represent distribution:
         output_layer_key = list(model_cfg.value.keys())[-1]
-        model_cfg.value[
-            output_layer_key
-        ].params.output_size = self.num_atoms
+        model_cfg.value[output_layer_key].params.output_size = self.num_atoms
 
         DuelingDQN.__init__(self, model_cfg)
 
@@ -265,7 +263,7 @@ class DuelingCategoricalDQN(DuelingDQN):
 
         value_dist = self.value_stream.forward(x)
         value_dist = value_dist.view(num_x, 1, self.num_atoms)
-        
+
         q_dist = advantage_dist + value_dist - advantage_mean
         q_dist = F.softmax(q_dist, dim=2)
         return q_dist
