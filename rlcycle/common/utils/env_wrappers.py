@@ -9,7 +9,6 @@ import os
 import cv2
 import gym
 import numpy as np
-from omegaconf import DictConfig
 
 os.environ.setdefault("PATH", "")
 

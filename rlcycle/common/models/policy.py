@@ -101,7 +101,7 @@ class GaussianPolicy(BaseModel):
         """Forward propogate through policy network"""
         x = self.features.forward(state)
         x = x.view(x.size(0), -1)
-        x = self.fc_input.forward(state)
+        x = self.fc_input.forward(x)
         x = self.fc_hidden.forward(x)
 
         mu = self.mu_stream.forward(x)

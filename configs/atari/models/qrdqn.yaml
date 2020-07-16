@@ -1,5 +1,5 @@
 model:
-  class: rlcycle.common.models.value.QRDQNModel
+  class: rlcycle.common.models.value.QRDQN
   params:
     model_cfg:
       state_dim: undefined

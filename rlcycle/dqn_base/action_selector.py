@@ -38,7 +38,7 @@ class QRActionSelector(ActionSelector):
             state = state.reshape(1, -1)
         state = np2tensor(state, self.use_cuda).unsqueeze(0)
         with torch.no_grad():
-            qvals = policy.forward(state).mean(2)  # fix dim
+            qvals = policy.forward(state).mean(dim=2)
             qvals = qvals.cpu().numpy()
         action = np.argmax(qvals)
         return action

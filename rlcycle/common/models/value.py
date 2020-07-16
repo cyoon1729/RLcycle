@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from rlcycle.common.models.base import BaseModel
 
 
-class DQNModel(BaseModel):
+class DQN(BaseModel):
     """Vanilla (Nature) DQN model initializable with hydra config
 
     Attributes:
@@ -49,7 +49,7 @@ class DQNModel(BaseModel):
         return x
 
 
-class DuelingDQNModel(BaseModel):
+class DuelingDQN(BaseModel):
     """Dueling DQN model initializable with hydra configs
 
     Attributes:
@@ -78,9 +78,10 @@ class DuelingDQNModel(BaseModel):
 
         # set output size of advantage fc output layer:
         output_layer_key = list(self.model_cfg.advantage.keys())[-1]
-        self.model_cfg.advantage[
-            output_layer_key
-        ].params.output_size = self.model_cfg.action_dim
+        if self.model_cfg.advantage[output_layer_key].params.output_size == "undefined":
+            self.model_cfg.advantage[
+                output_layer_key
+            ].params.output_size = self.model_cfg.action_dim
 
         # initialize advantage head
         advantage_stream = []
@@ -104,15 +105,73 @@ class DuelingDQNModel(BaseModel):
         return value + advantage - advantage.mean()
 
 
-class QRDQNModel(BaseModel):
-    """Quantile Regression DQN Model initializable with hydra configs
+class CategoricalDQN(BaseModel):
+    """Categorical DQN (a.k.a C51) Model
 
     Attributes:
+        v_min (float): lower bound for support
+        v_max (float): upper bound for support
+        delta_z (float): distance between discrete points in support
+        support (torch.Tensor): canonical returns
         fc_input (LinearLayer): fully connected input layer
         fc_hidden (nn.Sequential): hidden layers
         fc_output (LinearLayer): fully connected output layer
+
+    """
+
+    def __init__(self, model_cfg):
+        BaseModel.__init__(self, model_cfg)
+        self.action_dim = self.model_cfg.action_dim
+
+        self.num_atoms = self.model_cfg.num_atoms
+        self.v_min = self.model_cfg.v_min
+        self.v_max = self.model_cfg.v_max
+        self.delta_z = (self.v_max - self.v_min) / (self.num_atoms - 1)
+        self.support = torch.linspace(self.v_min, self.v_max, self.num_atoms)
+        if self.model_cfg.use_cuda:
+            self.support = self.support.cuda()
+
+        # set input size of fc input layer
+        self.model_cfg.fc.input.params.input_size = self.get_feature_size()
+
+        # set output size of fc output layer
+        self.model_cfg.fc.output.params.output_size = self.num_atoms * self.action_dim
+
+        # initialize input layer
+        self.fc_input = hydra.utils.instantiate(self.model_cfg.fc.input)
+
+        # initialize hidden layers
+        hidden_layers = []
+        for layer in self.model_cfg.fc.hidden:
+            layer_info = self.model_cfg.fc.hidden[layer]
+            hidden_layers.append(hydra.utils.instantiate(layer_info))
+        self.fc_hidden = nn.Sequential(*hidden_layers)
+
+        # initialize output layer
+        self.fc_output = hydra.utils.instantiate(self.model_cfg.fc.output)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        num_x = x.size(0)
+        x = self.features.forward(x)
+        x = x.view(x.size(0), -1)
+        x = self.fc_input.forward(x)
+        x = self.fc_hidden.forward(x)
+        x = self.fc_output.forward(x)
+        dist = x.view(num_x, -1, self.num_atoms)
+        dist = F.softmax(dist, dim=2)
+
+        return dist
+
+
+class QRDQN(BaseModel):
+    """Quantile Regression DQN Model initializable with hydra configs
+
+    Attributes:
         tau (torch.Tensor): quantile weights
         num_quantiles (int): number of quantiles for distributional representation
+        fc_input (LinearLayer): fully connected input layer
+        fc_hidden (nn.Sequential): hidden layers
+        fc_output (LinearLayer): fully connected output layer
 
     """
 
@@ -153,51 +212,58 @@ class QRDQNModel(BaseModel):
         x = x.view(x.size(0), -1)
         x = self.fc_input.forward(x)
         x = self.fc_hidden.forward(x)
-        x = self.fc_output.forward(x)
+        dist = self.fc_output.forward(x)
+        dist = dist.view(-1, self.action_dim, self.num_quantiles)
+        return dist
 
-        return x.view(-1, self.action_dim, self.num_quantiles)
 
+class DuelingCategoricalDQN(DuelingDQN):
+    """Dueling Categorical DQN as in Rainbow-DQN
 
-class CategoricalDQN(BaseModel):
+    Attributes:
+        v_min (float): lower bound for support
+        v_max (float): upper bound for support
+        delta_z (float): distance between discrete points in support
+        support (torch.Tensor): canonical returns
+        advantage_stream (nn.Sequential): distributional advantage stream
+        value_stream (nn.Sequential): distributional value stream
+
+    """
+
     def __init__(self, model_cfg):
-        BaseModel.__init__(self, model_cfg)
-        self.action_dim = self.model_cfg.action_dim
-
-        self.num_atoms = self.model_cfg.num_atoms
-        self.v_min = self.model_cfg.v_min
-        self.v_max = self.model_cfg.v_max
+        self.action_dim = model_cfg.action_dim
+        self.num_atoms = model_cfg.num_atoms
+        self.v_min = model_cfg.v_min
+        self.v_max = model_cfg.v_max
         self.delta_z = (self.v_max - self.v_min) / (self.num_atoms - 1)
         self.support = torch.linspace(self.v_min, self.v_max, self.num_atoms)
-        if self.model_cfg.use_cuda:
+        if model_cfg.use_cuda:
             self.support = self.support.cuda()
 
-        # set input size of fc input layer
-        self.model_cfg.fc.input.params.input_size = self.get_feature_size()
+        # set output size of advantage stream to represent distribution:
+        output_layer_key = list(model_cfg.advantage.keys())[-1]
+        model_cfg.advantage[output_layer_key].params.output_size = (
+            self.num_atoms * self.action_dim
+        )
 
-        # set output size of fc output layer
-        self.model_cfg.fc.output.params.output_size = self.num_atoms * self.action_dim
+        # set output size of value stream to represent distribution:
+        output_layer_key = list(model_cfg.value.keys())[-1]
+        model_cfg.value[output_layer_key].params.output_size = self.num_atoms
 
-        # initialize input layer
-        self.fc_input = hydra.utils.instantiate(self.model_cfg.fc.input)
-
-        # initialize hidden layers
-        hidden_layers = []
-        for layer in self.model_cfg.fc.hidden:
-            layer_info = self.model_cfg.fc.hidden[layer]
-            hidden_layers.append(hydra.utils.instantiate(layer_info))
-        self.fc_hidden = nn.Sequential(*hidden_layers)
-
-        # initialize output layer
-        self.fc_output = hydra.utils.instantiate(self.model_cfg.fc.output)
+        DuelingDQN.__init__(self, model_cfg)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        input_sz = x.size(0)
+        num_x = x.size(0)
         x = self.features.forward(x)
         x = x.view(x.size(0), -1)
-        x = self.fc_input.forward(x)
-        x = self.fc_hidden.forward(x)
-        x = self.fc_output.forward(x)
-        dist = x.view(input_sz, -1, self.num_atoms)
-        dist = F.softmax(dist, dim=1)
 
-        return dist
+        advantage_dist = self.advantage_stream.forward(x)
+        advantage_dist = advantage_dist.view(num_x, -1, self.num_atoms)
+        advantage_mean = torch.mean(advantage_dist, dim=1, keepdim=True)
+
+        value_dist = self.value_stream.forward(x)
+        value_dist = value_dist.view(num_x, 1, self.num_atoms)
+
+        q_dist = advantage_dist + value_dist - advantage_mean
+        q_dist = F.softmax(q_dist, dim=2)
+        return q_dist
