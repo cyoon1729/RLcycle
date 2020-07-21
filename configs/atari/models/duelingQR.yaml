@@ -1,10 +1,10 @@
 model:
-  class: rlcycle.common.models.value.QRDQN
+  class: rlcycle.common.models.value.DuelingQRDQN
   params:
     model_cfg:
       state_dim: undefined
       action_dim: undefined
-      num_quantiles: 10
+      num_quantiles: 4
       device: cuda
 
       use_conv: True
@@ -34,24 +34,30 @@ model:
              stride: 1
              activation_fn: relu   
              
-      fc:
-        input:
+      advantage:
+        fc1:
           class: rlcycle.common.models.layers.LinearLayer
           params: 
             input_size: undefined
             output_size: 512
-            post_activation_fn: relu           
-        hidden:
-          hidden1:
-            class: rlcycle.common.models.layers.LinearLayer
-            params: 
-              input_size: 512
-              output_size: 512
-              post_activation_fn: relu
-
-        output:
+            post_activation_fn: relu
+        fc2:
           class: rlcycle.common.models.layers.LinearLayer
-          params:
+          params: 
             input_size: 512
             output_size: undefined
+            post_activation_fn: identity
+
+      value:
+        fc1:
+          class: rlcycle.common.models.layers.LinearLayer
+          params: 
+            input_size: undefined
+            output_size: 512
+            post_activation_fn: identity
+        fc2:
+          class: rlcycle.common.models.layers.LinearLayer
+          params: 
+            input_size: 512
+            output_size: 1
             post_activation_fn: identity
