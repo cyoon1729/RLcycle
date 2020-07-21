@@ -90,6 +90,10 @@ class DQNLearner(Learner):
             new_priorities = new_priorities.cpu().detach().numpy()
             info = info + (indices, new_priorities,)
 
+        if self.model_cfg.params.model_cfg.use_noisy:
+            self.network.reset_noise()
+            self.target_network.reset_noise()
+
         return info
 
     def get_policy(self, to_cuda: bool):

@@ -62,9 +62,10 @@ class DQNBaseAgent(Agent):
         self.action_selector = build_action_selector(
             self.experiment_info, self.use_cuda
         )
-        self.action_selector = EpsGreedy(
-            self.action_selector, self.env.action_space, self.hyper_params
-        )
+        if not self.model_cfg.params.model_cfg.use_noisy:
+            self.action_selector = EpsGreedy(
+                self.action_selector, self.env.action_space, self.hyper_params
+            )
 
         if self.experiment_info.log_wandb:
             experiment_cfg = OmegaConf.create(
@@ -142,12 +143,12 @@ class DQNBaseAgent(Agent):
                             self.replay_buffer.update_priorities(
                                 indices, new_priorities
                             )
-
+                if not self.model_cfg.params.model_cfg.use_noisy:
                     self.action_selector.decay_epsilon()
 
             print(
                 f"[TRAIN] episode num: {episode_i} | update step: {self.update_step} |"
-                f"episode reward: {episode_reward} | epsilon: {self.action_selector.eps}"
+                f"episode reward: {episode_reward} |" # epsilon: {self.action_selector.eps}"
             )
 
             if self.experiment_info.log_wandb:

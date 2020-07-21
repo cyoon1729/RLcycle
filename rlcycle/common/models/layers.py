@@ -1,3 +1,6 @@
+import math
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -74,7 +77,6 @@ class LinearLayer(nn.Module):
         ), f"{post_activation_fn} is not registered in layer.py. Register."
         self.linear = nn.Linear(input_size, output_size)
         self.post_activation_fn = activation_fn_registry[post_activation_fn]
-        self.afn_name = post_activation_fn
 
         if init_w is not None:
             self.linear.weight.data.uniform_(-init_w, init_w)
@@ -90,7 +92,7 @@ class LinearLayer(nn.Module):
         return x
 
 
-class FactorizedNoisyLinear(nn.Module):
+class FactorizedNoisyLinearLayer(nn.Module):
     """Noisy linear layer with factorized gaussian noise."""
     def __init__(
         self,
@@ -105,6 +107,11 @@ class FactorizedNoisyLinear(nn.Module):
         
         self.input_size = input_size
         self.output_size = output_size
+
+        self.activation_args = dict()
+        if post_activation_fn == "softmax":
+            self.activation_args["dim"] = 1
+        self.post_activation_fn = activation_fn_registry[post_activation_fn]
 
         # Define layer parameters
         self.mu_weight = nn.Parameter(
@@ -129,19 +136,19 @@ class FactorizedNoisyLinear(nn.Module):
         if self.train:
             linear_output = F.linear(
                 x,
-                self.weight_mu + self.weight_sigma * self.weight_epsilon,
-                self.bias_mu + self.bias_sigma * self.bias_epsilon,
+                self.mu_weight + self.sigma_weight * self.eps_weight,
+                self.mu_bias + self.sigma_bias * self.eps_bias,
             )
         else:
             linear_output = F.linear(x)
-        output = self.post_activation_fn(linear_output)
+        output = self.post_activation_fn(linear_output, **self.activation_args)
         return output
 
     def reset_parameters(self):
         """Reset trainable parameters"""
         std = 1 / math.sqrt(self.input_size)
         self.mu_weight.data.uniform_(-std, std)
-        self.sigma_weight.data.fill_(0.5 / math.sqrt(self.output_size))
+        self.sigma_weight.data.fill_(0.5 / math.sqrt(self.input_size))
         self.mu_bias.data.uniform_(-std, std)
         self.sigma_bias.data.fill_(0.5 / math.sqrt(self.output_size))
 
@@ -160,7 +167,7 @@ class FactorizedNoisyLinear(nn.Module):
         return x.sign().mul(x.abs().sqrt())
 
 
-class NoisyLinear(nn.Module):
+class NoisyLinearLayer(nn.Module):
     """Noisy linear layer with gaussian noise"""
     def __init__(
         self,
@@ -175,6 +182,11 @@ class NoisyLinear(nn.Module):
         
         self.input_size = input_size
         self.output_size = output_size
+
+        self.activation_args = dict()
+        if post_activation_fn == "softmax":
+            self.activation_args["dim"] = 1
+        self.post_activation_fn = activation_fn_registry[post_activation_fn]
 
         # Define layer parameters
         self.mu_weight = nn.Parameter(
@@ -199,12 +211,12 @@ class NoisyLinear(nn.Module):
         if self.train:
             linear_output = F.linear(
                 x,
-                self.weight_mu + self.weight_sigma * self.weight_epsilon,
-                self.bias_mu + self.bias_sigma * self.bias_epsilon,
+                self.mu_weight + self.sigma_weight * self.eps_weight,
+                self.mu_bias + self.sigma_bias * self.eps_bias,
             )
         else:
             linear_output = F.linear(x)
-        output = self.post_activation_fn(linear_output)
+        output = self.post_activation_fn(linear_output, **self.activation_args)
         return output
 
     def reset_parameters(self):
