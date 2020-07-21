@@ -40,6 +40,26 @@ class DDPGActionSelector(ActionSelector):
         return action_rescaled
 
 
+class GaussianNoise(ActionSelector):
+    """Gaussian noise wrapper to wrap deterministic continuous policies"""
+    def __init__(
+        self, action_selector: ActionSelector, mu: float, sigma: float
+    ):
+        ActionSelector.__init__(self, action_selector.use_cuda)
+        self.action_selector = action_selector
+        self.mu = mu
+        self.sigma = sigma
+        self.exploration = True
+
+    def __call__(
+        self, policy: nn.Module, state: np.ndarray
+    ) -> Tuple[np.ndarray, ...]:
+        action = self.action_selector(policy, state)
+        if self.exploration:
+            action = action + np.random.normal(self._mu, self._sigma)
+        return action
+    
+
 # Ornstein-Ulhenbeck Noise
 # Adpated from #https://github.com/vitchyr/rlkit/blob/master/rlkit/exploration_strategies/ou_strategy.py
 class OUNoise(ActionSelector):
