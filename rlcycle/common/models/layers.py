@@ -88,3 +88,133 @@ class LinearLayer(nn.Module):
         x = self.linear(x)
         x = self.post_activation_fn(x, **self.activation_args)
         return x
+
+
+class FactorizedNoisyLinear(nn.Module):
+    """Noisy linear layer with factorized gaussian noise."""
+    def __init__(
+        self,
+        input_size: int,
+        output_size: int,
+        post_activation_fn: str,
+    ):
+        nn.Module.__init__(self)
+        assert (
+            post_activation_fn in activation_fn_registry.keys()
+        ), f"{post_activation_fn} is not registered in layer.py. Register."
+        
+        self.input_size = input_size
+        self.output_size = output_size
+
+        # Define layer parameters
+        self.mu_weight = nn.Parameter(
+            torch.FloatTensor(self.output_size, self.input_size)
+        )
+        self.sigma_weight = nn.Parameter(
+            torch.FloatTensor(self.output_size, self.input_size)
+        )
+        self.register_buffer(
+            "eps_weight", torch.FloatTensor(self.output_size, self.input_size)
+        )
+
+        self.mu_bias = nn.Parameter(torch.FloatTensor(self.output_size)) 
+        self.sigma_bias = nn.Parameter(torch.FloatTensor(self.output_size))
+        self.register_buffer("eps_bias", torch.FloatTensor(self.output_size))
+
+
+        self.reset_parameters()
+        self.reset_noise()
+
+    def forward(self, x):
+        if self.train:
+            linear_output = F.linear(
+                x,
+                self.weight_mu + self.weight_sigma * self.weight_epsilon,
+                self.bias_mu + self.bias_sigma * self.bias_epsilon,
+            )
+        else:
+            linear_output = F.linear(x)
+        output = self.post_activation_fn(linear_output)
+        return output
+
+    def reset_parameters(self):
+        """Reset trainable parameters"""
+        std = 1 / math.sqrt(self.input_size)
+        self.mu_weight.data.uniform_(-std, std)
+        self.sigma_weight.data.fill_(0.5 / math.sqrt(self.output_size))
+        self.mu_bias.data.uniform_(-std, std)
+        self.sigma_bias.data.fill_(0.5 / math.sqrt(self.output_size))
+
+    def reset_noise(self):
+        """Reset noise"""
+        eps_in = self.scale_noise(self.input_size)
+        eps_out = self.scale_noise(self.output_size)
+
+        self.eps_weight.copy_(eps_out.ger(eps_in))
+        self.eps_bias.copy_(eps_out)
+
+    @staticmethod
+    def scale_noise(size: int) -> torch.Tensor:
+        """Set scale to make noise (factorized gaussian noise)."""
+        x = torch.FloatTensor(np.random.normal(loc=0.0, scale=1.0, size=size))
+        return x.sign().mul(x.abs().sqrt())
+
+
+class NoisyLinear(nn.Module):
+    """Noisy linear layer with gaussian noise"""
+    def __init__(
+        self,
+        input_size: int,
+        output_size: int,
+        post_activation_fn: str,
+    ):
+        nn.Module.__init__(self)
+        assert (
+            post_activation_fn in activation_fn_registry.keys()
+        ), f"{post_activation_fn} is not registered in layer.py. Register."
+        
+        self.input_size = input_size
+        self.output_size = output_size
+
+        # Define layer parameters
+        self.mu_weight = nn.Parameter(
+            torch.FloatTensor(self.output_size, self.input_size)
+        )
+        self.sigma_weight = nn.Parameter(
+            torch.FloatTensor(self.output_size, self.input_size)
+        )
+        self.register_buffer(
+            "eps_weight", torch.FloatTensor(self.output_size, self.input_size)
+        )
+
+        self.mu_bias = nn.Parameter(torch.FloatTensor(self.output_size)) 
+        self.sigma_bias = nn.Parameter(torch.FloatTensor(self.output_size))
+        self.register_buffer("eps_bias", torch.FloatTensor(self.output_size))
+
+
+        self.reset_parameters()
+        self.reset_noise()
+
+    def forward(self, x):
+        if self.train:
+            linear_output = F.linear(
+                x,
+                self.weight_mu + self.weight_sigma * self.weight_epsilon,
+                self.bias_mu + self.bias_sigma * self.bias_epsilon,
+            )
+        else:
+            linear_output = F.linear(x)
+        output = self.post_activation_fn(linear_output)
+        return output
+
+    def reset_parameters(self):
+        """Reset trainable parameters"""
+        std = 1 / math.sqrt(self.input_size)
+        self.mu_weight.data.uniform_(-std, std)
+        self.sigma_weight.data.fill_(0.5 / math.sqrt(self.output_size))
+        self.mu_bias.data.uniform_(-std, std)
+        self.sigma_bias.data.fill_(0.5 / math.sqrt(self.output_size))
+
+    def reset_noise(self):
+        self.eps_weight.data.normal_()
+        self.eps_bias.data.normal_()
