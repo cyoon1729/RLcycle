@@ -156,9 +156,7 @@ class DQNBaseAgent(Agent):
             print(log_str)
 
             if self.experiment_info.log_wandb:
-                log_dict = dict(
-                    episode_reward=episode_reward
-                )
+                log_dict = dict(episode_reward=episode_reward)
                 if not self.model_cfg.params.model_cfg.use_noisy:
                     log_dict["epsilon"] = self.action_selector.eps
                 if self.update_step > 0:

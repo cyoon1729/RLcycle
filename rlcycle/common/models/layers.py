@@ -93,7 +93,21 @@ class LinearLayer(nn.Module):
 
 
 class FactorizedNoisyLinearLayer(nn.Module):
-    """Noisy linear layer with factorized gaussian noise."""
+    """Noisy linear layer with factorized gaussian noise.
+
+    Attributes:
+        input_size (int): layer input size
+        output_size (int): layer output size
+        mu_weight (nn.Parameter): trainiable guassian distribution mean for weights
+        sigma_weight (nn.Parameter): trainable gaussian distribution std for weights
+        mu_bias (nn.Parameter): trainiable guassian distribution mean for bias
+        sigma_bias (nn.Parameter): trainable gaussian distribution std for bias
+        eps_weight (torch.FloatTensor): Factorized Gaussian noise
+        eps_bias (torch.FloatTensor): Factorized Gaussian noise
+        post_activation_fn (nn.functional): post activation function
+        activation_args (dict): function parameters for activation_function (e.g. dim)
+
+    """
 
     def __init__(
         self, input_size: int, output_size: int, post_activation_fn: str,
@@ -130,6 +144,7 @@ class FactorizedNoisyLinearLayer(nn.Module):
         self.reset_noise()
 
     def forward(self, x):
+        """Forward propagate through layer."""
         if self.train:
             linear_output = F.linear(
                 x,
@@ -142,7 +157,7 @@ class FactorizedNoisyLinearLayer(nn.Module):
         return output
 
     def reset_parameters(self):
-        """Reset trainable parameters"""
+        """Reset trainable parameters."""
         std = 1 / math.sqrt(self.input_size)
         self.mu_weight.data.uniform_(-std, std)
         self.sigma_weight.data.fill_(0.5 / math.sqrt(self.input_size))
@@ -150,7 +165,7 @@ class FactorizedNoisyLinearLayer(nn.Module):
         self.sigma_bias.data.fill_(0.5 / math.sqrt(self.output_size))
 
     def reset_noise(self):
-        """Reset noise"""
+        """Reset noise."""
         eps_in = self.scale_noise(self.input_size)
         eps_out = self.scale_noise(self.output_size)
 
@@ -165,7 +180,19 @@ class FactorizedNoisyLinearLayer(nn.Module):
 
 
 class NoisyLinearLayer(nn.Module):
-    """Noisy linear layer with gaussian noise"""
+    """Noisy linear layer with gaussian noise
+
+    Attributes:
+        input_size (int): layer input size
+        output_size (int): layer output size
+        mu_weight (nn.Parameter): trainiable guassian distribution mean for weights
+        sigma_weight (nn.Parameter): trainable gaussian distribution std for weights
+        mu_bias (nn.Parameter): trainiable guassian distribution mean for bias
+        sigma_bias (nn.Parameter): trainable gaussian distribution std for bias
+        post_activation_fn (nn.functional): post activation function
+        activation_args (dict): function parameters for activation_function (e.g. dim)
+
+    """
 
     def __init__(
         self, input_size: int, output_size: int, post_activation_fn: str,
@@ -202,6 +229,7 @@ class NoisyLinearLayer(nn.Module):
         self.reset_noise()
 
     def forward(self, x):
+        """Forward propagate through layer."""
         if self.train:
             linear_output = F.linear(
                 x,
@@ -214,7 +242,7 @@ class NoisyLinearLayer(nn.Module):
         return output
 
     def reset_parameters(self):
-        """Reset trainable parameters"""
+        """Reset trainable parameters."""
         std = 1 / math.sqrt(self.input_size)
         self.mu_weight.data.uniform_(-std, std)
         self.sigma_weight.data.fill_(0.5 / math.sqrt(self.output_size))
@@ -222,5 +250,6 @@ class NoisyLinearLayer(nn.Module):
         self.sigma_bias.data.fill_(0.5 / math.sqrt(self.output_size))
 
     def reset_noise(self):
+        """Reset noise."""
         self.eps_weight.data.normal_()
         self.eps_bias.data.normal_()
