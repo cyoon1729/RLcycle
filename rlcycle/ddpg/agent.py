@@ -65,10 +65,14 @@ class DDPGAgent(Agent):
         self.action_selector = build_action_selector(
             self.experiment_info, self.use_cuda
         )
-        if self.experiment_info.noise == "OU":
+        if self.experiment_info.noise == "OUNoise":
             self.action_selector = OUNoise(self.action_selector, self.env.action_space)
         else:
-            self.action_selector = GaussianNoise(self.action_selector)
+            self.action_selector = GaussianNoise(
+                self.action_selector,
+                self.hyper_params.noise_mu,
+                self.hyper_params.noise_sigma
+            )
 
         # Build logger
         if self.experiment_info.log_wandb:
