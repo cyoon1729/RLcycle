@@ -8,11 +8,12 @@
 RLcycle (pronounced as "recycle") is a reinforcement learning (RL) agents framework. RLcycle provides ready-made RL agents, as well as reusable components for easy prototyping. 
 
 Currently, RLcycle provides:
-- DQN + enhancements, Distributional: C51, Quantile Regression, Rainbow-DQN
+- DQN + enhancements, Distributional: C51, Quantile Regression, Rainbow-DQN.
+- Noisy Networks for parameter space noise
 - A2C (data parallel) and A3C (gradient parallel).
 - DDPG, both Lillicrap et al. (2015) and Fujimoto et al., (2018) versions (Technically TD3).
 - Soft Actor Critic with automatic entropy coefficient tuning.
-- Prioritized Experience Replay and n-step updates for all off-policy algorithms
+- Prioritized Experience Replay and n-step updates for all off-policy algorithms.
 
 RLcycle uses:
 - [PyTorch](https://github.com/pytorch/pytorch) for computations and building and optimizing models.
