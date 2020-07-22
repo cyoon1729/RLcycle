@@ -58,9 +58,8 @@ class QRLoss(Loss):
 
         distance = target_z - z_dists
         quantile_huber_loss = (
-            (network.tau - (distance.detach() < 0).float()).abs()
-            * self.huber_loss(distance)
-        )
+            network.tau - (distance.detach() < 0).float()
+        ).abs() * self.huber_loss(distance)
         element_wise_loss = torch.mean(quantile_huber_loss, dim=1, keepdim=True)
 
         return element_wise_loss

@@ -10,7 +10,7 @@ from rlcycle.common.buffer.prioritized_replay_buffer import PrioritizedReplayBuf
 from rlcycle.common.buffer.replay_buffer import ReplayBuffer
 from rlcycle.common.utils.common_utils import np2tensor, preprocess_nstep
 from rlcycle.common.utils.logger import Logger
-from rlcycle.ddpg.action_selector import OUNoise, GaussianNoise
+from rlcycle.ddpg.action_selector import GaussianNoise, OUNoise
 
 
 class DDPGAgent(Agent):
@@ -71,7 +71,7 @@ class DDPGAgent(Agent):
             self.action_selector = GaussianNoise(
                 self.action_selector,
                 self.hyper_params.noise_mu,
-                self.hyper_params.noise_sigma
+                self.hyper_params.noise_sigma,
             )
 
         # Build logger

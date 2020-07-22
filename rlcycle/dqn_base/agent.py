@@ -145,12 +145,14 @@ class DQNBaseAgent(Agent):
                             )
                 if not self.model_cfg.params.model_cfg.use_noisy:
                     self.action_selector.decay_epsilon()
-            
-            log_str = (f"[TRAIN] episode num: {episode_i} "
-                       f"| update step: {self.update_step} "
-                       f"| episode reward: {episode_reward} "
+
+            log_str = (
+                f"[TRAIN] episode num: {episode_i} "
+                f"| update step: {self.update_step} "
+                f"| episode reward: {episode_reward} "
+            )
             if not self.model_cfg.params.model_cfg.use_noisy:
-                log_str = f" | epsilon: {round(self.action_selector.eps, 5)}"
+                log_str = f"| epsilon: {round(self.action_selector.eps, 5)}"
             print(log_str)
 
             if self.experiment_info.log_wandb:

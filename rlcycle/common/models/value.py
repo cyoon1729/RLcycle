@@ -48,7 +48,7 @@ class DQN(BaseModel):
         x = self.fc_hidden.forward(x)
         x = self.fc_output.forward(x)
         return x
-    
+
     def reset_noise(self):
         """Reset noise for noisy linear"""
         self.fc_input.reset_noise()
@@ -230,17 +230,19 @@ class QRDQN(DQN):
     def __init__(self, model_cfg):
         self.action_dim = model_cfg.action_dim
         self.num_quantiles = model_cfg.num_quantiles
-        self.tau = torch.tensor(
-            (2.0 * np.arange(self.num_quantiles) + 1) / (2.0 * self.num_quantiles),
-            requires_grad=False
-        ).float().view(1, -1)
+        self.tau = (
+            torch.tensor(
+                (2.0 * np.arange(self.num_quantiles) + 1) / (2.0 * self.num_quantiles),
+                requires_grad=False,
+            )
+            .float()
+            .view(1, -1)
+        )
         if model_cfg.use_cuda:
             self.tau = self.tau.cuda()
 
         # set output size of fc output layer
-        model_cfg.fc.output.params.output_size = (
-            self.num_quantiles * self.action_dim
-        )
+        model_cfg.fc.output.params.output_size = self.num_quantiles * self.action_dim
 
         DQN.__init__(self, model_cfg)
 

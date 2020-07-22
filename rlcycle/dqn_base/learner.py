@@ -47,7 +47,7 @@ class DQNLearner(Learner):
             self.network.parameters(),
             lr=self.hyper_params.learning_rate,
             weight_decay=self.hyper_params.weight_decay,
-            eps=self.hyper_params.adam_eps
+            eps=self.hyper_params.adam_eps,
         )
 
         self.loss_fn = build_loss(
