@@ -157,8 +157,10 @@ class DQNBaseAgent(Agent):
 
             if self.experiment_info.log_wandb:
                 log_dict = dict(
-                    episode_reward=episode_reward, epsilon=self.action_selector.eps,
+                    episode_reward=episode_reward
                 )
+                if not self.model_cfg.params.model_cfg.use_noisy:
+                    log_dict["epsilon"] = self.action_selector.eps
                 if self.update_step > 0:
                     log_dict["mean_loss"] = np.mean(losses)
                 self.logger.write_log(log_dict=log_dict)
