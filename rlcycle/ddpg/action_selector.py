@@ -56,7 +56,7 @@ class GaussianNoise(ActionSelector):
     ) -> Tuple[np.ndarray, ...]:
         action = self.action_selector(policy, state)
         if self.exploration:
-            action = action + np.random.normal(self._mu, self._sigma)
+            action = action + np.random.normal(self.mu, self.sigma)
         return action
     
 
