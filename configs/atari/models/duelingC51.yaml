@@ -9,6 +9,7 @@ model:
       v_max: 10
 
       use_conv: True
+      use_noisy: True
       conv_features:
         feature1:
           class: rlcycle.common.models.layers.Conv2DLayer
@@ -37,13 +38,13 @@ model:
              
       advantage:
         fc1:
-          class: rlcycle.common.models.layers.LinearLayer
+          class: rlcycle.common.models.layers.FactorizedNoisyLinearLayer
           params: 
             input_size: undefined
             output_size: 512
             post_activation_fn: relu
         fc2:
-          class: rlcycle.common.models.layers.LinearLayer
+          class: rlcycle.common.models.layers.FactorizedNoisyLinearLayer
           params: 
             input_size: 512
             output_size: undefined
@@ -51,14 +52,14 @@ model:
 
       value:
         fc1:
-          class: rlcycle.common.models.layers.LinearLayer
+          class: rlcycle.common.models.layers.FactorizedNoisyLinearLayer
           params: 
             input_size: undefined
             output_size: 512
             post_activation_fn: identity
         fc2:
-          class: rlcycle.common.models.layers.LinearLayer
+          class: rlcycle.common.models.layers.FactorizedNoisyLinearLayer
           params: 
             input_size: 512
-            output_size: undefined
+            output_size: 1
             post_activation_fn: identity

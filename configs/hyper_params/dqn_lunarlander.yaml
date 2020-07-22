@@ -1,6 +1,6 @@
 hyper_params:
-  batch_size: 32
-  replay_buffer_size: 100000 #
+  batch_size: 64
+  replay_buffer_size: 1000000 #
   use_per: False
 
   # Exploration configs
