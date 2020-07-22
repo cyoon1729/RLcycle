@@ -17,7 +17,7 @@ Currently, RLcycle provides:
 RLcycle uses:
 - [PyTorch](https://github.com/pytorch/pytorch) for computations and building and optimizing models.
 - [Hydra](https://github.com/facebookresearch/hydra) for configuring and building agents.
-- [Ray](https://github.com/ray-project/ray) for parallelization. 
+- [Ray](https://github.com/ray-project/ray) for parallelizing learning. 
 - [WandB](https://www.wandb.com/) for logging training and testing. 
 
 See below for an introduction and guide to using RLcycle, performance benchmarks, and future plans.
@@ -73,8 +73,8 @@ from omegaconf import DictConfig
 @hydra.main(config_path="./examples/rectangle.yaml")
 def main(cfg: DictConfig):
     shape = hydra.utils.instantiate(layer_info)
-    print(shape.__class__.__name__)  # >>> 'Rectangle'
-	print(shape.get_area()) # >>> 20
+    print(shape.__class__.__name__)  # 'Rectangle'
+    print(shape.get_area()) # 20
     
 if __main__ == "__main__":
     main()
@@ -195,3 +195,23 @@ Below are some things I hope to incorporate to RLcycle:
 - Compatibility with my distributed RL framework [distributedRL](https://github.com/cyoon1729/distributedRL). (i.e. Ape-X for all off-policy algorithms). *(high priority)*
 
 ## References
+
+### Repositories
+- Special thanks to [@Medipixel](https:medipixel.io)! A lot of the design choices I've made here are based on
+   what I learned through working on [their open source RL framework](https://github.com/medipixel/rl_algorithms) 
+   during my internship there.
+- Higgsfield's [RL-Adventure](https://github.com/higgsfield/RL-Adventure) [Series](https://github.com/higgsfield/RL-Adventure-2).
+
+### Papers
+1. ["Human-level control through deep reinforcement learning." Mnih et al., 2015.](https://storage.googleapis.com/deepmind-media/dqn/DQNNaturePaper.pdf)
+2. ["Dueling Network Architectures for Deep Reinforcement Learning." Wang et al., 2015.](https://arxiv.org/pdf/1511.06581.pdf)
+5. ["Prioritized Experience Replay." Schaul et al., 2015.](https://arxiv.org/pdf/1511.05952.pdf)
+3. ["Noisy Networks for Exploration." Fortunato et al.,  2017.](https://arxiv.org/pdf/1706.10295.pdf)
+4. ["A Distributional Perspective on Reinforcement Learning." Bellemare et al., 2017.](https://arxiv.org/pdf/1707.06887.pdf)
+5. ["Rainbow: Combining Improvements in Deep Reinforcement Learning." Hessel et al., 2017.](https://arxiv.org/pdf/1710.02298.pdf)
+6. ["Distributional Reinforcement Learning with Quantile Regression." Dabney et al., 2017.](https://arxiv.org/abs/1710.10044)
+7. ["Asynchronous methods for Deep Reinforcement Learning." Mnih et al., 2016](https://arxiv.org/pdf/1602.01783.pdf)
+8. ["Continuous control with deep reinforcement learning." Lillicrap et al., 2015.](https://arxiv.org/pdf/1509.02971.pdf)
+9. ["Addressing function approximation error in actor-critic methods." Fujimoto et al., 2018](https://arxiv.org/pdf/1802.09477.pdf)
+10. ["Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor." Haarnoja et al., 2018](https://arxiv.org/abs/1801.01290)
+11. ["Soft Actor-Critic Algorithms and Applications." Haarnoja et al., 2019"](https://arxiv.org/abs/1812.05905)
