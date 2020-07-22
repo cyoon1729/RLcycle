@@ -17,4 +17,7 @@ hyper_params:
   critic_learning_rate: 0.001
   actor_learning_rate: 0.001
 
-  noise: "OUNoise"
+  # Guassian noise
+  noise: "Gaussian"
+  noise_mu: 0
+  noise_sigma: 0.1 

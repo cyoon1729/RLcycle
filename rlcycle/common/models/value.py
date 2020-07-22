@@ -25,7 +25,8 @@ class DQN(BaseModel):
         self.model_cfg.fc.input.params.input_size = self.get_feature_size()
 
         # set output size of fc output layer
-        self.model_cfg.fc.output.params.output_size = self.model_cfg.action_dim
+        if self.model_cfg.fc.output.params.output_size == "undefined":
+            self.model_cfg.fc.output.params.output_size = self.model_cfg.action_dim
 
         # initialize input layer
         self.fc_input = hydra.utils.instantiate(self.model_cfg.fc.input)
@@ -47,6 +48,13 @@ class DQN(BaseModel):
         x = self.fc_hidden.forward(x)
         x = self.fc_output.forward(x)
         return x
+
+    def reset_noise(self):
+        """Reset noise for noisy linear"""
+        self.fc_input.reset_noise()
+        for hidden in self.fc_hidden:
+            hidden.reset_noise()
+        self.fc_output.reset_noise()
 
 
 class DuelingDQN(BaseModel):
@@ -104,8 +112,15 @@ class DuelingDQN(BaseModel):
         value = self.value_stream.forward(x)
         return value + advantage - advantage.mean()
 
+    def reset_noise(self):
+        """Reset noise for noisy linear"""
+        for layer in self.advantage_stream:
+            layer.reset_noise()
+        for layer in self.value_stream:
+            layer.reset_noise()
 
-class CategoricalDQN(BaseModel):
+
+class CategoricalDQN(DQN):
     """Categorical DQN (a.k.a C51) Model
 
     Attributes:
@@ -120,35 +135,20 @@ class CategoricalDQN(BaseModel):
     """
 
     def __init__(self, model_cfg):
-        BaseModel.__init__(self, model_cfg)
-        self.action_dim = self.model_cfg.action_dim
+        self.action_dim = model_cfg.action_dim
 
-        self.num_atoms = self.model_cfg.num_atoms
-        self.v_min = self.model_cfg.v_min
-        self.v_max = self.model_cfg.v_max
+        self.num_atoms = model_cfg.num_atoms
+        self.v_min = model_cfg.v_min
+        self.v_max = model_cfg.v_max
         self.delta_z = (self.v_max - self.v_min) / (self.num_atoms - 1)
         self.support = torch.linspace(self.v_min, self.v_max, self.num_atoms)
-        if self.model_cfg.use_cuda:
+        if model_cfg.use_cuda:
             self.support = self.support.cuda()
 
-        # set input size of fc input layer
-        self.model_cfg.fc.input.params.input_size = self.get_feature_size()
-
         # set output size of fc output layer
-        self.model_cfg.fc.output.params.output_size = self.num_atoms * self.action_dim
+        model_cfg.fc.output.params.output_size = self.num_atoms * self.action_dim
 
-        # initialize input layer
-        self.fc_input = hydra.utils.instantiate(self.model_cfg.fc.input)
-
-        # initialize hidden layers
-        hidden_layers = []
-        for layer in self.model_cfg.fc.hidden:
-            layer_info = self.model_cfg.fc.hidden[layer]
-            hidden_layers.append(hydra.utils.instantiate(layer_info))
-        self.fc_hidden = nn.Sequential(*hidden_layers)
-
-        # initialize output layer
-        self.fc_output = hydra.utils.instantiate(self.model_cfg.fc.output)
+        DQN.__init__(self, model_cfg)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         num_x = x.size(0)
@@ -160,60 +160,6 @@ class CategoricalDQN(BaseModel):
         dist = x.view(num_x, -1, self.num_atoms)
         dist = F.softmax(dist, dim=2)
 
-        return dist
-
-
-class QRDQN(BaseModel):
-    """Quantile Regression DQN Model initializable with hydra configs
-
-    Attributes:
-        tau (torch.Tensor): quantile weights
-        num_quantiles (int): number of quantiles for distributional representation
-        fc_input (LinearLayer): fully connected input layer
-        fc_hidden (nn.Sequential): hidden layers
-        fc_output (LinearLayer): fully connected output layer
-
-    """
-
-    def __init__(self, model_cfg):
-        BaseModel.__init__(self, model_cfg)
-        self.action_dim = self.model_cfg.action_dim
-        self.num_quantiles = self.model_cfg.num_quantiles
-        self.tau = torch.FloatTensor(
-            (2.0 * np.arange(self.num_quantiles) + 1) / (2.0 * self.num_quantiles),
-        ).view(1, -1)
-        if self.model_cfg.use_cuda:
-            self.tau = self.tau.cuda()
-
-        # set input size of fc input layer
-        self.model_cfg.fc.input.params.input_size = self.get_feature_size()
-
-        # set output size of fc output layer
-        self.model_cfg.fc.output.params.output_size = (
-            self.num_quantiles * self.action_dim
-        )
-
-        # initialize input layer
-        self.fc_input = hydra.utils.instantiate(self.model_cfg.fc.input)
-
-        # initialize hidden layers
-        hidden_layers = []
-        for layer in self.model_cfg.fc.hidden:
-            layer_info = self.model_cfg.fc.hidden[layer]
-            hidden_layers.append(hydra.utils.instantiate(layer_info))
-        self.fc_hidden = nn.Sequential(*hidden_layers)
-
-        # initialize output layer
-        self.fc_output = hydra.utils.instantiate(self.model_cfg.fc.output)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward propagate through network"""
-        x = self.features.forward(x)
-        x = x.view(x.size(0), -1)
-        x = self.fc_input.forward(x)
-        x = self.fc_hidden.forward(x)
-        dist = self.fc_output.forward(x)
-        dist = dist.view(-1, self.action_dim, self.num_quantiles)
         return dist
 
 
@@ -266,4 +212,97 @@ class DuelingCategoricalDQN(DuelingDQN):
 
         q_dist = advantage_dist + value_dist - advantage_mean
         q_dist = F.softmax(q_dist, dim=2)
+        return q_dist
+
+
+class QRDQN(DQN):
+    """Quantile Regression DQN Model initializable with hydra configs
+
+    Attributes:
+        tau (torch.Tensor): quantile weights
+        num_quantiles (int): number of quantiles for distributional representation
+        fc_input (LinearLayer): fully connected input layer
+        fc_hidden (nn.Sequential): hidden layers
+        fc_output (LinearLayer): fully connected output layer
+
+    """
+
+    def __init__(self, model_cfg):
+        self.action_dim = model_cfg.action_dim
+        self.num_quantiles = model_cfg.num_quantiles
+        self.tau = (
+            torch.tensor(
+                (2.0 * np.arange(self.num_quantiles) + 1) / (2.0 * self.num_quantiles),
+                requires_grad=False,
+            )
+            .float()
+            .view(1, -1)
+        )
+        if model_cfg.use_cuda:
+            self.tau = self.tau.cuda()
+
+        # set output size of fc output layer
+        model_cfg.fc.output.params.output_size = self.num_quantiles * self.action_dim
+
+        DQN.__init__(self, model_cfg)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward propagate through network"""
+        num_x = x.size(0)
+        x = self.features.forward(x)
+        x = x.view(num_x, -1)
+        x = self.fc_input.forward(x)
+        x = self.fc_hidden.forward(x)
+        dist = self.fc_output.forward(x)
+        dist = dist.view(num_x, self.action_dim, self.num_quantiles)
+
+        return dist
+
+
+class DuelingQRDQN(DuelingDQN):
+    """Dueling Categorical DQN as in Rainbow-DQN
+
+    Attributes:
+        tau (torch.Tensor): quantile weights
+        num_quantiles (int): number of quantiles for distributional representation
+        advantage_stream (nn.Sequential): distributional advantage stream
+        value_stream (nn.Sequential): distributional value stream
+
+    """
+
+    def __init__(self, model_cfg):
+        self.action_dim = model_cfg.action_dim
+        self.num_quantiles = model_cfg.num_quantiles
+        self.tau = torch.FloatTensor(
+            (2.0 * np.arange(self.num_quantiles) + 1) / (2.0 * self.num_quantiles),
+        ).view(1, -1)
+        if model_cfg.use_cuda:
+            self.tau = self.tau.cuda()
+
+        # set output size of advantage stream to represent distribution:
+        output_layer_key = list(model_cfg.advantage.keys())[-1]
+        model_cfg.advantage[output_layer_key].params.output_size = (
+            self.num_quantiles * self.action_dim
+        )
+
+        # set output size of value stream to represent distribution:
+        output_layer_key = list(model_cfg.value.keys())[-1]
+        model_cfg.value[output_layer_key].params.output_size = self.num_quantiles
+
+        DuelingDQN.__init__(self, model_cfg)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        num_x = x.size(0)
+        x = self.features.forward(x)
+        x = x.view(x.size(0), -1)
+
+        advantage_dist = self.advantage_stream.forward(x)
+        advantage_dist = advantage_dist.view(num_x, self.action_dim, self.num_quantiles)
+        advantage_mean = torch.mean(advantage_dist, dim=1, keepdim=True)
+
+        value_dist = self.value_stream.forward(x)
+        value_dist = value_dist.view(num_x, 1, self.num_quantiles)
+
+        q_dist = advantage_dist + value_dist - advantage_mean
+
         return q_dist

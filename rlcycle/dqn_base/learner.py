@@ -44,7 +44,10 @@ class DQNLearner(Learner):
         hard_update(self.network, self.target_network)
 
         self.optimizer = optim.Adam(
-            self.network.parameters(), lr=self.hyper_params.learning_rate
+            self.network.parameters(),
+            lr=self.hyper_params.learning_rate,
+            weight_decay=self.hyper_params.weight_decay,
+            eps=self.hyper_params.adam_eps,
         )
 
         self.loss_fn = build_loss(
@@ -86,6 +89,10 @@ class DQNLearner(Learner):
             new_priorities = torch.clamp(q_loss_element_wise.view(-1), min=1e-6)
             new_priorities = new_priorities.cpu().detach().numpy()
             info = info + (indices, new_priorities,)
+
+        if self.model_cfg.params.model_cfg.use_noisy:
+            self.network.reset_noise()
+            self.target_network.reset_noise()
 
         return info
 

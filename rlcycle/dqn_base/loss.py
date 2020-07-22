@@ -53,22 +53,20 @@ class QRLoss(Loss):
             next_z = target_network.forward(next_states)
             next_actions = torch.max(next_z.mean(2), dim=1)[1]
             next_z = next_z[list(range(states.size(0))), next_actions]
-
             n_step_gamma = self.hyper_params.gamma ** self.hyper_params.n_step
             target_z = rewards + (1 - dones) * n_step_gamma * next_z
 
         distance = target_z - z_dists
-        element_wise_loss = torch.mean(
-            self.quantile_huber_loss(distance)
-            * (network.tau - (distance.detach() < 0).float()).abs(),
-            dim=1,
-        )
+        quantile_huber_loss = (
+            network.tau - (distance.detach() < 0).float()
+        ).abs() * self.huber_loss(distance)
+        element_wise_loss = torch.mean(quantile_huber_loss, dim=1, keepdim=True)
 
         return element_wise_loss
 
     @staticmethod
-    def quantile_huber_loss(x: List[torch.Tensor], k: float = 1.0):
-        return torch.where(x.abs() < k, 0.5 * x.pow(2), k * (x.abs() - 0.5 * k))
+    def huber_loss(x: List[torch.Tensor], k: float = 1.0):
+        return torch.where(x.abs() <= k, 0.5 * x.pow(2), k * (x.abs() - 0.5 * k))
 
 
 class CategoricalLoss(Loss):

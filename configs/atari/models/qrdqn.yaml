@@ -4,7 +4,7 @@ model:
     model_cfg:
       state_dim: undefined
       action_dim: undefined
-      num_quantiles: 4
+      num_quantiles: 10
       device: cuda
 
       use_conv: True
