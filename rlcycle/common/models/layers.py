@@ -94,17 +94,15 @@ class LinearLayer(nn.Module):
 
 class FactorizedNoisyLinearLayer(nn.Module):
     """Noisy linear layer with factorized gaussian noise."""
+
     def __init__(
-        self,
-        input_size: int,
-        output_size: int,
-        post_activation_fn: str,
+        self, input_size: int, output_size: int, post_activation_fn: str,
     ):
         nn.Module.__init__(self)
         assert (
             post_activation_fn in activation_fn_registry.keys()
         ), f"{post_activation_fn} is not registered in layer.py. Register."
-        
+
         self.input_size = input_size
         self.output_size = output_size
 
@@ -124,10 +122,9 @@ class FactorizedNoisyLinearLayer(nn.Module):
             "eps_weight", torch.FloatTensor(self.output_size, self.input_size)
         )
 
-        self.mu_bias = nn.Parameter(torch.FloatTensor(self.output_size)) 
+        self.mu_bias = nn.Parameter(torch.FloatTensor(self.output_size))
         self.sigma_bias = nn.Parameter(torch.FloatTensor(self.output_size))
         self.register_buffer("eps_bias", torch.FloatTensor(self.output_size))
-
 
         self.reset_parameters()
         self.reset_noise()
@@ -169,17 +166,15 @@ class FactorizedNoisyLinearLayer(nn.Module):
 
 class NoisyLinearLayer(nn.Module):
     """Noisy linear layer with gaussian noise"""
+
     def __init__(
-        self,
-        input_size: int,
-        output_size: int,
-        post_activation_fn: str,
+        self, input_size: int, output_size: int, post_activation_fn: str,
     ):
         nn.Module.__init__(self)
         assert (
             post_activation_fn in activation_fn_registry.keys()
         ), f"{post_activation_fn} is not registered in layer.py. Register."
-        
+
         self.input_size = input_size
         self.output_size = output_size
 
@@ -199,10 +194,9 @@ class NoisyLinearLayer(nn.Module):
             "eps_weight", torch.FloatTensor(self.output_size, self.input_size)
         )
 
-        self.mu_bias = nn.Parameter(torch.FloatTensor(self.output_size)) 
+        self.mu_bias = nn.Parameter(torch.FloatTensor(self.output_size))
         self.sigma_bias = nn.Parameter(torch.FloatTensor(self.output_size))
         self.register_buffer("eps_bias", torch.FloatTensor(self.output_size))
-
 
         self.reset_parameters()
         self.reset_noise()
