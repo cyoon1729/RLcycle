@@ -98,10 +98,10 @@ class FactorizedNoisyLinearLayer(nn.Module):
     Attributes:
         input_size (int): layer input size
         output_size (int): layer output size
-        mu_weight (nn.Parameter): trainiable guassian distribution mean for weights
-        sigma_weight (nn.Parameter): trainable gaussian distribution std for weights
-        mu_bias (nn.Parameter): trainiable guassian distribution mean for bias
-        sigma_bias (nn.Parameter): trainable gaussian distribution std for bias
+        mu_weight (nn.Parameter): trainiable weights
+        sigma_weight (nn.Parameter): trainable gaussian distribution noise std for weights
+        mu_bias (nn.Parameter): trainiable bias
+        sigma_bias (nn.Parameter): trainable gaussian distribution noise std for bias
         eps_weight (torch.FloatTensor): Factorized Gaussian noise
         eps_bias (torch.FloatTensor): Factorized Gaussian noise
         post_activation_fn (nn.functional): post activation function
@@ -152,7 +152,7 @@ class FactorizedNoisyLinearLayer(nn.Module):
                 self.mu_bias + self.sigma_bias * self.eps_bias,
             )
         else:
-            linear_output = F.linear(x)
+            linear_output = F.linear(x, self.mu_weight, self.mu_bias)
         output = self.post_activation_fn(linear_output, **self.activation_args)
         return output
 
@@ -185,10 +185,9 @@ class NoisyLinearLayer(nn.Module):
     Attributes:
         input_size (int): layer input size
         output_size (int): layer output size
-        mu_weight (nn.Parameter): trainiable guassian distribution mean for weights
-        sigma_weight (nn.Parameter): trainable gaussian distribution std for weights
-        mu_bias (nn.Parameter): trainiable guassian distribution mean for bias
-        sigma_bias (nn.Parameter): trainable gaussian distribution std for bias
+        sigma_weight (nn.Parameter): trainable gaussian distribution noise std for weights
+        mu_bias (nn.Parameter): trainiable bias
+        sigma_bias (nn.Parameter): trainable gaussian distribution noise std for bias
         post_activation_fn (nn.functional): post activation function
         activation_args (dict): function parameters for activation_function (e.g. dim)
 
@@ -237,7 +236,7 @@ class NoisyLinearLayer(nn.Module):
                 self.mu_bias + self.sigma_bias * self.eps_bias,
             )
         else:
-            linear_output = F.linear(x)
+            linear_output = F.linear(x, self.mu_weight, self.mu_bias)
         output = self.post_activation_fn(linear_output, **self.activation_args)
         return output
 
