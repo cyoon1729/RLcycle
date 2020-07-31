@@ -1,7 +1,7 @@
 hyper_params:
-  batch_size: 64
+  batch_size: 100
   replay_buffer_size: 1000000 # Nature DQN puts 1000000 but this takes up too much memory
-  use_per: True
+  use_per: False
   per_alpha: 0.4  # PER alpha value
   per_beta: 0.6  # PER beta value
   per_beta_max: 1.0
@@ -9,7 +9,8 @@ hyper_params:
 
   update_starting_point: 64 # update steps when buffer has # experiences stored
   n_step: 1
-  train_freq: 1  
+  train_freq: 1
+  max_exploratory_steps: 1000
   gamma: 0.99
   tau: 0.005
   critic_gradient_clip: 10.0
@@ -20,4 +21,4 @@ hyper_params:
   # Guassian noise
   noise: "Gaussian"
   noise_mu: 0
-  noise_sigma: 0.1 
+  noise_sigma: 0.1

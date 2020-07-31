@@ -56,6 +56,7 @@ def build_action_selector(experiment_info: DictConfig, use_cuda: bool):
     action_selector_cfg["class"] = experiment_info.action_selector
     action_selector_cfg["params"] = dict(use_cuda=use_cuda)
     if not experiment_info.env.is_discrete:
+        action_selector_cfg.params.action_dim = experiment_info.env.action_dim
         action_selector_cfg.params.action_range = experiment_info.env.action_range
     action_selector = hydra.utils.instantiate(action_selector_cfg)
     return action_selector
