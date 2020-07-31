@@ -12,13 +12,15 @@ class SACActionSelector(ActionSelector):
     """Action selector for (vanilla) DDPG policy
 
     Attributes:
+        action_dim (int): size of action space dimension
         action_min (np.ndarray): lower bound for continuous actions
         action_max (np.ndarray): upper bound for continuous actions
 
     """
 
-    def __init__(self, action_range: list, use_cuda: bool):
+    def __init__(self, action_dim: int, action_range: list, use_cuda: bool):
         ActionSelector.__init__(self, use_cuda)
+        self.action_dim = action_dim
         self.action_min = np.array(action_range[0])
         self.action_max = np.array(action_range[1])
 

@@ -10,7 +10,7 @@ from rlcycle.common.buffer.prioritized_replay_buffer import PrioritizedReplayBuf
 from rlcycle.common.buffer.replay_buffer import ReplayBuffer
 from rlcycle.common.utils.common_utils import np2tensor, preprocess_nstep
 from rlcycle.common.utils.logger import Logger
-from rlcycle.ddpg.action_selector import GaussianNoise, OUNoise
+from rlcycle.ddpg.action_selector import GaussianNoise, OUNoise, RandomActionsStarts
 
 
 class DDPGAgent(Agent):
@@ -65,7 +65,7 @@ class DDPGAgent(Agent):
         self.action_selector = build_action_selector(
             self.experiment_info, self.use_cuda
         )
-        if self.experiment_info.noise == "OUNoise":
+        if self.hyper_params.noise == "OUNoise":
             self.action_selector = OUNoise(self.action_selector, self.env.action_space)
         else:
             self.action_selector = GaussianNoise(
@@ -73,6 +73,10 @@ class DDPGAgent(Agent):
                 self.hyper_params.noise_mu,
                 self.hyper_params.noise_sigma,
             )
+        self.action_selector = RandomActionsStarts(
+            self.action_selector,
+            max_exploratory_steps=self.hyper_params.max_exploratory_steps,
+        )
 
         # Build logger
         if self.experiment_info.log_wandb:
@@ -119,7 +123,7 @@ class DDPGAgent(Agent):
                 if self.experiment_info.train_render:
                     self.env.render()
 
-                action = self.action_selector(self.learner.actor, state)
+                action = self.action_selector(self.learner.actor, state, episode_i)
                 state, action, reward, next_state, done = self.step(state, action)
 
                 episode_reward = episode_reward + reward
