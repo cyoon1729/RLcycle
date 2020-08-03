@@ -197,6 +197,7 @@ This should help you get started with building & running agents in RLcycle!
 
 <details>
 <summary> <b> PyBullet Reacher-v2
+    
 ![reacher](./assets/reacher.png)
 </details>
     
