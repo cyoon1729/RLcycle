@@ -62,10 +62,9 @@ class DQNBaseAgent(Agent):
         self.action_selector = build_action_selector(
             self.experiment_info, self.use_cuda
         )
-        if not self.model_cfg.params.model_cfg.use_noisy:
-            self.action_selector = EpsGreedy(
-                self.action_selector, self.env.action_space, self.hyper_params
-            )
+        self.action_selector = EpsGreedy(
+            self.action_selector, self.env.action_space, self.hyper_params
+        )
 
         if self.experiment_info.log_wandb:
             experiment_cfg = OmegaConf.create(
@@ -143,22 +142,20 @@ class DQNBaseAgent(Agent):
                             self.replay_buffer.update_priorities(
                                 indices, new_priorities
                             )
-                if not self.model_cfg.params.model_cfg.use_noisy:
-                    self.action_selector.decay_epsilon()
 
-            log_str = (
+                self.action_selector.decay_epsilon()
+
+            print(
                 f"[TRAIN] episode num: {episode_i} "
                 f"| update step: {self.update_step} "
                 f"| episode reward: {episode_reward} "
+                f"| epsilon: {round(self.action_selector.eps, 5)}"
             )
-            if not self.model_cfg.params.model_cfg.use_noisy:
-                log_str = f"| epsilon: {round(self.action_selector.eps, 5)}"
-            print(log_str)
 
             if self.experiment_info.log_wandb:
-                log_dict = dict(episode_reward=episode_reward)
-                if not self.model_cfg.params.model_cfg.use_noisy:
-                    log_dict["epsilon"] = self.action_selector.eps
+                log_dict = dict(
+                    episode_reward=episode_reward, epsilon=self.action_selector.eps
+                )
                 if self.update_step > 0:
                     log_dict["mean_loss"] = np.mean(losses)
                 self.logger.write_log(log_dict=log_dict)

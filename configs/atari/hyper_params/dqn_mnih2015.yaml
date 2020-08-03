@@ -10,7 +10,7 @@ hyper_params:
   per_alpha: 0.4  # PER alpha value
   per_beta: 0.6  # PER beta value
   per_beta_max: 1.0
-  per_beta_total_steps: 100000
+  per_beta_total_steps: 300000
 
   # Exploration configs
   eps: 1.0  # epsilon-greedy exploration
@@ -27,6 +27,6 @@ hyper_params:
   train_freq: 4
 
   # Optimizer
-  learning_rate: 0.0001
+  learning_rate: 0.0003
   weight_decay: 0.0
   adam_eps: 0.00000001
