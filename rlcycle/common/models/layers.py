@@ -125,14 +125,9 @@ class FactorizedNoisyLinearLayer(nn.Module):
             self.activation_args["dim"] = 1
         self.post_activation_fn = activation_fn_registry[post_activation_fn]
 
-        
         # Define layer parameters
-        self.mu_weight = nn.Parameter(
-            torch.zeros(self.output_size, self.input_size)
-        )
-        self.sigma_weight = nn.Parameter(
-            torch.zeros(self.output_size, self.input_size)
-        )
+        self.mu_weight = nn.Parameter(torch.zeros(self.output_size, self.input_size))
+        self.sigma_weight = nn.Parameter(torch.zeros(self.output_size, self.input_size))
         self.register_buffer(
             "eps_weight", torch.zeros(self.output_size, self.input_size)
         )
