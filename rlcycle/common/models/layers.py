@@ -125,20 +125,21 @@ class FactorizedNoisyLinearLayer(nn.Module):
             self.activation_args["dim"] = 1
         self.post_activation_fn = activation_fn_registry[post_activation_fn]
 
+        
         # Define layer parameters
         self.mu_weight = nn.Parameter(
-            torch.FloatTensor(self.output_size, self.input_size)
+            torch.zeros(self.output_size, self.input_size)
         )
         self.sigma_weight = nn.Parameter(
-            torch.FloatTensor(self.output_size, self.input_size)
+            torch.zeros(self.output_size, self.input_size)
         )
         self.register_buffer(
-            "eps_weight", torch.FloatTensor(self.output_size, self.input_size)
+            "eps_weight", torch.zeros(self.output_size, self.input_size)
         )
 
-        self.mu_bias = nn.Parameter(torch.FloatTensor(self.output_size))
-        self.sigma_bias = nn.Parameter(torch.FloatTensor(self.output_size))
-        self.register_buffer("eps_bias", torch.FloatTensor(self.output_size))
+        self.mu_bias = nn.Parameter(torch.zeros(self.output_size))
+        self.sigma_bias = nn.Parameter(torch.zeros(self.output_size))
+        self.register_buffer("eps_bias", torch.zeros(self.output_size))
 
         self.reset_parameters()
         self.reset_noise()
@@ -175,7 +176,7 @@ class FactorizedNoisyLinearLayer(nn.Module):
     @staticmethod
     def scale_noise(size: int) -> torch.Tensor:
         """Set scale to make noise (factorized gaussian noise)."""
-        x = torch.FloatTensor(np.random.normal(loc=0.0, scale=1.0, size=size))
+        x = torch.from_numpy(np.random.normal(loc=0.0, scale=1.0, size=size)).float()
         return x.sign().mul(x.abs().sqrt())
 
 
@@ -211,18 +212,18 @@ class NoisyLinearLayer(nn.Module):
 
         # Define layer parameters
         self.mu_weight = nn.Parameter(
-            torch.FloatTensor(self.output_size, self.input_size)
+            torch.zeros(self.output_size, self.input_size).float()
         )
         self.sigma_weight = nn.Parameter(
-            torch.FloatTensor(self.output_size, self.input_size)
+            torch.zeros(self.output_size, self.input_size).float()
         )
         self.register_buffer(
-            "eps_weight", torch.FloatTensor(self.output_size, self.input_size)
+            "eps_weight", torch.zeros(self.output_size, self.input_size).float()
         )
 
-        self.mu_bias = nn.Parameter(torch.FloatTensor(self.output_size))
-        self.sigma_bias = nn.Parameter(torch.FloatTensor(self.output_size))
-        self.register_buffer("eps_bias", torch.FloatTensor(self.output_size))
+        self.mu_bias = nn.Parameter(torch.zeros(self.output_size).float())
+        self.sigma_bias = nn.Parameter(torch.zeros(self.output_size).float())
+        self.register_buffer("eps_bias", torch.zeros(self.output_size).float())
 
         self.reset_parameters()
         self.reset_noise()
