@@ -185,6 +185,8 @@ This should help you get started with building & running agents in RLcycle!
 </details>
 
 ## Benchmarks
+*Hyperparameters were not rigorously tuned; most follow those presented in the original papers, with some modifications to work around memory usage.* 
+
 <details>
 <summary> <b> Atari PongNoFrameskip-v4
 </details>
@@ -195,6 +197,9 @@ This should help you get started with building & running agents in RLcycle!
 
 <details>
 <summary> <b> PyBullet Reacher-v2
+
+![reacher](./assets/reacher.png)
+
 </details>
     
 <details>
