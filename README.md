@@ -11,7 +11,7 @@ Currently, RLcycle provides:
 - DQN + enhancements, Distributional: C51, Quantile Regression, Rainbow-DQN.
 - Noisy Networks for parameter space noise
 - A2C (data parallel) and A3C (gradient parallel).
-- DDPG, both Lillicrap et al. (2015) and Fujimoto et al., (2018) versions (Technically TD3).
+- DDPG, both Lillicrap et al. (2015) and Fujimoto et al., (2018) versions.
 - Soft Actor Critic with automatic entropy coefficient tuning.
 - Prioritized Experience Replay and n-step updates for all off-policy algorithms.
 
@@ -185,7 +185,21 @@ This should help you get started with building & running agents in RLcycle!
 </details>
 
 ## Benchmarks
-To be added shortly.
+<details>
+<summary> <b> Atari PongNoFrameskip-v4
+</details>
+
+<details>
+<summary> <b> Atari BreakoutNoFrameskip-v4
+</details>
+
+<details>
+<summary> <b> PyBullet Reacher-v2
+</details>
+    
+<details>
+<summary> <b> PyBullet HalfCheetah-v2
+</details>
 
 
 ## Future Plans
