@@ -358,7 +358,7 @@ Click the dropdown below!
 <details>
 <summary> <b> Atari PongNoFrameskip-v4 </b> </summary>
 <p>
-*For more information, visit [my WandB log](https://app.wandb.ai/chrisyoon1729/RLcycle-PongNoFrameskip-v4?workspace=user-chrisyoon1729)*
+For more information, visit my WandB [log](https://app.wandb.ai/chrisyoon1729/RLcycle-PongNoFrameskip-v4?workspace=user-chrisyoon1729)
 
 ![atari-pong](./assets/pong.png)
 </p>
@@ -371,7 +371,7 @@ Click the dropdown below!
 <details>
 <summary> <b> PyBullet Reacher-v2 </b> </summary>
 <p>
-*For more information, visit [my WandB log](https://app.wandb.ai/chrisyoon1729/RLcycle-ReacherPyBulletEnv-v0?workspace=user-chrisyoon1729)*
+For more information, visit my WandB [log](https://app.wandb.ai/chrisyoon1729/RLcycle-ReacherPyBulletEnv-v0?workspace=user-chrisyoon1729)
 
 ![reacher](./assets/reacher.png)
 </p>
