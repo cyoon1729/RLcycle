@@ -1,9 +1,9 @@
 # RLcycle
 
-[![Total alerts](https://img.shields.io/lgtm/alerts/g/cyoon1729/RLcycle.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/cyoon1729/RLcycle/alerts/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/cyoon1729/RLcycle.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/cyoon1729/RLcycle/context:python)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/cyoon1729/RLcycle.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/cyoon1729/RLcycle/alerts/)
 
 RLcycle (pronounced as "recycle") is a reinforcement learning (RL) agents framework. RLcycle provides ready-made RL agents, as well as reusable components for easy prototyping. 
 
@@ -25,7 +25,7 @@ See below for an introduction and guide to using RLcycle, performance benchmarks
 
 #### Contributing
 
-If you have any questions, or would like to contribute to RLcycle or offer any suggestions, feel free to raise an issue or reach out at `cjy2129 [at] columbia [dot] edu`!
+If you have any questions or suggestions, feel free to raise an issue or reach out at `cjy2129 [at] columbia [dot] edu`!
 
 ## Getting Started
 To install:
@@ -39,7 +39,7 @@ pip install -e .
 ```
 
 <details>
-<summary> <b> 1. A quick look at Hydra for managing configurations </b></summary>
+<summary> <b> 0. A quick look at Hydra for managing configurations </b></summary>
 Let's first take a  look at one of the many useful things [hydra](https://hydra.cc/) can do:
 
 ```yaml
@@ -83,8 +83,175 @@ if __main__ == "__main__":
 If you would like to know more about `hydra`,  [check it out](https://hydra.cc/)!
 </details>
 
+
+
 <details>
-<summary> <b> 2. Initializing Components in RLcycle (models, learners, agents, etc) </b></summary>
+<summary> <b> 1. Running experiments </b></summary>
+
+Run the `run_agent.py` file and specify the experiment configuration as below:
+
+```shell
+python run_agent.py configs=atari/rainbow_dqn
+```
+Alternatively, you can specify the configuration (yaml) file in `metaconfig.yaml`.
+
+```yaml
+# in ./metaconfig.yaml
+defaults:
+ - configs=atari/rainbow_dqn
+```
+To modify experiment arguments or hyperparameters, you can add the flags as below:
+
+```shell
+python run_agent.py configs=atari/rainbow_dqn configs.experiment_info.env.name=AlienNoFrameskip-v4
+
+python run_agent.py configs=atari/rainbow_dqn configs.hyper_params.batch_size=64
+
+python run_agent.py configs=pybullet/sac configs.hyper_params.batch_size=64
+```
+</details>
+
+<details>
+<summary> <b> 2. Building configurations for RLcycle </b> </summary>
+Let's take `atari/rainbow_dqn.yaml` for example:
+
+```yaml
+experiment_info:
+  experiment_name: Rainbow DQN
+  agent: rlcycle.dqn_base.agent.DQNBaseAgent
+  learner: rlcycle.dqn_base.learner.DQNLearner
+  loss: rlcycle.dqn_base.loss.CategoricalLoss
+  action_selector: rlcycle.dqn_base.action_selector.CategoricalActionSelector
+  device: cuda
+  log_wandb: True
+
+  # Environment info
+  env:
+    name: "PongNoFrameskip-v4"
+    is_atari: True
+    is_discrete: True
+    frame_stack: True
+
+  # Experiment default arguments:
+  total_num_episodes: 5000
+  test_interval: 100  # Test every 50 episodes
+  test_num: 5  # Number of episodes to test during test phase
+  render_train: False  # Render all episode steps during training
+  render_test: True # Render tests
+
+defaults:
+  - hyper_params: rainbow
+  - models: duelingC51
+```
+under `experiment_info`, we have the fundamental arguments for running RL experiments: which classes (agent, learner, loss) we want to use, and the gym evironment and experiment configurations.
+
+The `defaults` points to `rlcycle/configs/atari/hyper_params/rainbow.yaml` for hyperparameters, and `rlcycle/configs/atari/models/duelingC51.yaml` for model configurations. Taking a closer look at these files, we have:
+
+```yaml
+hyper_params:
+  batch_size: 64
+  replay_buffer_size: 100000 
+  use_per: False
+  per_alpha: 0.5  # PER alpha value
+  per_beta: 0.4  # PER beta value
+  per_beta_max: 1.0
+  per_beta_total_steps: 300000
+
+  # Exploration configs
+  eps: 1.0  # epsilon-greedy exploration
+  eps_final: 0.0  # minimum epsilon value for exploration
+  max_exploration_frame: 100000  # eps = eps_final at most until # steps
+
+  # Others
+  update_starting_point: 40000 # update steps when buffer has # experiences stored
+  gamma: 0.99
+  tau: 0.005
+  q_reg_coeff: 0.0
+  gradient_clip: 10.0
+  n_step: 3
+  train_freq: 4
+
+  # Optimizer
+  learning_rate: 0.0000625 # 0.0003
+  weight_decay: 0.0
+  adam_eps: 0.00015
+```
+a pretty standard organization for RL experiment hyperparameters, and
+
+```yaml
+model:
+  class: rlcycle.common.models.value.DuelingCategoricalDQN
+  params:
+    model_cfg:
+      state_dim: undefined
+      action_dim: undefined
+      num_atoms: 51
+      v_min: -10
+      v_max: 10
+
+      use_conv: True
+      use_noisy: True
+      conv_features:
+        feature1:
+          class: rlcycle.common.models.layers.Conv2DLayer
+          params:
+             input_size: 4
+             output_size: 32
+             kernel_size: 8
+             stride: 4
+             activation_fn: relu
+        feature2:
+          class: rlcycle.common.models.layers.Conv2DLayer
+          params:
+             input_size: 32
+             output_size: 64
+             kernel_size: 4
+             stride: 2
+             activation_fn: relu
+        feature3:
+          class: rlcycle.common.models.layers.Conv2DLayer
+          params:
+             input_size: 64
+             output_size: 64
+             kernel_size: 3
+             stride: 1
+             activation_fn: relu   
+             
+      advantage:
+        fc1:
+          class: rlcycle.common.models.layers.FactorizedNoisyLinearLayer
+          params: 
+            input_size: undefined
+            output_size: 512
+            post_activation_fn: relu
+        fc2:
+          class: rlcycle.common.models.layers.FactorizedNoisyLinearLayer
+          params: 
+            input_size: 512
+            output_size: undefined
+            post_activation_fn: identity
+
+      value:
+        fc1:
+          class: rlcycle.common.models.layers.FactorizedNoisyLinearLayer
+          params: 
+            input_size: undefined
+            output_size: 512
+            post_activation_fn: identity
+        fc2:
+          class: rlcycle.common.models.layers.FactorizedNoisyLinearLayer
+          params: 
+            input_size: 512
+            output_size: 1
+            post_activation_fn: identity
+```
+where we define the parameters for the model and each of its layers. Note that the fields with values
+"undefined" will be defined inside the respective python object. For a more simple model yaml configuration file, take a look at `rlcycle/configs/atari/models/dqn.yaml`.
+
+</details>
+
+<details>
+<summary> <b> Extra (Good to know): How RLcycle instantiates components (models, learners, agents, etc) </b></summary>
 
 Most of the components in `RLcycle` are instantiated via `hydra.utils.instantiate`, as illustrated in the section above. 
 Examples:
@@ -191,25 +358,27 @@ Click the dropdown below!
 <details>
 <summary> <b> Atari PongNoFrameskip-v4 </b> </summary>
 <p>
+*For more information, visit [my WandB log](https://app.wandb.ai/chrisyoon1729/RLcycle-PongNoFrameskip-v4?workspace=user-chrisyoon1729)*
 
 ![atari-pong](./assets/pong.png)
 </p>
 </details>
 
 <details>
-<summary> <b> Atari BreakoutNoFrameskip-v4 </b> </summary>
+<summary> <b> Atari BreakoutNoFrameskip-v4 (Will be ready soon) </b> </summary>
 </details>
 
 <details>
 <summary> <b> PyBullet Reacher-v2 </b> </summary>
 <p>
+*For more information, visit [my WandB log](https://app.wandb.ai/chrisyoon1729/RLcycle-ReacherPyBulletEnv-v0?workspace=user-chrisyoon1729)*
 
 ![reacher](./assets/reacher.png)
 </p>
 </details>
     
 <details>
-<summary> <b> PyBullet HalfCheetah-v2 </b> </summary>
+<summary> <b> PyBullet HalfCheetah-v2 (Will be ready soon) </b> </summary>
 </details>
 
 
