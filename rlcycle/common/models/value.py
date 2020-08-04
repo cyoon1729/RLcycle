@@ -212,6 +212,7 @@ class DuelingCategoricalDQN(DuelingDQN):
 
         q_dist = advantage_dist + value_dist - advantage_mean
         q_dist = F.softmax(q_dist, dim=2)
+
         return q_dist
 
 

@@ -22,5 +22,5 @@ experiment_info:
   render_test: True # Render tests
 
 defaults:
-  - hyper_params: dqn_mnih2015
+  - hyper_params: rainbow
   - models: duelingC51
