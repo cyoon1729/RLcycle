@@ -190,6 +190,10 @@ This should help you get started with building & running agents in RLcycle!
 Click the dropdown below!
 <details>
 <summary> <b> Atari PongNoFrameskip-v4 </b> </summary>
+<p>
+
+![atari-pong](./assets/pong.png)
+</p>
 </details>
 
 <details>
