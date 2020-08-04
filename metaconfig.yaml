@@ -1,0 +1,2 @@
+defaults:
+  - configs: atari/rainbow_dqn
