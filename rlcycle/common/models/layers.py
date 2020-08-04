@@ -171,7 +171,8 @@ class FactorizedNoisyLinearLayer(nn.Module):
     @staticmethod
     def scale_noise(size: int) -> torch.Tensor:
         """Set scale to make noise (factorized gaussian noise)."""
-        x = torch.from_numpy(np.random.normal(loc=0.0, scale=1.0, size=size)).float()
+        # x = torch.from_numpy(np.random.normal(loc=0.0, scale=1.0, size=size)).float()
+        x = torch.normal(mean=0.0, std=1.0, size=tuple([size]))
         return x.sign().mul(x.abs().sqrt())
 
 
