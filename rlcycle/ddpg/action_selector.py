@@ -60,7 +60,7 @@ class DDPGActionSelector(ActionSelector):
         action_np = action.cpu().detach().view(-1).numpy()
         return action_np
 
-    def rescale_action(self, action: np.ndarray):
+    def rescale_action(self, action: np.ndarray) -> np.ndarray:
         """Rescale actions to fit continuous action spaces"""
         action_rescaled = (
             action * (self.action_max - self.action_min) / 2.0

@@ -3,6 +3,7 @@ from typing import Tuple
 
 import numpy as np
 from omegaconf import DictConfig, OmegaConf
+import torch
 
 from rlcycle.build import build_action_selector, build_learner
 from rlcycle.common.abstract.agent import Agent
@@ -83,7 +84,7 @@ class SACAgent(Agent):
 
     def step(
         self, state: np.ndarray, action: np.ndarray
-    ) -> Tuple[np.ndarray, np.ndarray, np.float64, bool]:
+    ) -> Tuple[np.ndarray, np.ndarray, np.float64, np.ndarray, bool]:
         """Carry out single env step and return info
 
         Params:
@@ -173,7 +174,9 @@ class SACAgent(Agent):
                     log_dict["alpha_loss"] = np.mean(losses["alpha_loss"])
                 self.logger.write_log(log_dict)
 
-    def _preprocess_experience(self, experience: Tuple[np.ndarray]):
+    def _preprocess_experience(
+        self, experience: Tuple[np.ndarray]
+    ) -> Tuple[torch.Tensor]:
         """Convert collected experience to pytorch tensors."""
         states, actions, rewards, next_states, dones = experience[:5]
         if self.hyper_params.use_per:

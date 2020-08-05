@@ -1,7 +1,11 @@
+import gym
 import hydra
 from omegaconf import DictConfig
 
+from rlcycle.common.abstract.action_selector import ActionSelector
+from rlcycle.common.abstract.learner import LearnerBase
 from rlcycle.common.abstract.loss import Loss
+from rlcycle.common.models.base import BaseModel
 from rlcycle.common.utils.env_generator import generate_atari_env, generate_env
 
 
@@ -18,7 +22,7 @@ def build_agent(
     return agent
 
 
-def build_env(experiment_info: DictConfig):
+def build_env(experiment_info: DictConfig) -> gym.Env:
     """Build gym environment from DictConfigs via hydra.utils.instantiate()"""
     if experiment_info.env.is_atari:
         env = generate_atari_env(experiment_info.env)
@@ -29,7 +33,7 @@ def build_env(experiment_info: DictConfig):
 
 def build_learner(
     experiment_info: DictConfig, hyper_params: DictConfig, model: DictConfig
-):
+) -> LearnerBase:
     """Build learner from DictConfigs via hydra.utils.instantiate()"""
     learner_cfg = DictConfig(dict())
     learner_cfg["class"] = experiment_info.learner
@@ -40,7 +44,7 @@ def build_learner(
     return learner
 
 
-def build_model(model_cfg: DictConfig, use_cuda: bool):
+def build_model(model_cfg: DictConfig, use_cuda: bool) -> BaseModel:
     """Build model from DictConfigs via hydra.utils.instantiate()"""
     model_cfg.use_cuda = use_cuda
     model = hydra.utils.instantiate(model_cfg)
@@ -50,7 +54,9 @@ def build_model(model_cfg: DictConfig, use_cuda: bool):
         return model.cpu()
 
 
-def build_action_selector(experiment_info: DictConfig, use_cuda: bool):
+def build_action_selector(
+    experiment_info: DictConfig, use_cuda: bool
+) -> ActionSelector:
     """Build action selector from DictConfig via hydra.utils.instantiate()"""
     action_selector_cfg = DictConfig(dict())
     action_selector_cfg["class"] = experiment_info.action_selector

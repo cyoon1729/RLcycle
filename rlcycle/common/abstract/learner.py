@@ -85,6 +85,6 @@ class LearnerWrapper(LearnerBase):
         """Call wrapped learner update_model()"""
         return self.learner.update_model(experience)
 
-    def get_policy(self, to_cuda: bool):
+    def get_policy(self, to_cuda: bool) -> BaseModel:
         """Call wrapped learner get_policy()"""
         return self.learner.get_policy(to_cuda)

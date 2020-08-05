@@ -66,7 +66,9 @@ class A2CAgent(Agent):
             )
             self.logger = Logger(experiment_cfg)
 
-    def step(self, state: np.ndarray, action: np.ndarray):
+    def step(
+        self, state: np.ndarray, action: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray, np.float64, np.ndarray, bool]:
         """Carry out one environment step"""
         # A2C only uses this for test
         next_state, reward, done, _ = self.env.step(action)

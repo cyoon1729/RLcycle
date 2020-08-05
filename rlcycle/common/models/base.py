@@ -28,7 +28,7 @@ class BaseModel(nn.Module):
             print("Not using CNN backbone; Using identity layer.")
             self.features = nn.Identity(0)  # args aren't used in nn.Identity
 
-    def get_feature_size(self):
+    def get_feature_size(self) -> int:
         """Get output size of feature layers; input size for fc input layer"""
         try:  # if state_dim is a tuple, like atari images
             dummy_feature = self.features(torch.zeros(1, *self.model_cfg.state_dim))

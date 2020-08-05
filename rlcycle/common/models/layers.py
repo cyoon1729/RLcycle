@@ -1,6 +1,5 @@
 import math
 
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -139,7 +138,7 @@ class FactorizedNoisyLinearLayer(nn.Module):
         self.reset_parameters()
         self.reset_noise()
 
-    def forward(self, x):
+    def forward(self, x) -> torch.Tensor:
         """Forward propagate through layer."""
         if self.train:
             linear_output = F.linear(

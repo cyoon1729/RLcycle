@@ -4,6 +4,7 @@ https://github.com/openai/baselines/blob/master/baselines/deepq/replay_buffer.py
 """
 
 import random
+from typing import List, Tuple
 
 import numpy as np
 from omegaconf import DictConfig
@@ -54,7 +55,7 @@ class PrioritizedReplayBuffer(ReplayBufferWrapper):
         self._it_sum[idx] = self._max_priority ** self._alpha
         self._it_min[idx] = self._max_priority ** self._alpha
 
-    def _sample_proportional(self, batch_size):
+    def _sample_proportional(self, batch_size) -> List[int]:
         res = []
         p_total = self._it_sum.sum(0, len(self.replay_buffer._storage) - 1)
         every_range_len = p_total / batch_size
@@ -64,7 +65,7 @@ class PrioritizedReplayBuffer(ReplayBufferWrapper):
             res.append(idx)
         return res
 
-    def sample(self):
+    def sample(self) -> Tuple[np.ndarray, ...]:
         idxes = self._sample_proportional(self.hyper_params.batch_size)
 
         weights = []
@@ -96,5 +97,5 @@ class PrioritizedReplayBuffer(ReplayBufferWrapper):
         self.beta = self.beta + self.beta_increment
         assert self.beta > 0
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.replay_buffer)

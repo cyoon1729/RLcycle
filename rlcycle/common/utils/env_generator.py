@@ -11,7 +11,7 @@ from rlcycle.common.utils.env_wrappers import (
 )
 
 
-def generate_atari_env(env_info: DictConfig):
+def generate_atari_env(env_info: DictConfig) -> gym.Env:
     """Generate atari env from given config"""
     assert env_info.is_atari is True
     env = make_atari(env_id=env_info.name, max_episode_steps=env_info.max_episode_steps)
@@ -20,7 +20,7 @@ def generate_atari_env(env_info: DictConfig):
     return env
 
 
-def generate_env(env_info: DictConfig):
+def generate_env(env_info: DictConfig) -> gym.Env:
     """Generate non-atari env from given config"""
     assert env_info.is_atari is False, "For atari envs use generate_atari_env()"
     env = gym.make(env_info.name)

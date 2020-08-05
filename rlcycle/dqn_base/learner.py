@@ -9,6 +9,7 @@ import torch.optim as optim
 
 from rlcycle.build import build_loss, build_model
 from rlcycle.common.abstract.learner import Learner
+from rlcycle.common.models.base import BaseModel
 from rlcycle.common.utils.common_utils import hard_update, soft_update
 
 
@@ -96,7 +97,7 @@ class DQNLearner(Learner):
 
         return info
 
-    def get_policy(self, to_cuda: bool):
+    def get_policy(self, to_cuda: bool) -> BaseModel:
         """Return policy mapped to target device"""
         policy_copy = deepcopy(self.network)
         if to_cuda:

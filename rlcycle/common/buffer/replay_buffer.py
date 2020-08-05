@@ -3,6 +3,7 @@ Adapted from OpenAI Baselines:
 https://github.com/openai/baselines/blob/master/baselines/deepq/replay_buffer.py
 """
 import random
+from typing import Tuple
 
 import numpy as np
 from omegaconf import DictConfig
@@ -27,7 +28,7 @@ class ReplayBuffer(ReplayBufferBase):
         self._maxsize = self.hyper_params.replay_buffer_size
         self._next_idx = 0
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._storage)
 
     def add(self, obs_t, action, reward, obs_tp1, done):
@@ -59,7 +60,7 @@ class ReplayBuffer(ReplayBufferBase):
             np.array(dones),
         )
 
-    def sample(self):
+    def sample(self) -> Tuple[np.ndarray, ...]:
         """Sample and return experience from storage"""
         idxes = [
             random.randint(0, len(self._storage) - 1)

@@ -55,7 +55,7 @@ class Agent(ABC):
         action_selector: ActionSelector,
         episode_i: int,
         update_step: int,
-    ):
+    ) -> float:
         """Test policy without random exploration a number of times."""
         print("====TEST START====")
         policy.eval()

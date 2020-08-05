@@ -9,6 +9,7 @@ import torch.optim as optim
 
 from rlcycle.build import build_loss, build_model
 from rlcycle.common.abstract.learner import Learner
+from rlcycle.common.models.base import BaseModel
 from rlcycle.common.utils.common_utils import hard_update, soft_update
 
 
@@ -181,7 +182,7 @@ class SACLearner(Learner):
 
         return info
 
-    def get_policy(self, to_cuda: bool):
+    def get_policy(self, to_cuda: bool) -> BaseModel:
         policy_copy = deepcopy(self.actor)
         if to_cuda:
             policy_copy.cuda()

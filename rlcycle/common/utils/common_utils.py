@@ -1,18 +1,18 @@
-from typing import Deque
+from typing import Deque, Tuple
 
 import numpy as np
 import torch
 import torch.nn as nn
 
 
-def np2tensor(np_arr: np.ndarray, use_cuda: bool):
+def np2tensor(np_arr: np.ndarray, use_cuda: bool) -> torch.Tensor:
     """Convert numpy array to tensor"""
     if use_cuda:
         return torch.from_numpy(np_arr).cuda(non_blocking=True).float()
     return torch.from_numpy(np_arr).cpu().float()
 
 
-def preprocess_nstep(n_step_queue: Deque, gamma: float) -> tuple:
+def preprocess_nstep(n_step_queue: Deque, gamma: float) -> Tuple[np.ndarray, ...]:
     """Return n-step transition data with discounted n-step rewards"""
     discounted_reward = 0
     _, _, _, last_state, done = n_step_queue[-1]
