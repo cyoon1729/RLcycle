@@ -40,7 +40,7 @@ pip install -e .
 
 <details>
 <summary> <b> 0. A quick look at Hydra for managing configurations </b></summary>
-Let's first take a  look at one of the many useful things [hydra](https://hydra.cc/) can do:
+Let's first take a  look at one of the many useful things <a href=https://hydra.cc/> Hydra </a> can do:
 
 ```yaml
 """Instantiating classes from yaml files"""
@@ -80,7 +80,7 @@ def main(cfg: DictConfig):
 if __main__ == "__main__":
     main()
 ```
-If you would like to know more about `hydra`,  [check it out](https://hydra.cc/)!
+If you would like to know more about `Hydra`, check <a href=https://hydra.cc/> their documentation </a> out!
 </details>
 
 
@@ -358,7 +358,7 @@ Click the dropdown below!
 <details>
 <summary> <b> Atari PongNoFrameskip-v4 </b> </summary>
 <p>
-*For more information, visit [my WandB log](https://app.wandb.ai/chrisyoon1729/RLcycle-PongNoFrameskip-v4?workspace=user-chrisyoon1729)*
+For more information, visit <a href=https://app.wandb.ai/chrisyoon1729/RLcycle-PongNoFrameskip-v4?workspace=user-chrisyoon1729> the WandB log </a>.
 
 ![atari-pong](./assets/pong.png)
 </p>
@@ -371,7 +371,7 @@ Click the dropdown below!
 <details>
 <summary> <b> PyBullet Reacher-v2 </b> </summary>
 <p>
-*For more information, visit [my WandB log](https://app.wandb.ai/chrisyoon1729/RLcycle-ReacherPyBulletEnv-v0?workspace=user-chrisyoon1729)*
+For more information, visit <a href=https://app.wandb.ai/chrisyoon1729/RLcycle-ReacherPyBulletEnv-v0?workspace=user-chrisyoon1729> the WandB log </a>.
 
 ![reacher](./assets/reacher.png)
 </p>
