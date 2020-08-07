@@ -10,7 +10,7 @@ hyper_params:
   update_starting_point: 64 # update steps when buffer has # experiences stored
   n_step: 1
   train_freq: 1
-  max_exploratory_steps: 1000
+  max_exploratory_steps: 10000
   gamma: 0.99
   tau: 0.005
   critic_gradient_clip: 10.0

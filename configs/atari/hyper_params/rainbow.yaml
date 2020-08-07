@@ -10,7 +10,7 @@ hyper_params:
 
   # Exploration configs
   eps: 1.0  # epsilon-greedy exploration
-  eps_final: 0.00001  # minimum epsilon value for exploration
+  eps_final: 0.0  # minimum epsilon value for exploration
   max_exploration_frame: 100000  # eps = eps_final at most until # steps
 
   # Others

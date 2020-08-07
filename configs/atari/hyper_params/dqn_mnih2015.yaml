@@ -18,7 +18,7 @@ hyper_params:
   max_exploration_frame: 1000000  # eps = eps_final at most until # steps
 
   # Others
-  update_starting_point: 10000 # update steps when buffer has # experiences stored
+  update_starting_point: 40000 # update steps when buffer has # experiences stored
   gamma: 0.99
   tau: 0.005
   q_reg_coeff: 0.0

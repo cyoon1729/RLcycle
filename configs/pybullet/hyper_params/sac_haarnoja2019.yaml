@@ -12,7 +12,7 @@ hyper_params:
   train_freq: 1  
   gamma: 0.99
   tau: 0.005
-  max_exploratory_steps: 1000
+  max_exploratory_steps: 10000
   critic_learning_rate: 0.001
   actor_learning_rate: 0.001
   alpha_learning_rate: 0.0003
