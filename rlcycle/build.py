@@ -31,6 +31,15 @@ def build_env(experiment_info: DictConfig) -> gym.Env:
     return env
 
 
+def build_custom_env(experiment_info: DictConfig) -> gym.Env:
+    """Build Custom env that might or might not inherit gym.Env"""
+    custom_env_cfg = DictConfig(dict())
+    custom_env_cfg["class"] = experiment_info.env.name
+    custom_env_cfg["params"] = experiment_info.env.args
+    custom_env = hydra.utils.instantiate(agent_cfg)
+    return custom_env
+
+
 def build_learner(
     experiment_info: DictConfig, hyper_params: DictConfig, model: DictConfig
 ) -> LearnerBase:
