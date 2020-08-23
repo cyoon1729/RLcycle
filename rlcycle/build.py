@@ -26,6 +26,8 @@ def build_env(experiment_info: DictConfig) -> gym.Env:
     """Build gym environment from DictConfigs via hydra.utils.instantiate()"""
     if experiment_info.env.is_atari:
         env = generate_atari_env(experiment_info.env)
+    elif experiment_info.env.is_custom:
+        env = build_custom_env(experiment_info.env)
     else:
         env = generate_env(experiment_info.env)
     return env
